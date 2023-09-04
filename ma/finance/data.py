@@ -1,20 +1,12 @@
-import zope.interface
-import pandas as pd
+import importlib
+import config as cfg
+import datetime as dt
+
+start_date = dt.datetime(2020, 1, 1)
+end_date = dt.datetime(2023, 1, 1)
 
 
-class MyInterface(zope.interface.Interface):
-    x = zope.interface.Attribute("symbol")
+MyClass = getattr(importlib.import_module(cfg.data_provider["stocks"]), "Reader")
+instance = MyClass()
 
-    def load_data(self, x):
-        pass
-
-
-@zope.interface.implementer(MyInterface)
-class MyClass:
-    def load_data(self, x):
-        return x**2
-
-
-obj = MyInterface()
-
-print(obj.load_data(2))
+print(instance.price_data("aapl", start_date, end_date))
