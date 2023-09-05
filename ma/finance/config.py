@@ -1,4 +1,7 @@
 data_provider = {
-    "crypto": "data_provider.MessariDataReader",
-    "stocks": "data_provider.StooqDataReader",
+    "messari": "MessariDataReader",
+    "stooq": "StooqDataReader",
+}
+exchange_provider = {
+    "coinbase": "CoinbaseHandler",
 }

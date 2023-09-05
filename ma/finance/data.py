@@ -1,18 +1,15 @@
-import importlib
-import config as cfg
 import datetime as dt
-
-import exchange.CBHandler as ch
-
-start_date = dt.datetime(2020, 1, 1)
-end_date = dt.datetime(2023, 1, 1)
+import data_provider.DataReader as data_provider
+import exchange.ExchangeHandler as exchange_provider
 
 
-MyClass = getattr(importlib.import_module(cfg.data_provider["stocks"]), "Reader")
-instance = MyClass()
-
-print(instance.price_data("aapl", start_date, end_date))
+start_date = dt.datetime(2023, 1, 1)
+end_date = dt.datetime(2023, 9, 15)
 
 
-coinbase = ch.Handler()
-print(coinbase.current_user()["name"])
+data = data_provider.instatiate("messari2").price_data("btc", start_date, end_date)
+
+# exchange = exchange_provider.instatiate("coinbase").description()
+
+
+print(data)
