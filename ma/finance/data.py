@@ -7,9 +7,11 @@ start_date = dt.datetime(2023, 1, 1)
 end_date = dt.datetime(2023, 9, 15)
 
 
-data = data_provider.instatiate("messari2").price_data("btc", start_date, end_date)
+data = data_provider.instatiate("messari").price_data("perp", start_date, end_date)
 
 # exchange = exchange_provider.instatiate("coinbase").description()
+
+# data = data_provider.instatiate("coinbase").currency_catalog()
 
 
 print(data)
