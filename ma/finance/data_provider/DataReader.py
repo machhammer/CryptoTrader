@@ -3,6 +3,7 @@ import pandas_datareader as web
 import pandas as pd
 import config as cfg
 from abc import ABC, abstractmethod
+import yfinance as yf
 
 
 class DataReader(ABC):
