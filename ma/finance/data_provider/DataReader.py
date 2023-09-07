@@ -3,7 +3,6 @@ import pandas_datareader as web
 import pandas as pd
 import config as cfg
 from abc import ABC, abstractmethod
-import yfinance as yf
 
 
 class DataReader(ABC):
@@ -55,6 +54,8 @@ class MessariDataReader(DataReader):
             df["date"] = pd.to_datetime(df["date"], unit="ms")
             df = df.set_index("date")
             return df
+        except KeyError:
+            raise Exception("No data found for symbol: " + symbol)
         except:
             raise Exception("Error connecting to Messari")
 
