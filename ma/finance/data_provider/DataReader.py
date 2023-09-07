@@ -3,15 +3,20 @@ import pandas_datareader as web
 import pandas as pd
 import config as cfg
 from abc import ABC, abstractmethod
+import yahoo_fin.stock_info as yahoo_fin
 
 
 class DataReader(ABC):
     @abstractmethod
-    def price_data(self, symbol, start, end):
+    def historic_price_data(self, symbol, start, end):
         pass
 
     @abstractmethod
-    def currency_catalog(self, symbol, start, end):
+    def price(self, symbol):
+        pass
+
+    @abstractmethod
+    def currency_catalog(self):
         pass
 
 
@@ -22,21 +27,45 @@ def instatiate(reader) -> DataReader:
         raise Exception("DataReader ID not found: " + reader)
 
 
+# ****************************************************************************************************
+
+
+class YahooDataReader(DataReader):
+    def historic_price_data(self, symbol, start, end):
+        return yahoo_fin.get_data(
+            symbol, start_date=start, end_date=end, index_as_date=True, interval="1d"
+        )
+
+    def price(self, symbol):
+        return yahoo_fin.get_live_price(symbol)
+
+    def currency_catalog(self):
+        raise Exception("Not implemented!")
+
+
+# ****************************************************************************************************
+
+
 class CoinbaseDataReader(DataReader):
-    def price_data(self, symbol, start, end):
+    def historic_price_data(self, symbol, start, end):
+        raise Exception("Not implemented!")
+
+    def price(self, symbol):
         raise Exception("Not implemented!")
 
     def currency_catalog(self):
         api_url = f"https://api.exchange.coinbase.com/currencies"
         raw = requests.get(api_url).json()
-        # df = pd.DataFrame(raw)
         df = pd.json_normalize(raw)
 
         return df
 
 
+# ****************************************************************************************************
+
+
 class MessariDataReader(DataReader):
-    def price_data(self, symbol, start, end):
+    def historic_price_data(self, symbol, start, end):
         try:
             api_url = f"https://data.messari.io/api/v1/markets/binance-{symbol}-usdt/metrics/price/time-series?start={start}&end={end}&interval=1d"
             raw = requests.get(api_url).json()
@@ -59,16 +88,25 @@ class MessariDataReader(DataReader):
         except:
             raise Exception("Error connecting to Messari")
 
+    def price(self, symbol):
+        raise Exception("Not implemented!")
+
     def currency_catalog(self):
         raise Exception("Not implemented!")
 
 
+# ****************************************************************************************************
+
+
 class StooqDataReader(DataReader):
-    def price_data(self, symbol, start_date, end_date):
+    def historic_price_data(self, symbol, start_date, end_date):
         try:
             return web.DataReader(symbol, "stooq", start_date, end_date)
         except:
             raise Exception("Error connecting to Pandas 'stooq'")
+
+    def price(self, symbol):
+        raise Exception("Not implemented!")
 
     def currency_catalog(self):
         raise Exception("Not implemented!")
