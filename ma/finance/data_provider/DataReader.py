@@ -32,9 +32,19 @@ def instatiate(reader) -> DataReader:
 
 class YahooDataReader(DataReader):
     def historic_price_data(self, symbol, start, end):
-        return yahoo_fin.get_data(
+        data = yahoo_fin.get_data(
             symbol, start_date=start, end_date=end, index_as_date=True, interval="1d"
         )
+        data = data.rename(
+            columns={
+                "open": "Open",
+                "high": "High",
+                "low": "Low",
+                "close": "Close",
+                "volume": "Volume",
+            }
+        )
+        return data[["Open", "High", "Low", "Close", "Volume"]]
 
     def price(self, symbol):
         return yahoo_fin.get_live_price(symbol)
@@ -72,12 +82,12 @@ class MessariDataReader(DataReader):
             df = pd.DataFrame(raw["data"]["values"])
             df = df.rename(
                 columns={
-                    0: "date",
-                    1: "open",
-                    2: "high",
-                    3: "low",
-                    4: "close",
-                    5: "volume",
+                    0: "Date",
+                    1: "Open",
+                    2: "High",
+                    3: "Low",
+                    4: "Close",
+                    5: "Volume",
                 }
             )
             df["date"] = pd.to_datetime(df["date"], unit="ms")
