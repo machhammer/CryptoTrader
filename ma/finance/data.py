@@ -1,25 +1,24 @@
-import datetime as dt
-from datetime import datetime
 import data_provider.DataReader as data_provider
-import config as cfg
-import pandas as pd
-import backtrader as bt
-
-from trading.SMAStrategy import SmaCross
-
-start_date = dt.datetime(2023, 1, 1)
-end_date = dt.datetime(2023, 9, 15)
+import data_provider.NewsReader as news_reader
+from data_science import analyzer
+import datetime
+from storage.NewsDB import CosmosDB
+import json
 
 
-cerebro = bt.Cerebro()  # create a "Cerebro" engine instance
+mode = 1
 
 
-data = data_provider.instatiate("yahoo").historic_price_data(
-    "btc-usd", start_date, end_date
-)
+db = CosmosDB()
 
-cerebro.adddata(data)  # Add the data feed
+if mode == 0:
+    db.clean_db()
 
-cerebro.addstrategy(SmaCross)  # Add the trading strategy
-cerebro.run()  # run it all
-cerebro.plot()  # and plot it with a single command
+if mode == 1:
+    db.create_db()
+
+    feeds = news_reader.read_news_feeds()
+
+    feeds = analyzer.sentiment_analysis(feeds)
+
+    db.store_news(feeds)

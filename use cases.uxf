@@ -1,0 +1,4 @@
+<diagram program="umletino" version="15.1"><zoom_level>10</zoom_level><element><id>UMLUseCase</id><coordinates><x>490</x><y>240</y><w>120</w><h>40</h></coordinates><panel_attributes>News anzeigen</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLUseCase</id><coordinates><x>270</x><y>140</y><w>120</w><h>50</h></coordinates><panel_attributes>Empfehlungen
+anzeigen</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLUseCase</id><coordinates><x>490</x><y>70</y><w>120</w><h>40</h></coordinates><panel_attributes>Indikatoren
+berechnen</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLUseCase</id><coordinates><x>490</x><y>150</y><w>120</w><h>40</h></coordinates><panel_attributes>News Sentiment 
+Analyse</panel_attributes><additional_attributes></additional_attributes></element></diagram>

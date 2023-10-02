@@ -1,0 +1,61 @@
+import azure.cosmos.documents as documents
+import azure.cosmos.cosmos_client as cosmos_client
+import azure.cosmos.exceptions as exceptions
+from azure.cosmos.partition_key import PartitionKey
+import datetime
+import uuid
+import credentials as config
+
+
+HOST = config.cosmosdb["host"]
+MASTER_KEY = config.cosmosdb["master_key"]
+DATABASE_ID = config.cosmosdb["database_id"]
+CONTAINER_ID = config.cosmosdb["container_id"]
+
+
+class CosmosDB:
+    def __init__(self):
+        self.client = cosmos_client.CosmosClient(
+            HOST,
+            {"masterKey": MASTER_KEY},
+            user_agent="ma",
+            user_agent_overwrite=True,
+        )
+
+    def create_db(self):
+        try:
+            db = self.client.create_database(id=DATABASE_ID)
+            print("Database with id '{0}' created".format(DATABASE_ID))
+
+        except exceptions.CosmosResourceExistsError:
+            db = self.client.get_database_client(DATABASE_ID)
+            print("Database with id '{0}' was found".format(DATABASE_ID))
+
+        # setup container for this sample
+        try:
+            self.container = db.create_container(
+                id=CONTAINER_ID, partition_key=PartitionKey(path="/title")
+            )
+            print("Container with id '{0}' created".format(CONTAINER_ID))
+
+        except exceptions.CosmosResourceExistsError:
+            self.container = db.get_container_client(CONTAINER_ID)
+            print("Container with id '{0}' was found".format(CONTAINER_ID))
+
+    def clean_db(self):
+        self.client.delete_database(DATABASE_ID)
+
+    def store_news(self, news):
+        print("\nStoring News\n")
+        i = 0
+        e = 0
+        for entry in news:
+            i = i + 1
+            try:
+                self.container.create_item(body=entry)
+            except Exception as error:
+                e = e + 1
+                print(error)
+
+        print("Number of news: " + str(i))
+        print("Number or errors: " + str(e))
