@@ -59,3 +59,15 @@ class CosmosDB:
 
         print("Number of news: " + str(i))
         print("Number or errors: " + str(e))
+
+    def query_news(self):
+        print("\nQuerying for Items\n")
+        items = list(
+            self.client.get_database_client(DATABASE_ID)
+            .get_container_client(CONTAINER_ID)
+            .query_items(
+                query="SELECT * FROM Items i ORDER BY i.published DESC",
+                enable_cross_partition_query=True,
+            )
+        )
+        return items

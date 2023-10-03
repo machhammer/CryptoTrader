@@ -6,7 +6,7 @@ from storage.NewsDB import CosmosDB
 import json
 
 
-mode = 1
+mode = 2
 
 
 db = CosmosDB()
@@ -22,3 +22,10 @@ if mode == 1:
     feeds = analyzer.sentiment_analysis(feeds)
 
     db.store_news(feeds)
+
+
+if mode == 2:
+    news_feeds = db.query_news()
+
+    for news in news_feeds:
+        print(news)

@@ -125,3 +125,4 @@ venv.bak/
 dmypy.json
 
 credentials.py
+*.secret
