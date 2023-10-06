@@ -45,20 +45,44 @@ class CosmosDB:
     def clean_db(self):
         self.client.delete_database(DATABASE_ID)
 
+    def query_news_by_attribute(self, attribute, value):
+        query = (
+            "SELECT i.title FROM Items i WHERE i." + attribute + " = '" + value + "'"
+        )
+        try:
+            items = list(
+                self.client.get_database_client(DATABASE_ID)
+                .get_container_client(CONTAINER_ID)
+                .query_items(
+                    query=query,
+                    enable_cross_partition_query=True,
+                )
+            )
+        except Exception as error:
+            print(error)
+            print(query)
+
+        return items
+
     def store_news(self, news):
         print("\nStoring News\n")
         i = 0
         e = 0
+        d = 0
         for entry in news:
             i = i + 1
             try:
-                self.container.create_item(body=entry)
+                if not self.query_news_by_attribute("title", entry["title"]):
+                    self.container.create_item(body=entry)
+                else:
+                    d = d + 1
             except Exception as error:
                 e = e + 1
                 print(error)
 
         print("Number of news: " + str(i))
         print("Number or errors: " + str(e))
+        print("Number or duplicates: " + str(d))
 
     def query_news(self):
         print("\nQuerying for Items\n")

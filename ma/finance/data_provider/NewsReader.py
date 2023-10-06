@@ -12,7 +12,7 @@ def to_dict(id, title, published, summary, url):
     to_date = dateutil.parser.parse(published)
     return {
         "id": str(uuid.uuid4())[:8],
-        "title": title,
+        "title": title.replace("'", ""),
         "published": str(to_date),
         "summary": summary,
         "source": url,
@@ -27,7 +27,8 @@ def read_news_feeds():
         print(url)
         for entry in feed.entries:
             summary = entry.summary if hasattr(entry, "summary") else entry.title
-            results.append(
-                to_dict(entry.id, entry.title, entry.published, summary, url)
-            )
+            if not entry in results:
+                results.append(
+                    to_dict(entry.id, entry.title, entry.published, summary, url)
+                )
     return results

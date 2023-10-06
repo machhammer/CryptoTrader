@@ -1,12 +1,13 @@
 import data_provider.DataReader as data_provider
 import data_provider.NewsReader as news_reader
-from data_science import analyzer
+
+# from data_science import analyzer
 import datetime
 from storage.NewsDB import CosmosDB
 import json
 
 
-mode = 2
+mode = 1
 
 
 db = CosmosDB()
@@ -19,7 +20,7 @@ if mode == 1:
 
     feeds = news_reader.read_news_feeds()
 
-    feeds = analyzer.sentiment_analysis(feeds)
+    # feeds = analyzer.sentiment_analysis(feeds)
 
     db.store_news(feeds)
 
