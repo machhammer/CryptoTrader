@@ -90,7 +90,7 @@ class CosmosDB:
             self.client.get_database_client(DATABASE_ID)
             .get_container_client(CONTAINER_ID)
             .query_items(
-                query="SELECT * FROM Items i ORDER BY i.published DESC",
+                query="SELECT i.id, i.published, i.title, i.summary FROM Items i ORDER BY i.published DESC",
                 enable_cross_partition_query=True,
             )
         )
