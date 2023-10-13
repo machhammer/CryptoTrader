@@ -7,7 +7,7 @@ from storage.NewsDB import CosmosDB
 import json
 
 
-mode = 1
+mode = 2
 
 
 db = CosmosDB()

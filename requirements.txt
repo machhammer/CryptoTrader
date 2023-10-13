@@ -1,0 +1,13 @@
+azure_storage==0.37.0
+backtrader==1.9.78.123
+coinbase==2.1.0
+feedparser==6.0.10
+Flask==3.0.0
+Flask_Cors==4.0.0
+mastodon==0.0.1
+nltk==3.8.1
+pandas==2.1.1
+pandas_datareader==0.10.0
+python_dateutil==2.8.2
+Requests==2.31.0
+yahoo_fin==0.8.9.1
