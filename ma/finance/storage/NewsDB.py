@@ -1,7 +1,7 @@
 import azure.cosmos.documents as documents
 import azure.cosmos.cosmos_client as cosmos_client
-import azure.cosmos.exceptions as exceptions
-from azure.cosmos.partition_key import PartitionKey
+import azure.cosmos.errors as exceptions
+import azure.cosmos.partition as PartitionKey
 import datetime
 import uuid
 import credentials as config
