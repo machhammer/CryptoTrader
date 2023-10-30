@@ -3,6 +3,7 @@ import data_provider.NewsReader as news_reader
 
 # from data_science import analyzer
 import datetime
+
 from storage.NewsDB import CosmosDB
 import json
 
