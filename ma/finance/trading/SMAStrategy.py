@@ -11,6 +11,10 @@ class SmaCross(bt.Strategy):
         pslow=30,  # period for the slow moving average
     )
 
+    def log(self, txt, dt=None):
+        dt = dt or self.datas[0].datetime.date(0)
+        print(f'{dt.isoformat()} {txt}') #Print date and close
+
     def __init__(self):
         sma1 = bt.ind.SMA(period=self.p.pfast)  # fast moving average
         sma2 = bt.ind.SMA(period=self.p.pslow)  # slow moving average
@@ -23,3 +27,4 @@ class SmaCross(bt.Strategy):
 
         elif self.crossover < 0:  # in the market & cross to the downside
             self.close()  # close long position
+        self.log('Close: ', self.datas[0].close)
