@@ -1,7 +1,7 @@
 import backtrader as bt
 
 
-class MyStrategy(bt.Strategy):
+class MACD1226(bt.Strategy):
     # list of parameters which are configurable for the strategy
     params = (
         # Standard MACD Parameters
