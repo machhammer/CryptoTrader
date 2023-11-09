@@ -11,7 +11,7 @@ class SimpleMovingAverage(bt.Strategy):
     )
 
     def __init__(self):
-        self.sma = bt.SimpleMovingAverage(self.params.period)
+        self.sma = bt.indicators.SimpleMovingAverage(self.params.period)
 
     def next(self):
         if self.sma > self.data.close:
