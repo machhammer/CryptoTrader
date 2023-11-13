@@ -4,6 +4,7 @@ import pandas as pd
 import config as cfg
 from abc import ABC, abstractmethod
 import yahoo_fin.stock_info as yahoo_fin
+import yfinance as yf
 
 
 class DataReader(ABC):
@@ -30,10 +31,25 @@ def instatiate(reader) -> DataReader:
 # ****************************************************************************************************
 
 
+class yFinanceReader(DataReader):
+    def historic_price_data(self, symbol, start, end):
+        asset = yf.Ticker(symbol)
+        data = asset.history(start=start, end=end, interval="90m")
+        return data[["Open", "High", "Low", "Close", "Volume"]]
+
+    def price(self, symbol):
+        return yahoo_fin.get_live_price(symbol)
+
+    def currency_catalog(self):
+        raise Exception("Not implemented!")
+
+# ****************************************************************************************************
+
+
 class YahooDataReader(DataReader):
     def historic_price_data(self, symbol, start, end):
         data = yahoo_fin.get_data(
-            symbol, start_date=start, end_date=end, index_as_date=True, interval="1d"
+            symbol, start_date=start, end_date=end, index_as_date=True, interval="1d", period="4h"
         )
         data = data.rename(
             columns={
