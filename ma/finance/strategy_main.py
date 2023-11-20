@@ -28,6 +28,7 @@ class TestStrategy(bt.Strategy):
 
         # NOTE: If you try to get the wallet balance from a wallet you have
         # never funded, a KeyError will be raised! Change LTC below as approriate
+        if hasattr(slef, 'live_data')
         if self.live_data:
             cash, value = self.broker.get_wallet_balance('XRP')
         else:
@@ -112,8 +113,8 @@ cerebro.setbroker(broker)
 # Drop newest will prevent us from loading partial data from incomplete candles
 hist_start_date = datetime.utcnow() - timedelta(minutes=50)
 data = store.getdata(dataname='XRP/USD', name="XRPUSD",
-                timeframe=(bt.TimeFrame.Minutes, 30), fromdate=hist_start_date,
-                compression=1, ohlcv_limit=50, drop_newest=True , historical=False)
+                timeframe=bt.TimeFrame.Minutes, fromdate=hist_start_date,
+                compression=1, ohlcv_limit=50, drop_newest=True , historical=True)
 
 
 
