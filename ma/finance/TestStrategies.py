@@ -21,12 +21,12 @@ data = data_provider.yFinanceReader().historic_price_data(
 
 class SimpleTesting(bt.Strategy):
     params = (
+        ("rsiperiod", 14),
         ("smaperiod", 21),
         ("macdperiod1", 12),
         ("macdperiod2", 26),
         ("macdsignal", 9),
         ("macdepsilon", 9),
-        ("rsiperiod", 14),
     )
 
     def __init__(self):
@@ -57,7 +57,7 @@ class SimpleTesting(bt.Strategy):
             # Slow things down.
             cash = "NA"
 
-        for data in self.datas:
+        """ for data in self.datas:
             print(
                 "{} - {} | Cash {} | C: {} Diff:{}".format(
                     data.datetime.datetime(),
@@ -66,7 +66,7 @@ class SimpleTesting(bt.Strategy):
                     data.close[0],
                     round(abs(self.macd.signal) - abs(self.macd.macd), 5),
                 )
-            )
+            ) """
 
         if self.rsi < 30:
             self.rsi_buy_alert = True
@@ -84,7 +84,7 @@ class SimpleTesting(bt.Strategy):
                 > (self.p.macdepsilon / 100000)
             )
         ):
-            self.buy(size=25)
+            self.buy()
             self.rsi_buy_alert = False
 
         if (
@@ -97,7 +97,7 @@ class SimpleTesting(bt.Strategy):
                 > (self.p.macdepsilon / 100000)
             )
         ):
-            self.sell(size=25)
+            self.sell()
             self.rsi_sell_alert = False
 
     def notify_data(self, data, status, *args, **kwargs):
@@ -117,26 +117,34 @@ if __name__ == "__main__":
 
     cerebro.optstrategy(
         SimpleTesting,
-        smaperiod=range(5, 40),
-        macdperiod1=range(12, 20),
-        macdperiod2=range(26, 30),
-        macdsignal=range(9, 15),
-        macdepsilon=range(5, 9),
-        rsiperiod=range(12, 16),
+        smaperiod=range(14, 15),
+        rsiperiod=range(21, 22),
+        macdperiod1=range(12, 13),
+        macdperiod2=range(26, 27),
+        macdsignal=range(9, 10),
+        macdepsilon=range(9, 10),
     )
 
     cerebro.broker.setcash(100000.0)
+    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe_ratio')
     cerebro.adddata(bt.feeds.PandasData(dataname=data))
+    cerebro.addsizer(bt.sizers.FixedSize, stake=20)
     print("Starting Portfolio Value: %.2f" % cerebro.broker.getvalue())
 
-    stratruns = cerebro.run()
+    optimized_runs = cerebro.run()
 
-    print("==================================================")
-    for stratrun in stratruns:
-        print("**************************************************")
-        for strat in stratrun:
-            print("--------------------------------------------------")
-            print(strat.p._getkwargs())
-    print("==================================================")
+    final_results_list = []
 
-    print("Final Portfolio Value: %.2f" % cerebro.broker.getvalue())
+    for run in optimized_runs:
+
+        for strategy in run:
+            PnL = round(strategy.broker.get_value() - 10000,2)
+            print(strategy)
+            sharpe = strategy.analyzers.sharpe_ratio.get_analysis()
+            final_results_list.append([strategy.params.smaperiod, strategy.params.rsiperiod, strategy.params.macdperiod1, strategy.params.macdperiod2, strategy.params.macdsignal, strategy.params.macdepsilon, sharpe])
+    
+        sort_by_sharpe = sorted(final_results_list, key=lambda x: x[3], reverse=True)
+
+
+    for line in sort_by_sharpe[:5]:
+        print(line)
