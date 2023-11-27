@@ -113,38 +113,46 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-    cerebro = bt.Cerebro(maxcpus=None)
+    cerebro = bt.Cerebro(maxcpus=None, optreturn=False)
 
     cerebro.optstrategy(
         SimpleTesting,
-        smaperiod=range(14, 15),
-        rsiperiod=range(21, 22),
-        macdperiod1=range(12, 13),
-        macdperiod2=range(26, 27),
-        macdsignal=range(9, 10),
-        macdepsilon=range(9, 10),
+        smaperiod=range(12, 18),
+        rsiperiod=range(19, 24),
+        macdperiod1=range(10, 15),
+        macdperiod2=range(24, 29),
+        macdsignal=range(7, 12),
+        macdepsilon=range(7, 12),
     )
 
     cerebro.broker.setcash(100000.0)
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe_ratio')
+    cerebro.broker.setcommission(commission=0.005)
+    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
     cerebro.adddata(bt.feeds.PandasData(dataname=data))
     cerebro.addsizer(bt.sizers.FixedSize, stake=20)
-    print("Starting Portfolio Value: %.2f" % cerebro.broker.getvalue())
 
     optimized_runs = cerebro.run()
 
     final_results_list = []
 
     for run in optimized_runs:
-
         for strategy in run:
-            PnL = round(strategy.broker.get_value() - 10000,2)
-            print(strategy)
+            PnL = round(strategy.broker.get_value(), 2)
             sharpe = strategy.analyzers.sharpe_ratio.get_analysis()
-            final_results_list.append([strategy.params.smaperiod, strategy.params.rsiperiod, strategy.params.macdperiod1, strategy.params.macdperiod2, strategy.params.macdsignal, strategy.params.macdepsilon, sharpe])
-    
-        sort_by_sharpe = sorted(final_results_list, key=lambda x: x[3], reverse=True)
+            final_results_list.append(
+                [
+                    strategy.params.smaperiod,
+                    strategy.params.rsiperiod,
+                    strategy.params.macdperiod1,
+                    strategy.params.macdperiod2,
+                    strategy.params.macdsignal,
+                    strategy.params.macdepsilon,
+                    sharpe,
+                    PnL,
+                ]
+            )
 
+        sort_by_sharpe = sorted(final_results_list, key=lambda x: x[3], reverse=True)
 
     for line in sort_by_sharpe[:5]:
         print(line)
