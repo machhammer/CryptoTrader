@@ -111,24 +111,9 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     test = False
 
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False)
-=======
-    cerebro = bt.Cerebro(maxcpus=8, optreturn=False, exactbars=2)
-
-    cerebro.optstrategy(
-        SimpleTesting,
-        smaperiod=range(10, 20),
-        rsiperiod=range(10, 30),
-        macdperiod1=range(5, 21),
-        macdperiod2=range(15, 30),
-        macdsignal=range(5, 15),
-        macdepsilon=range(5, 9),
-    )
-
->>>>>>> b54995c044c59ef75b7a6ea42aa65527cdd7df40
     cerebro.broker.setcash(100000.0)
     cerebro.broker.setcommission(commission=0.005)
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
@@ -178,12 +163,7 @@ if __name__ == "__main__":
         for line in sort_by_sharpe[:5]:
             print(line)
 
-<<<<<<< HEAD
     else:
         cerebro.addstrategy(SimpleTesting)
         cerebro.run()
         cerebro.plot()
-=======
-    for line in sort_by_sharpe[:10]:
-        print(line)
->>>>>>> b54995c044c59ef75b7a6ea42aa65527cdd7df40
