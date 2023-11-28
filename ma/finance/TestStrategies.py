@@ -113,16 +113,16 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-    cerebro = bt.Cerebro(maxcpus=None, optreturn=False)
+    cerebro = bt.Cerebro(maxcpus=8, optreturn=False, exactbars=2)
 
     cerebro.optstrategy(
         SimpleTesting,
-        smaperiod=range(12, 18),
-        rsiperiod=range(19, 24),
-        macdperiod1=range(10, 15),
-        macdperiod2=range(24, 29),
-        macdsignal=range(7, 12),
-        macdepsilon=range(7, 12),
+        smaperiod=range(10, 20),
+        rsiperiod=range(10, 30),
+        macdperiod1=range(5, 21),
+        macdperiod2=range(15, 30),
+        macdsignal=range(5, 15),
+        macdepsilon=range(5, 9),
     )
 
     cerebro.broker.setcash(100000.0)
@@ -154,5 +154,5 @@ if __name__ == "__main__":
 
         sort_by_sharpe = sorted(final_results_list, key=lambda x: x[3], reverse=True)
 
-    for line in sort_by_sharpe[:5]:
+    for line in sort_by_sharpe[:10]:
         print(line)
