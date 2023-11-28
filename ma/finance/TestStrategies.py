@@ -1,4 +1,4 @@
-import datetime as dt
+from datetime import datetime, timedelta
 import credentials
 from dateutil.relativedelta import relativedelta
 import data_provider.DataReader as data_provider
@@ -7,7 +7,8 @@ from ccxtbt import CCXTStore
 import ccxt
 import warnings
 
-warnings.filterwarnings("ignore")
+# warnings.filterwarnings("ignore")
+
 
 api_key = credentials.provider_1.get("key")
 api_secret = credentials.provider_1.get("secret")
@@ -21,11 +22,6 @@ exchange = ccxt.coinbase(
         # 'verbose': True,  # for debug output
     }
 )
-
-ohlcv = exchange.fetch_ohlcv("BTC/USDT", "6h")
-data = pd.DataFrame(ohlcv, columns=["Time", "Open", "High", "Low", "Close", "Volume"])
-data["Time"] = [datetime.fromtimestamp(float(time) / 1000) for time in data["Time"]]
-data.set_index("Time", inplace=True)
 
 store = CCXTStore(
     exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
@@ -52,6 +48,17 @@ data = data_provider.yFinanceReader().historic_price_data(
     "xrp-usd", start_date, end_date
 )
  """
+hist_start_date = datetime.utcnow() - timedelta(days=60)
+data = store.getdata(
+    dataname="XRP/USD",
+    name="XRPUSD",
+    timeframe=bt.TimeFrame.Minutes,
+    fromdate=hist_start_date,
+    compression=360,
+    ohlcv_limit=1000,
+    drop_newest=True,
+    historical=True,
+)
 
 
 class SimpleTesting(bt.Strategy):
@@ -61,9 +68,9 @@ class SimpleTesting(bt.Strategy):
         ("macdperiod1", 12),
         ("macdperiod2", 26),
         ("macdsignal", 9),
-        ("macdepsilon", 8),
-        ("rsi_sell_threshold", 73),
-        ("rsi_buy_threshold", 30),
+        ("macdepsilon", 5),
+        ("rsi_sell_threshold", 28),
+        ("rsi_buy_threshold", 65),
     )
 
     def __init__(self):
@@ -78,32 +85,30 @@ class SimpleTesting(bt.Strategy):
 
         self.rsi_buy_alert = False
         self.rsi_sell_alert = False
+        self.macd_diff = abs(abs(self.macd.signal) - abs(self.macd.macd))
 
     def next(self):
-        # Get cash and balance
-        # New broker method that will let you get the cash and balance for
-        # any wallet. It also means we can disable the getcash() and getvalue()
-        # rest calls before and after next which slows things down.
-
-        # NOTE: If you try to get the wallet balance from a wallet you have
-        # never funded, a KeyError will be raised! Change LTC below as approriate
         if hasattr(self, "live_Data") and self.live_data:
             cash, value = self.broker.get_wallet_balance("XRP")
         else:
-            # Avoid checking the balance during a backfill. Otherwise, it will
-            # Slow things down.
             cash = "NA"
 
-        """ for data in self.datas:
+        for data in self.datas:
             print(
-                "{} - {} | Cash {} | C: {} Diff:{}".format(
+                "{} - {} | Cash {} | C: {} | SMA: {} | RSI: {} | MACD: {} | MACD Signal: {} | MACD Diff: {} | RSI Buy Alert: {} | RSI Sell Alert: {}".format(
                     data.datetime.datetime(),
                     data._name,
                     cash,
                     data.close[0],
-                    round(abs(self.macd.signal) - abs(self.macd.macd), 5),
+                    round(self.sma[0], 5),
+                    round(self.rsi[0]),
+                    round(self.macd.macd[0], 5),
+                    round(self.macd.signal[0], 5),
+                    round(self.macd_diff[0], 7),
+                    self.rsi_buy_alert,
+                    self.rsi_sell_alert,
                 )
-            ) """
+            )
 
         if self.rsi < self.p.rsi_buy_threshold:
             self.rsi_buy_alert = True
@@ -118,10 +123,7 @@ class SimpleTesting(bt.Strategy):
             and (self.rsi_buy_alert)
             and (self.data.close[0] > self.sma)
             and (self.macd.signal < self.macd.macd)
-            and (
-                round(abs(self.macd.signal) - abs(self.macd.macd), 5)
-                > (self.p.macdepsilon / 100000)
-            )
+            and (self.macd_diff > (self.p.macdepsilon / 100000))
         ):
             self.buy()
             self.rsi_buy_alert = False
@@ -131,10 +133,7 @@ class SimpleTesting(bt.Strategy):
             and (self.rsi_sell_alert)
             and (self.data.close[0] < self.sma)
             and (self.macd.signal < self.macd.macd)
-            and (
-                round(abs(self.macd.signal) - abs(self.macd.macd), 5)
-                > (self.p.macdepsilon / 100000)
-            )
+            and (self.macd_diff > (self.p.macdepsilon / 100000))
         ):
             self.sell()
             self.rsi_sell_alert = False
@@ -152,17 +151,17 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-    test = False
+    Opt = False
 
-    cerebro = bt.Cerebro(maxcpus=None, optreturn=False)
-    cerebro.setbroker(broker)
+    cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
+    # cerebro.setbroker(broker)
     cerebro.broker.setcash(100000.0)
     cerebro.broker.setcommission(commission=0.005)
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
-    cerebro.adddata(bt.feeds.PandasData(dataname=data))
+    cerebro.adddata(data)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=80)
 
-    if test:
+    if Opt:
         cerebro.optstrategy(
             SimpleTesting,
             smaperiod=[10],
@@ -170,8 +169,8 @@ if __name__ == "__main__":
             macdperiod1=[12],
             macdperiod2=[26],
             macdsignal=[9],
-            macdepsilon=range(7, 10),
-            rsi_sell_threshold=range(73, 80),
+            macdepsilon=range(5, 10),
+            rsi_sell_threshold=range(65, 80),
             rsi_buy_threshold=range(28, 35),
         )
 
