@@ -1,13 +1,7 @@
 import datetime as dt
-import time
 from dateutil.relativedelta import relativedelta
 import data_provider.DataReader as data_provider
-from trading.MACDStrategy import MACD1226
-import config as cfg
-import yahoo_fin.stock_info as yf
-import pandas as pd
 import backtrader as bt
-import yfinance as yf
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -21,12 +15,14 @@ data = data_provider.yFinanceReader().historic_price_data(
 
 class SimpleTesting(bt.Strategy):
     params = (
+        ("smaperiod", 10),
         ("rsiperiod", 14),
-        ("smaperiod", 21),
         ("macdperiod1", 12),
         ("macdperiod2", 26),
         ("macdsignal", 9),
-        ("macdepsilon", 9),
+        ("macdepsilon", 8),
+        ("rsi_sell_threshold", 73),
+        ("rsi_buy_threshold", 30),
     )
 
     def __init__(self):
@@ -68,11 +64,13 @@ class SimpleTesting(bt.Strategy):
                 )
             ) """
 
-        if self.rsi < 30:
+        if self.rsi < self.p.rsi_buy_threshold:
             self.rsi_buy_alert = True
+            self.rsi_sell_alert = False
 
-        if self.rsi > 80:
+        if self.rsi > self.p.rsi_sell_threshold:
             self.rsi_sell_alert = True
+            self.rsi_buy_alert = False
 
         if (
             not self.position
@@ -113,46 +111,59 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
+    test = False
+
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False)
-
-    cerebro.optstrategy(
-        SimpleTesting,
-        smaperiod=range(12, 18),
-        rsiperiod=range(19, 24),
-        macdperiod1=range(10, 15),
-        macdperiod2=range(24, 29),
-        macdsignal=range(7, 12),
-        macdepsilon=range(7, 12),
-    )
-
     cerebro.broker.setcash(100000.0)
     cerebro.broker.setcommission(commission=0.005)
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
     cerebro.adddata(bt.feeds.PandasData(dataname=data))
-    cerebro.addsizer(bt.sizers.FixedSize, stake=20)
+    cerebro.addsizer(bt.sizers.PercentSizer, percents=80)
 
-    optimized_runs = cerebro.run()
+    if test:
+        cerebro.optstrategy(
+            SimpleTesting,
+            smaperiod=[10],
+            rsiperiod=[14],
+            macdperiod1=[12],
+            macdperiod2=[26],
+            macdsignal=[9],
+            macdepsilon=range(7, 10),
+            rsi_sell_threshold=range(73, 80),
+            rsi_buy_threshold=range(28, 35),
+        )
 
-    final_results_list = []
+        optimized_runs = cerebro.run()
 
-    for run in optimized_runs:
-        for strategy in run:
-            PnL = round(strategy.broker.get_value(), 2)
-            sharpe = strategy.analyzers.sharpe_ratio.get_analysis()
-            final_results_list.append(
-                [
-                    strategy.params.smaperiod,
-                    strategy.params.rsiperiod,
-                    strategy.params.macdperiod1,
-                    strategy.params.macdperiod2,
-                    strategy.params.macdsignal,
-                    strategy.params.macdepsilon,
-                    sharpe,
-                    PnL,
-                ]
+        final_results_list = []
+
+        for run in optimized_runs:
+            for strategy in run:
+                PnL = round(strategy.broker.get_value(), 2)
+                sharpe = strategy.analyzers.sharpe_ratio.get_analysis()
+                final_results_list.append(
+                    [
+                        strategy.params.smaperiod,
+                        strategy.params.rsiperiod,
+                        strategy.params.macdperiod1,
+                        strategy.params.macdperiod2,
+                        strategy.params.macdsignal,
+                        strategy.params.macdepsilon,
+                        strategy.params.rsi_buy_threshold,
+                        strategy.params.rsi_sell_threshold,
+                        sharpe,
+                        PnL,
+                    ]
+                )
+
+            sort_by_sharpe = sorted(
+                final_results_list, key=lambda x: x[3], reverse=True
             )
 
-        sort_by_sharpe = sorted(final_results_list, key=lambda x: x[3], reverse=True)
+        for line in sort_by_sharpe[:5]:
+            print(line)
 
-    for line in sort_by_sharpe[:5]:
-        print(line)
+    else:
+        cerebro.addstrategy(SimpleTesting)
+        cerebro.run()
+        cerebro.plot()
