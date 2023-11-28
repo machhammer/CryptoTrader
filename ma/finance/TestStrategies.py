@@ -1,16 +1,57 @@
 import datetime as dt
+import credentials
 from dateutil.relativedelta import relativedelta
 import data_provider.DataReader as data_provider
 import backtrader as bt
+from ccxtbt import CCXTStore
+import ccxt
 import warnings
 
 warnings.filterwarnings("ignore")
 
-end_date = dt.datetime.now()
+api_key = credentials.provider_1.get("key")
+api_secret = credentials.provider_1.get("secret")
+
+config = {"apiKey": api_key, "secret": api_secret, "enableRateLimit": True}
+
+exchange = ccxt.coinbase(
+    {
+        "apiKey": api_key,
+        "secret": api_secret,
+        # 'verbose': True,  # for debug output
+    }
+)
+
+ohlcv = exchange.fetch_ohlcv("BTC/USDT", "6h")
+data = pd.DataFrame(ohlcv, columns=["Time", "Open", "High", "Low", "Close", "Volume"])
+data["Time"] = [datetime.fromtimestamp(float(time) / 1000) for time in data["Time"]]
+data.set_index("Time", inplace=True)
+
+store = CCXTStore(
+    exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
+)
+
+broker_mapping = {
+    "order_types": {
+        bt.Order.Market: "market",
+        bt.Order.Limit: "limit",
+        bt.Order.Stop: "stop-loss",  # stop-loss for kraken, stop for bitmex
+        bt.Order.StopLimit: "stop limit",
+    },
+    "mappings": {
+        "closed_order": {"key": "status", "value": "closed"},
+        "canceled_order": {"key": "result", "value": 1},
+    },
+}
+
+broker = store.getbroker(broker_mapping=broker_mapping)
+
+""" end_date = dt.datetime.now()
 start_date = end_date - relativedelta(days=60)
 data = data_provider.yFinanceReader().historic_price_data(
     "xrp-usd", start_date, end_date
 )
+ """
 
 
 class SimpleTesting(bt.Strategy):
@@ -114,6 +155,7 @@ if __name__ == "__main__":
     test = False
 
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False)
+    cerebro.setbroker(broker)
     cerebro.broker.setcash(100000.0)
     cerebro.broker.setcommission(commission=0.005)
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
