@@ -45,13 +45,13 @@ broker = store.getbroker(broker_mapping=broker_mapping)
 """ end_date = dt.datetime.now()
 start_date = end_date - relativedelta(days=60)
 data = data_provider.yFinanceReader().historic_price_data(
-    "xrp-usd", start_date, end_date
+    "sol-usd", start_date, end_date
 )
  """
-hist_start_date = datetime.utcnow() - timedelta(days=60)
+hist_start_date = datetime.utcnow() - timedelta(days=120)
 data = store.getdata(
-    dataname="XRP/USD",
-    name="XRPUSD",
+    dataname="SOL/USD",
+    name="SOLUSD",
     timeframe=bt.TimeFrame.Minutes,
     fromdate=hist_start_date,
     compression=360,
@@ -68,9 +68,9 @@ class SimpleTesting(bt.Strategy):
         ("macdperiod1", 12),
         ("macdperiod2", 26),
         ("macdsignal", 9),
-        ("macdepsilon", 5),
-        ("rsi_sell_threshold", 28),
-        ("rsi_buy_threshold", 65),
+        ("macdepsilon", 8),
+        ("rsi_sell_threshold", 73),
+        ("rsi_buy_threshold", 33),
     )
 
     def __init__(self):
@@ -82,10 +82,34 @@ class SimpleTesting(bt.Strategy):
             period_me2=self.p.macdperiod2,
             period_signal=self.p.macdsignal,
         )
+        self.adx = bt.indicators.AverageDirectionalMovementIndex(self.data)
+        self.aroonUpDown = bt.indicators.AroonUpDown(self.data)
+        self.bollinger = bt.indicators.BollingerBands(self.data)
+
+        self.macd_diff = abs(abs(self.macd.signal) - abs(self.macd.macd))
+        self.p.macdepsilon = self.p.macdepsilon / 1000
+        self.macd_threshold = self.macd_diff > self.p.macdepsilon
+
+        self.reset_flags()
+
+    def reset_flags(self):
+        self.sma_buy_alert = False
+        self.sma_sell_alert = False
 
         self.rsi_buy_alert = False
         self.rsi_sell_alert = False
-        self.macd_diff = abs(abs(self.macd.signal) - abs(self.macd.macd))
+
+        self.macd_buy_alert = False
+        self.macd_sell_alert = False
+
+        self.adx_buy_alert = False
+        self.adx_sell_alert = False
+
+        self.aroon_buy_alert = False
+        self.aroon_sell_alert = False
+
+        self.bb_buy_alert = False
+        self.bb_sell_alert = False
 
     def next(self):
         if hasattr(self, "live_Data") and self.live_data:
@@ -93,23 +117,15 @@ class SimpleTesting(bt.Strategy):
         else:
             cash = "NA"
 
-        for data in self.datas:
-            print(
-                "{} - {} | Cash {} | C: {} | SMA: {} | RSI: {} | MACD: {} | MACD Signal: {} | MACD Diff: {} | RSI Buy Alert: {} | RSI Sell Alert: {}".format(
-                    data.datetime.datetime(),
-                    data._name,
-                    cash,
-                    data.close[0],
-                    round(self.sma[0], 5),
-                    round(self.rsi[0]),
-                    round(self.macd.macd[0], 5),
-                    round(self.macd.signal[0], 5),
-                    round(self.macd_diff[0], 7),
-                    self.rsi_buy_alert,
-                    self.rsi_sell_alert,
-                )
-            )
+        # SMA Flag
+        if self.sma < self.data.close:
+            self.sma_buy_alert = True
+            self.sma_sell_alert = False
+        else:
+            self.sma_sell_alert = True
+            self.sma_buy_alert = False
 
+        # RSI Flag
         if self.rsi < self.p.rsi_buy_threshold:
             self.rsi_buy_alert = True
             self.rsi_sell_alert = False
@@ -118,25 +134,128 @@ class SimpleTesting(bt.Strategy):
             self.rsi_sell_alert = True
             self.rsi_buy_alert = False
 
+        # MACD Flag
+        if self.macd.macd > self.macd.signal:
+            self.macd_buy_alert = True
+            self.macd_sell_alert = False
+        else:
+            self.macd_buy_alert = False
+            self.macd_sell_alert = True
+
+        # ADX Flag
+        if self.adx.DIplus > self.adx.DIminus:
+            self.adx_buy_alert = True
+            self.adx_sell_alert = False
+        else:
+            self.adx_buy_alert = False
+            self.adx_sell_alert = True
+
+        # Aroon Flag
+        if self.aroonUpDown.up > self.aroonUpDown.down:
+            self.aroon_buy_alert = True
+            self.aroon_sell_alert = False
+        else:
+            self.aroon_buy_alert = False
+            self.aroon_sell_alert = True
+
+        # BB Flag
+        top_bot_diff = self.bollinger.lines.top - self.bollinger.lines.bot
+        price_bot_diff = self.data.close - self.bollinger.lines.bot
+
+        ratio = price_bot_diff / top_bot_diff
+
+        if ratio > 0.9:
+            self.bb_sell_alert = True
+            self.bb_buy_alert = False
+        if ratio < 0.1:
+            self.bb_sell_alert = False
+            self.bb_buy_alert = True
+        if ratio >= 0.1 and ratio <= 0.9:
+            self.bb_sell_alert = True
+            self.bb_buy_alert = True
+
+        # print Log information
+
+        for data in self.datas:
+            print(
+                "{} - {} | Cash {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
+                    data.datetime.datetime(),
+                    data._name,
+                    cash,
+                    data.close[0],
+                    self.sma[0],
+                    self.rsi[0],
+                    self.macd.macd[0],
+                    self.macd.signal[0],
+                    self.macd_diff[0],
+                    self.adx.DIplus[0] - self.adx.DIminus[0],
+                    self.adx[0],
+                    self.aroonUpDown.down[0],
+                    self.aroonUpDown.up[0],
+                    self.bollinger.lines.top[0],
+                    self.bollinger.lines.bot[0],
+                )
+            )
+            print(
+                "SMA B: {} | SMA S: {} | RSI B: {} | RSI S: {} | MACD B: {} | MACD S: {} | ADX B: {} | ADX S: {} | AROON B: {} | AROON S: {} | BB B: {} | BB S: {}".format(
+                    self.sma_buy_alert,
+                    self.sma_sell_alert,
+                    self.rsi_buy_alert,
+                    self.rsi_sell_alert,
+                    self.macd_buy_alert,
+                    self.macd_sell_alert,
+                    self.adx_buy_alert,
+                    self.adx_sell_alert,
+                    self.aroon_buy_alert,
+                    self.aroon_sell_alert,
+                    self.bb_buy_alert,
+                    self.bb_sell_alert,
+                )
+            )
+
+        # Check for BUY condition
+
         if (
             not self.position
-            and (self.rsi_buy_alert)
-            and (self.data.close[0] > self.sma)
-            and (self.macd.signal < self.macd.macd)
-            and (self.macd_diff > (self.p.macdepsilon / 100000))
+            and [
+                self.sma_buy_alert,
+                self.rsi_buy_alert,
+                self.macd_buy_alert,
+                self.adx_buy_alert,
+                self.aroon_buy_alert,
+                self.bb_buy_alert,
+            ].count(True)
+            > 4
         ):
+            print(
+                "************************** BUY ******************************* Diff: {} Eps: {:f} Gr: {}".format(
+                    self.macd_diff[0], self.p.macdepsilon, self.macd_threshold
+                )
+            )
             self.buy()
-            self.rsi_buy_alert = False
+            self.reset_flags()
+
+        # Check for SELL condition
 
         if (
             self.position
-            and (self.rsi_sell_alert)
-            and (self.data.close[0] < self.sma)
-            and (self.macd.signal < self.macd.macd)
-            and (self.macd_diff > (self.p.macdepsilon / 100000))
+            and [
+                self.sma_sell_alert,
+                self.rsi_sell_alert,
+                self.macd_sell_alert,
+                self.adx_sell_alert,
+                self.aroon_sell_alert,
+                self.bb_sell_alert,
+            ].count(True)
+            > 4
         ):
+            print(
+                "************************** SELL ************** {} {}".format(
+                    self.macd_sell_alert, self.adx_sell_alert
+                )
+            )
             self.sell()
-            self.rsi_sell_alert = False
+            self.reset_flags()
 
     def notify_data(self, data, status, *args, **kwargs):
         dn = data._name
@@ -155,7 +274,7 @@ if __name__ == "__main__":
 
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
     # cerebro.setbroker(broker)
-    cerebro.broker.setcash(100000.0)
+    cerebro.broker.setcash(10000.0)
     cerebro.broker.setcommission(commission=0.005)
     cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
     cerebro.adddata(data)
