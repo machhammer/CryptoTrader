@@ -31,7 +31,7 @@ broker_mapping = {
     "order_types": {
         bt.Order.Market: "market",
         bt.Order.Limit: "limit",
-        bt.Order.Stop: "stop-loss",  # stop-loss for kraken, stop for bitmex
+        bt.Order.Stop: "stop-loss",
         bt.Order.StopLimit: "stop limit",
     },
     "mappings": {
@@ -41,24 +41,6 @@ broker_mapping = {
 }
 
 broker = store.getbroker(broker_mapping=broker_mapping)
-
-""" end_date = dt.datetime.now()
-start_date = end_date - relativedelta(days=60)
-data = data_provider.yFinanceReader().historic_price_data(
-    "sol-usd", start_date, end_date
-)
- """
-hist_start_date = datetime.utcnow() - timedelta(days=120)
-data = store.getdata(
-    dataname="SOL/USD",
-    name="SOLUSD",
-    timeframe=bt.TimeFrame.Minutes,
-    fromdate=hist_start_date,
-    compression=360,
-    ohlcv_limit=1000,
-    drop_newest=True,
-    historical=True,
-)
 
 
 class SimpleTesting(bt.Strategy):
@@ -111,9 +93,23 @@ class SimpleTesting(bt.Strategy):
         self.bb_buy_alert = False
         self.bb_sell_alert = False
 
+        self.buy_confirmation_1 = False
+        self.buy_confirmation_2 = False
+
+        self.sell_confirmation_1 = False
+        self.sell_confirmation_2 = False
+        self.sell_confirmation_3 = False
+
+        self.executed_buy_price = -99
+
     def next(self):
-        if hasattr(self, "live_Data") and self.live_data:
+        if hasattr(self, "live_data") and self.live_data:
             cash, value = self.broker.get_wallet_balance("XRP")
+            usdc_cash, usdc_value = self.broker.get_wallet_balance("USDC")
+            self.log(self.position)
+            self.log(cash)
+            self.log("USDC {}".format(usdc_value))
+
         else:
             cash = "NA"
 
@@ -177,9 +173,9 @@ class SimpleTesting(bt.Strategy):
         # print Log information
 
         for data in self.datas:
-            print(
+            self.log(
                 "{} - {} | Cash {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
-                    data.datetime.datetime(),
+                    data.datetime.datetime().strftime("%H:%M"),
                     data._name,
                     cash,
                     data.close[0],
@@ -196,7 +192,7 @@ class SimpleTesting(bt.Strategy):
                     self.bollinger.lines.bot[0],
                 )
             )
-            print(
+            self.log(
                 "SMA B: {} | SMA S: {} | RSI B: {} | RSI S: {} | MACD B: {} | MACD S: {} | ADX B: {} | ADX S: {} | AROON B: {} | AROON S: {} | BB B: {} | BB S: {}".format(
                     self.sma_buy_alert,
                     self.sma_sell_alert,
@@ -227,35 +223,44 @@ class SimpleTesting(bt.Strategy):
             ].count(True)
             > 4
         ):
-            print(
-                "************************** BUY ******************************* Diff: {} Eps: {:f} Gr: {}".format(
-                    self.macd_diff[0], self.p.macdepsilon, self.macd_threshold
-                )
-            )
-            self.buy()
-            self.reset_flags()
+            if self.buy_confirmation_2:
+                # self.buy()
+                self.reset_flags()
+            else:
+                if self.buy_confirmation_1:
+                    self.buy_confirmation_2 = True
+                else:
+                    self.buy_confirmation_1 = True
 
         # Check for SELL condition
 
         if (
-            self.position
-            and [
-                self.sma_sell_alert,
-                self.rsi_sell_alert,
-                self.macd_sell_alert,
-                self.adx_sell_alert,
-                self.aroon_sell_alert,
-                self.bb_sell_alert,
-            ].count(True)
-            > 4
+            data.close[0] <= self.executed_buy_price * 0.9
+            or data.close[0] > self.executed_buy_price
         ):
-            print(
-                "************************** SELL ************** {} {}".format(
-                    self.macd_sell_alert, self.adx_sell_alert
-                )
-            )
-            self.sell()
-            self.reset_flags()
+            if (
+                self.position
+                and [
+                    self.sma_sell_alert,
+                    self.rsi_sell_alert,
+                    self.macd_sell_alert,
+                    self.adx_sell_alert,
+                    self.aroon_sell_alert,
+                    self.bb_sell_alert,
+                ].count(True)
+                > 4
+            ):
+                if self.sell_confirmation_3:
+                    # self.sell()
+                    self.reset_flags()
+                else:
+                    if self.sell_confirmation_2:
+                        self.sell_confirmation_3 = True
+                    else:
+                        if self.sell_confirmation_1:
+                            self.sell_confirmation_2 = True
+                        else:
+                            self.sell_confirmation_1 = True
 
     def notify_data(self, data, status, *args, **kwargs):
         dn = data._name
@@ -268,17 +273,81 @@ class SimpleTesting(bt.Strategy):
         else:
             self.live_data = False
 
+    def notify_order(self, order):
+        if order.status == order.Completed:  # Check if the order is executed
+            if order.isbuy():  # Check if it was a buy order
+                self.log(
+                    "Executed BUY (Price: %.2f, Value: %.2f, Commission %.2f)"
+                    % (order.executed.price, order.executed.value, order.executed.comm)
+                )
+                self.executed_buy_price = order.executed.price
+                self.log(
+                    "Sell if price lower than {:.2f}".format(
+                        self.executed_buy_price * 0.9
+                    )
+                )
+            else:  # Check if it was a sell order
+                self.log(
+                    "Executed SELL (Price: %.2f, Value: %.2f, Commission %.2f)"
+                    % (order.executed.price, order.executed.value, order.executed.comm)
+                )
+            self.bar_executed = len(
+                self
+            )  # This locks bar_executed to last trade number.
+
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log("Order was canceled/margin/rejected")
+        self.order = None  # Once the order is executed, we don’t have any open order.
+
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
+
+        self.log(
+            "OPERATION PROFIT, GROSS {0:8.2f}, NET {1:8.2f}".format(
+                trade.pnl, trade.pnlcomm
+            )
+        )
+
+    def log(self, txt):
+        dt = self.datas[0].datetime.date(0)
+        print("%s, %s" % (dt.isoformat(), txt))
+
 
 if __name__ == "__main__":
     Opt = False
+    Live = True
+
+    coin = "XRP/USDC"
+
+    historical_data = 74
+
+    if Live:
+        historical_data = 200
+
+    hist_to_date = datetime.utcnow()
+    hist_start_date = hist_to_date - timedelta(minutes=historical_data)
+
+    data = store.getdata(
+        dataname=coin,
+        name=coin,
+        timeframe=bt.TimeFrame.Minutes,
+        fromdate=hist_start_date,
+        compression=1,
+        ohlcv_limit=1000,
+        drop_newest=True,
+        historical=not Live,
+    )
 
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
-    # cerebro.setbroker(broker)
-    cerebro.broker.setcash(10000.0)
-    cerebro.broker.setcommission(commission=0.005)
-    cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name="sharpe_ratio")
+    if Live:
+        cerebro.setbroker(broker)
+    else:
+        cerebro.broker.setcash(50.0)
+        cerebro.broker.setcommission(commission=0.005)
+
     cerebro.adddata(data)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=80)
+    cerebro.addsizer(bt.sizers.PercentSizer, percents=90)
 
     if Opt:
         cerebro.optstrategy(
@@ -326,4 +395,4 @@ if __name__ == "__main__":
     else:
         cerebro.addstrategy(SimpleTesting)
         cerebro.run()
-        cerebro.plot()
+        # cerebro.plot()
