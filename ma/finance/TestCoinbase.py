@@ -4,6 +4,8 @@ from dateutil.relativedelta import relativedelta
 import data_provider.DataReader as data_provider
 import backtrader as bt
 from backtrader import Order
+from backtrader import Position
+
 from ccxtbt import CCXTStore
 import ccxt
 import warnings
@@ -25,7 +27,7 @@ exchange = ccxt.coinbase(
 )
 
 store = CCXTStore(
-    exchange="coinbase", currency="XRP", config=config, retries=5, debug=True
+    exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
 )
 
 broker_mapping = {
@@ -51,7 +53,8 @@ class SimpleTesting(bt.Strategy):
     def next(self):
         self.log("SMA {} - Data {}".format(self.sma[0], self.data.close[0]))
         if self.live_data:
-            self.order = self.sell(exectype=Order.Limit, price=0.8)
+            print("********** Price: ", self.data.close[0])
+            # self.order = self.sell(exectype=Order.Limit, price=0.8)
             self.log("BUY: {}".format(self.order))
 
     def notify_order(self, order):
@@ -125,14 +128,19 @@ if __name__ == "__main__":
         historical=False,
     )
 
-
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
     cerebro.setbroker(broker)
     print("Balance: {}".format(cerebro.broker.get_balance()))
+    print("Value: {}".format(cerebro.broker.getvalue()))
+    print("FundValue: {}".format(cerebro.broker.fundvalue))
+    print("FundShares: {}".format(cerebro.broker.fundshares))
+    print("Starting Vaoue: {}".format(cerebro.broker.startingvalue))
+    print("Position: {}".format(len(cerebro.broker.positions)))
+    print("Cash: {}".format(cerebro.broker.cash))
 
-    print("Shares: ", dir(cerebro.broker.fundshares))
+    print("Shares: ", dir(cerebro.broker))
 
     cerebro.adddata(data)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=90)
     cerebro.addstrategy(SimpleTesting)
-    #cerebro.run()
+    cerebro.run()

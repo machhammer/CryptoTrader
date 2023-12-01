@@ -4,6 +4,8 @@ from dateutil.relativedelta import relativedelta
 import data_provider.DataReader as data_provider
 import backtrader as bt
 from ccxtbt import CCXTStore
+from backtrader import Order
+
 import ccxt
 import warnings
 
@@ -24,7 +26,7 @@ exchange = ccxt.coinbase(
 )
 
 store = CCXTStore(
-    exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
+    exchange="coinbase", currency="BTC", config=config, retries=5, debug=False
 )
 
 broker_mapping = {
@@ -41,6 +43,8 @@ broker_mapping = {
 }
 
 broker = store.getbroker(broker_mapping=broker_mapping)
+
+initial_position = 0
 
 
 class SimpleTesting(bt.Strategy):
@@ -211,20 +215,16 @@ class SimpleTesting(bt.Strategy):
 
         # Check for BUY condition
 
-        if (
-            not self.position
-            and [
-                self.sma_buy_alert,
-                self.rsi_buy_alert,
-                self.macd_buy_alert,
-                self.adx_buy_alert,
-                self.aroon_buy_alert,
-                self.bb_buy_alert,
-            ].count(True)
-            > 4
-        ):
+        if (not self.position or initial_position == 0) and [
+            self.sma_buy_alert,
+            self.rsi_buy_alert,
+            self.macd_buy_alert,
+            self.adx_buy_alert,
+            self.aroon_buy_alert,
+            self.bb_buy_alert,
+        ].count(True) > 4:
             if self.buy_confirmation_2:
-                # self.buy()
+                self.sell(exectype=Order.Limit, price=data.close[0] - 1)
                 self.reset_flags()
             else:
                 if self.buy_confirmation_1:
@@ -238,21 +238,18 @@ class SimpleTesting(bt.Strategy):
             data.close[0] <= self.executed_buy_price * 0.9
             or data.close[0] > self.executed_buy_price
         ):
-            if (
-                self.position
-                and [
-                    self.sma_sell_alert,
-                    self.rsi_sell_alert,
-                    self.macd_sell_alert,
-                    self.adx_sell_alert,
-                    self.aroon_sell_alert,
-                    self.bb_sell_alert,
-                ].count(True)
-                > 4
-            ):
+            if (self.position or initial_position > 0) and [
+                self.sma_sell_alert,
+                self.rsi_sell_alert,
+                self.macd_sell_alert,
+                self.adx_sell_alert,
+                self.aroon_sell_alert,
+                self.bb_sell_alert,
+            ].count(True) > 4:
                 if self.sell_confirmation_3:
-                    # self.sell()
+                    self.sell(exectype=Order.Limit, price=data.close[0] + 1)
                     self.reset_flags()
+                    initial_position = 0
                 else:
                     if self.sell_confirmation_2:
                         self.sell_confirmation_3 = True
@@ -342,6 +339,7 @@ if __name__ == "__main__":
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
     if Live:
         cerebro.setbroker(broker)
+        [initial_position, _] = broker.get_balance()
     else:
         cerebro.broker.setcash(50.0)
         cerebro.broker.setcommission(commission=0.005)
@@ -391,7 +389,6 @@ if __name__ == "__main__":
 
         for line in sort_by_sharpe[:5]:
             print(line)
-
 
     else:
         cerebro.addstrategy(SimpleTesting)
