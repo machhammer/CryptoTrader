@@ -392,6 +392,7 @@ if __name__ == "__main__":
         for line in sort_by_sharpe[:5]:
             print(line)
 
+
     else:
         cerebro.addstrategy(SimpleTesting)
         cerebro.run()

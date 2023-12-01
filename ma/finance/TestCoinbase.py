@@ -25,7 +25,7 @@ exchange = ccxt.coinbase(
 )
 
 store = CCXTStore(
-    exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
+    exchange="coinbase", currency="XRP", config=config, retries=5, debug=True
 )
 
 broker_mapping = {
@@ -51,7 +51,7 @@ class SimpleTesting(bt.Strategy):
     def next(self):
         self.log("SMA {} - Data {}".format(self.sma[0], self.data.close[0]))
         if self.live_data:
-            self.order = self.sell(size=1.0)
+            self.order = self.sell(exectype=Order.Limit, price=0.8)
             self.log("BUY: {}".format(self.order))
 
     def notify_order(self, order):
@@ -125,10 +125,14 @@ if __name__ == "__main__":
         historical=False,
     )
 
+
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
     cerebro.setbroker(broker)
+    print("Balance: {}".format(cerebro.broker.get_balance()))
+
+    print("Shares: ", dir(cerebro.broker.fundshares))
 
     cerebro.adddata(data)
     cerebro.addsizer(bt.sizers.PercentSizer, percents=90)
     cerebro.addstrategy(SimpleTesting)
-    cerebro.run()
+    #cerebro.run()
