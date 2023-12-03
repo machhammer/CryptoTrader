@@ -7,9 +7,6 @@ from ccxtbt import CCXTStore
 from backtrader import Order
 
 import ccxt
-import warnings
-
-# warnings.filterwarnings("ignore")
 
 
 api_key = credentials.provider_1.get("key")
@@ -21,12 +18,12 @@ exchange = ccxt.coinbase(
     {
         "apiKey": api_key,
         "secret": api_secret,
-        # 'verbose': True,  # for debug output
+        #'verbose': True
     }
 )
 
 store = CCXTStore(
-    exchange="coinbase", currency="BTC", config=config, retries=5, debug=False
+    exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
 )
 
 broker_mapping = {
@@ -44,7 +41,6 @@ broker_mapping = {
 
 broker = store.getbroker(broker_mapping=broker_mapping)
 
-initial_position = 0
 
 
 class SimpleTesting(bt.Strategy):
@@ -75,6 +71,15 @@ class SimpleTesting(bt.Strategy):
         self.macd_diff = abs(abs(self.macd.signal) - abs(self.macd.macd))
         self.p.macdepsilon = self.p.macdepsilon / 1000
         self.macd_threshold = self.macd_diff > self.p.macdepsilon
+
+        self.initial_position = 0
+        try: 
+            [self.initial_position, _] = self.broker.get_balance()
+        except:
+            print ("No get Balance()")
+
+
+        print("Initial Position: {}".format(self.initial_position))
 
         self.reset_flags()
 
@@ -108,14 +113,10 @@ class SimpleTesting(bt.Strategy):
 
     def next(self):
         if hasattr(self, "live_data") and self.live_data:
-            cash, value = self.broker.get_wallet_balance("XRP")
-            usdc_cash, usdc_value = self.broker.get_wallet_balance("USDC")
-            self.log(self.position)
-            self.log(cash)
-            self.log("USDC {}".format(usdc_value))
-
+            cash = self.broker.get_balance()
         else:
             cash = "NA"
+
 
         # SMA Flag
         if self.sma < self.data.close:
@@ -174,6 +175,24 @@ class SimpleTesting(bt.Strategy):
             self.bb_sell_alert = True
             self.bb_buy_alert = True
 
+        BUY_ALERT = [
+            self.sma_buy_alert,
+            self.rsi_buy_alert,
+            self.macd_buy_alert,
+            self.adx_buy_alert,
+            self.aroon_buy_alert,
+            self.bb_buy_alert,
+        ].count(True) > 4
+
+        SELL_ALERT = [
+            self.sma_sell_alert,
+            self.rsi_sell_alert,
+            self.macd_sell_alert,
+            self.adx_sell_alert,
+            self.aroon_sell_alert,
+            self.bb_sell_alert,
+        ].count(True) > 4
+
         # print Log information
 
         for data in self.datas:
@@ -197,7 +216,9 @@ class SimpleTesting(bt.Strategy):
                 )
             )
             self.log(
-                "SMA B: {} | SMA S: {} | RSI B: {} | RSI S: {} | MACD B: {} | MACD S: {} | ADX B: {} | ADX S: {} | AROON B: {} | AROON S: {} | BB B: {} | BB S: {}".format(
+                "{} - {} | SMA B: {} | SMA S: {} | RSI B: {} | RSI S: {} | MACD B: {} | MACD S: {} | ADX B: {} | ADX S: {} | AROON B: {} | AROON S: {} | BB B: {} | BB S: {} | BUY Alert: {} | SELL Alert: {}".format(
+                    data.datetime.datetime().strftime("%H:%M"),
+                    data._name,
                     self.sma_buy_alert,
                     self.sma_sell_alert,
                     self.rsi_buy_alert,
@@ -210,21 +231,17 @@ class SimpleTesting(bt.Strategy):
                     self.aroon_sell_alert,
                     self.bb_buy_alert,
                     self.bb_sell_alert,
+                    BUY_ALERT,
+                    SELL_ALERT
                 )
+            
             )
 
         # Check for BUY condition
 
-        if (not self.position or initial_position == 0) and [
-            self.sma_buy_alert,
-            self.rsi_buy_alert,
-            self.macd_buy_alert,
-            self.adx_buy_alert,
-            self.aroon_buy_alert,
-            self.bb_buy_alert,
-        ].count(True) > 4:
+        if (not self.position or self.initial_position == 0) and BUY_ALERT:
             if self.buy_confirmation_2:
-                self.sell(exectype=Order.Limit, price=data.close[0] - 1)
+                self.buy(size=broker.get_balance(), exectype=Order.Limit, price=data.close[0])
                 self.reset_flags()
             else:
                 if self.buy_confirmation_1:
@@ -238,18 +255,11 @@ class SimpleTesting(bt.Strategy):
             data.close[0] <= self.executed_buy_price * 0.9
             or data.close[0] > self.executed_buy_price
         ):
-            if (self.position or initial_position > 0) and [
-                self.sma_sell_alert,
-                self.rsi_sell_alert,
-                self.macd_sell_alert,
-                self.adx_sell_alert,
-                self.aroon_sell_alert,
-                self.bb_sell_alert,
-            ].count(True) > 4:
+            if (self.position or self.initial_position > 0) and SELL_ALERT:
                 if self.sell_confirmation_3:
-                    self.sell(exectype=Order.Limit, price=data.close[0] + 1)
+                    self.sell(size=broker.get_balance(), exectype=Order.Limit, price=data.close[0])
                     self.reset_flags()
-                    initial_position = 0
+
                 else:
                     if self.sell_confirmation_2:
                         self.sell_confirmation_3 = True
@@ -262,7 +272,6 @@ class SimpleTesting(bt.Strategy):
     def notify_data(self, data, status, *args, **kwargs):
         dn = data._name
         dt = datetime.now()
-        print(status)
         msg = "Data Status: {}".format(data._getstatusname(status))
         print(dt, dn, msg)
         if data._getstatusname(status) == "LIVE":
@@ -271,8 +280,8 @@ class SimpleTesting(bt.Strategy):
             self.live_data = False
 
     def notify_order(self, order):
-        if order.status == order.Completed:  # Check if the order is executed
-            if order.isbuy():  # Check if it was a buy order
+        if order.status == order.Completed:
+            if order.isbuy():
                 self.log(
                     "Executed BUY (Price: %.2f, Value: %.2f, Commission %.2f)"
                     % (order.executed.price, order.executed.value, order.executed.comm)
@@ -283,18 +292,17 @@ class SimpleTesting(bt.Strategy):
                         self.executed_buy_price * 0.9
                     )
                 )
-            else:  # Check if it was a sell order
+            else:
                 self.log(
                     "Executed SELL (Price: %.2f, Value: %.2f, Commission %.2f)"
                     % (order.executed.price, order.executed.value, order.executed.comm)
                 )
             self.bar_executed = len(
                 self
-            )  # This locks bar_executed to last trade number.
-
+            )
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log("Order was canceled/margin/rejected")
-        self.order = None  # Once the order is executed, we don’t have any open order.
+        self.order = None
 
     def notify_trade(self, trade):
         if not trade.isclosed:
@@ -317,35 +325,32 @@ if __name__ == "__main__":
 
     coin = "XRP/USDC"
 
-    historical_data = 74
-
-    if Live:
-        historical_data = 200
-
+    historical_data = 60
+    
     hist_to_date = datetime.utcnow()
-    hist_start_date = hist_to_date - timedelta(minutes=historical_data)
+    hist_start_date = hist_to_date - timedelta(hours=historical_data)
 
     data = store.getdata(
         dataname=coin,
         name=coin,
         timeframe=bt.TimeFrame.Minutes,
         fromdate=hist_start_date,
-        compression=1,
+        compression=360,
         ohlcv_limit=1000,
         drop_newest=True,
         historical=not Live,
     )
 
+    
+
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
     if Live:
         cerebro.setbroker(broker)
-        [initial_position, _] = broker.get_balance()
     else:
         cerebro.broker.setcash(50.0)
         cerebro.broker.setcommission(commission=0.005)
 
     cerebro.adddata(data)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=90)
 
     if Opt:
         cerebro.optstrategy(
@@ -393,4 +398,4 @@ if __name__ == "__main__":
     else:
         cerebro.addstrategy(SimpleTesting)
         cerebro.run()
-        # cerebro.plot()
+        #cerebro.plot()
