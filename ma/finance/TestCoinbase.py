@@ -12,7 +12,7 @@ import warnings
 
 # warnings.filterwarnings("ignore")
 
-coin = "VARA"
+coin = "XLM"
 
 coins = {
     "XRP": "XRP/USDC",
@@ -38,7 +38,7 @@ exchange = ccxt.coinbase(
 )
 
 store = CCXTStore(
-    exchange="coinbase", currency=coin, config=config, retries=5, debug=False
+    exchange="coinbase", currency=coin, config=config, retries=1, debug=False
 )
 
 broker_mapping = {
@@ -60,12 +60,52 @@ broker = store.getbroker(broker_mapping=broker_mapping)
 class SimpleTesting(bt.Strategy):
     def __init__(self):
         self.sma = bt.indicators.SimpleMovingAverage(period=15)
+        self.mode = "Sell"
 
     def next(self):
         if self.live_data:
-            current_balance = exchange.fetch_balance()["USDC"]["free"]
-            size_position = current_balance / data.close[0]
-            self.buy(size=size_position, exectype=Order.Limit, price=data.close[0])
+            print(self.mode)
+            if self.mode == "Sell":
+                try:
+                    current_balance = self.broker.get_balance()[0]
+                    print(current_balance)
+                    size_position = current_balance
+
+                    self.sell(
+                        size=size_position,
+                        exectype=Order.Market,
+                        price=data.close[0],
+                    )
+
+                    self.log(
+                        "*** Execute SELL - Size: {}, Price: {} ".format(
+                            size_position, data.close[0]
+                        )
+                    )
+
+                except Exception as e:
+                    print(e)
+
+            if self.mode == "Buy" and not self.position:
+                try:
+                    current_balance = exchange.fetch_balance()["USDC"]["free"] - 1
+                    size_position = current_balance / data.close[0]
+                    self.log(
+                        "*** Size Position = {} / {} = {} ".format(
+                            current_balance, data.close[0], size_position
+                        )
+                    )
+                    self.log(
+                        "*** Execute BUY - Size: {}, Price: {} ".format(
+                            size_position, data.close[0]
+                        )
+                    )
+                    self.buy(
+                        size=size_position, exectype=Order.Market, price=data.close[0]
+                    )
+
+                except Exception as e:
+                    print(e)
 
     def notify_order(self, order):
         if order.status == order.Completed:  # Check if the order is executed

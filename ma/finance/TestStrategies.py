@@ -8,10 +8,9 @@ from backtrader import Order
 
 import ccxt
 
-Opt = False
 Live = True
 
-coin = "VARA"
+coin = "XLM"
 
 coins = {
     "XRP": "XRP/USDC",
@@ -87,9 +86,11 @@ class SimpleTesting(bt.Strategy):
         self.p.macdepsilon = self.p.macdepsilon / 1000
         self.macd_threshold = self.macd_diff > self.p.macdepsilon
 
+        self.original_initial_position = 0
         self.initial_position = 0
         try:
-            [self.initial_position, _] = self.broker.get_balance()
+            [self.original_initial_position, _] = self.broker.get_balance()
+            self.initial_position = self.original_initial_position
         except:
             pass
 
@@ -125,12 +126,20 @@ class SimpleTesting(bt.Strategy):
 
         self.executed_buy_price = -99
         self.highest_price = -99
+        self.lowest_price = 99999999
 
     def next(self):
         size_position = 10
 
+        if self.initial_position > 0:
+            if self.original_initial_position * self.data.close[0] < 1:
+                self.initial_position = 0
+                self.log("Initial Position set to 0 due to low value")
+
         if self.data.close[0] > self.highest_price:
             self.highest_price = self.data.close[0]
+        if self.data.close[0] < self.lowest_price:
+            self.lowest_price = self.data.close[0]
 
         # SMA Flag
         if self.sma < self.data.close:
@@ -211,10 +220,11 @@ class SimpleTesting(bt.Strategy):
 
         for data in self.datas:
             self.log(
-                "{} - {} | Cash {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
+                "{} - {} | High {} | Low {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
                     data.datetime.datetime().strftime("%H:%M"),
                     data._name,
                     self.highest_price,
+                    self.lowest_price,
                     data.close[0],
                     self.sma[0],
                     self.rsi[0],
@@ -256,10 +266,10 @@ class SimpleTesting(bt.Strategy):
             # Check for BUY condition
             if BUY_ALERT:
                 self.log("*** BUY ALERT set")
-                if self.initial_position == 0 or self.position.size == 0.0:
+                if self.initial_position == 0 and self.position.size == 0.0:
                     self.log(
                         "*** Initial Position: {} has Position: {} ".format(
-                            self.initial_position, not not self.position
+                            self.initial_position, self.position.size
                         )
                     )
                     if self.buy_confirmation_2:
@@ -271,20 +281,29 @@ class SimpleTesting(bt.Strategy):
                                     current_balance, data.close[0], size_position
                                 )
                             )
+                            self.log(
+                                "*** Execute BUY - Size: {}, Price: {} ".format(
+                                    size_position, data.close[0]
+                                )
+                            )
+                            if Live:
+                                order = exchange.create_order(
+                                    coins[coin],
+                                    Order.Market,
+                                    "buy",
+                                    size_position,
+                                    data.close[0],
+                                )
+                                print(order)
+                                self.executed_buy_price = data.close[0]
+                            else:
+                                print("*** BUY OFFLINE")
+                                self.order = self.buy(size=10)
+                            self.initial_position = -99
+                            self.reset_flags()
                         except Exception as e:
                             print(e)
-                        self.log(
-                            "*** Execute BUY - Size: {}, Price: {} ".format(
-                                size_position, data.close[0]
-                            )
-                        )
-                        self.buy(
-                            size=size_position,
-                            exectype=Order.Limit,
-                            price=data.close[0],
-                        )
-                        self.initial_position = -99
-                        self.reset_flags()
+
                     else:
                         if self.buy_confirmation_1:
                             self.log("*** Set BUY confirmation 2")
@@ -296,7 +315,7 @@ class SimpleTesting(bt.Strategy):
                     self.log("*** BUY Aborted: Position exists already!")
                     self.log(
                         "*** Initial Position: {} has Position: {} ".format(
-                            self.initial_position, self.position
+                            self.initial_position, self.position.size
                         )
                     )
             else:
@@ -305,9 +324,7 @@ class SimpleTesting(bt.Strategy):
             # Check for SELL condition
 
             # Urgency SELL
-            if data.close[0] <= self.executed_buy_price * (
-                1 - self.p.sell_threshold / 100
-            ):
+            if data.close[0] <= data.close[-1] * (1 - self.p.sell_threshold / 100):
                 self.log("*** URGENCY SELL")
                 self.log(
                     "*** Current Price ({}) is {}% lower than Executed Buy Price ({})".format(
@@ -323,8 +340,10 @@ class SimpleTesting(bt.Strategy):
                 self.log("*** SELL ALERT set")
                 if self.position.size > 0.0 or self.initial_position > 0:
                     if self.executed_buy_price == -99:
-                        self.executed_buy_price = data.close[-1]
-                    if data.close[0] > self.executed_buy_price:
+                        self.executed_buy_price = self.lowest_price
+                    if self.data.close[0] > self.executed_buy_price or self.data.close[
+                        0
+                    ] <= self.highest_price * (1 - self.p.sell_threshold / 100):
                         if self.sell_confirmation_2:
                             self.execute_sell_position(size_position)
                         else:
@@ -334,6 +353,15 @@ class SimpleTesting(bt.Strategy):
                             else:
                                 self.log("*** Set SELL confirmation 1")
                                 self.sell_confirmation_1 = True
+                    else:
+                        self.log(
+                            "*** SELL price not in right range. Price {}, Executed {}, highest_price {}, highest 85% {} ".format(
+                                self.data.close[0],
+                                self.executed_buy_price,
+                                self.highest_price,
+                                self.highest_price * (1 - self.p.sell_threshold / 100),
+                            )
+                        )
                 else:
                     self.log("*** SELL Aborted: No Position")
                     self.log(
@@ -360,8 +388,7 @@ class SimpleTesting(bt.Strategy):
 
     def execute_sell_position(self, size_position):
         try:
-            current_balance = self.broker.get_balance()[0]
-            size_position = current_balance / self.data.close[0]
+            size_position = self.broker.get_balance()[0]
         except Exception as e:
             print(e)
         self.log(
@@ -369,11 +396,16 @@ class SimpleTesting(bt.Strategy):
                 size_position, data.close[0]
             )
         )
-        self.sell(
-            size=self.position.size,
-            exectype=Order.Limit,
-            price=data.close[0],
-        )
+        if Live:
+            order = exchange.create_order(
+                coins[coin], Order.Market, "sell", size_position, data.close[0]
+            )
+            print(order)
+        else:
+            print("*** SELL OFFLINE")
+            self.order = self.sell()
+        self.executed_buy_price = -99
+        self.initial_position = 0
         self.reset_flags()
 
     def notify_data(self, data, status, *args, **kwargs):
@@ -437,7 +469,7 @@ if __name__ == "__main__":
         historical=not Live,
     )
 
-    cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
+    cerebro = bt.Cerebro()
     if Live:
         broker = store.getbroker(broker_mapping=broker_mapping)
         cerebro.setbroker(broker)
@@ -447,50 +479,6 @@ if __name__ == "__main__":
 
     cerebro.adddata(data)
 
-    if Opt:
-        cerebro.optstrategy(
-            SimpleTesting,
-            smaperiod=[10],
-            rsiperiod=[14],
-            macdperiod1=[12],
-            macdperiod2=[26],
-            macdsignal=[9],
-            macdepsilon=range(5, 10),
-            rsi_sell_threshold=range(65, 80),
-            rsi_buy_threshold=range(28, 35),
-        )
-
-        optimized_runs = cerebro.run()
-
-        final_results_list = []
-
-        for run in optimized_runs:
-            for strategy in run:
-                PnL = round(strategy.broker.get_value(), 2)
-                sharpe = strategy.analyzers.sharpe_ratio.get_analysis()
-                final_results_list.append(
-                    [
-                        strategy.params.smaperiod,
-                        strategy.params.rsiperiod,
-                        strategy.params.macdperiod1,
-                        strategy.params.macdperiod2,
-                        strategy.params.macdsignal,
-                        strategy.params.macdepsilon,
-                        strategy.params.rsi_buy_threshold,
-                        strategy.params.rsi_sell_threshold,
-                        sharpe,
-                        PnL,
-                    ]
-                )
-
-            sort_by_sharpe = sorted(
-                final_results_list, key=lambda x: x[3], reverse=True
-            )
-
-        for line in sort_by_sharpe[:5]:
-            print(line)
-
-    else:
-        cerebro.addstrategy(SimpleTesting)
-        cerebro.run()
-        cerebro.plot()
+    cerebro.addstrategy(SimpleTesting)
+    cerebro.run()
+    cerebro.plot()
