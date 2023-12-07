@@ -124,9 +124,13 @@ class SimpleTesting(bt.Strategy):
         self.sell_confirmation_3 = False
 
         self.executed_buy_price = -99
+        self.highest_price = -99
 
     def next(self):
         size_position = 10
+
+        if self.data.close[0] > self.highest_price:
+            self.highest_price = self.data.close[0]
 
         # SMA Flag
         if self.sma < self.data.close:
@@ -210,7 +214,7 @@ class SimpleTesting(bt.Strategy):
                 "{} - {} | Cash {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
                     data.datetime.datetime().strftime("%H:%M"),
                     data._name,
-                    size_position,
+                    self.highest_price,
                     data.close[0],
                     self.sma[0],
                     self.rsi[0],
