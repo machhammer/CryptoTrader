@@ -12,6 +12,17 @@ import warnings
 
 # warnings.filterwarnings("ignore")
 
+coin = "VARA"
+
+coins = {
+    "XRP": "XRP/USDC",
+    "SOL": "SOL/USDC",
+    "ETH": "ETC/USDC",
+    "BTC": "BTC/USDC",
+    "XLM": "XLM/USDC",
+    "VARA": "VARA/USDC",
+    "SHIB": "SHIB/USDC",
+}
 
 api_key = credentials.provider_1.get("key")
 api_secret = credentials.provider_1.get("secret")
@@ -27,7 +38,7 @@ exchange = ccxt.coinbase(
 )
 
 store = CCXTStore(
-    exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
+    exchange="coinbase", currency=coin, config=config, retries=5, debug=False
 )
 
 broker_mapping = {
@@ -51,11 +62,10 @@ class SimpleTesting(bt.Strategy):
         self.sma = bt.indicators.SimpleMovingAverage(period=15)
 
     def next(self):
-        self.log("SMA {} - Data {}".format(self.sma[0], self.data.close[0]))
         if self.live_data:
-            print("********** Price: ", self.data.close[0])
-            # self.order = self.sell(exectype=Order.Limit, price=0.8)
-            self.log("BUY: {}".format(self.order))
+            current_balance = exchange.fetch_balance()["USDC"]["free"]
+            size_position = current_balance / data.close[0]
+            self.buy(size=size_position, exectype=Order.Limit, price=data.close[0])
 
     def notify_order(self, order):
         if order.status == order.Completed:  # Check if the order is executed
@@ -64,21 +74,11 @@ class SimpleTesting(bt.Strategy):
                     "Executed BUY (Price: %.2f, Value: %.2f, Commission %.2f)"
                     % (order.executed.price, order.executed.value, order.executed.comm)
                 )
-                self.executed_buy_price = order.executed.price
-                self.log(
-                    "Sell if price lower than {:.2f}".format(
-                        self.executed_buy_price * 0.9
-                    )
-                )
             else:  # Check if it was a sell order
                 self.log(
                     "Executed SELL (Price: %.2f, Value: %.2f, Commission %.2f)"
                     % (order.executed.price, order.executed.value, order.executed.comm)
                 )
-            self.bar_executed = len(
-                self
-            )  # This locks bar_executed to last trade number.
-
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log("Order was canceled/margin/rejected")
         self.order = None  # Once the order is executed, we don’t have any open order.
@@ -110,16 +110,14 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-    coin = "XRP/USDC"
-
-    historical_data = 200
+    historical_data = 0.2
 
     hist_to_date = datetime.utcnow()
-    hist_start_date = hist_to_date - timedelta(minutes=historical_data)
+    hist_start_date = hist_to_date - timedelta(minutes=historical_data * 1440)
 
     data = store.getdata(
-        dataname=coin,
-        name=coin,
+        dataname=coins[coin],
+        name=coins[coin],
         timeframe=bt.TimeFrame.Minutes,
         fromdate=hist_start_date,
         compression=1,
@@ -129,18 +127,11 @@ if __name__ == "__main__":
     )
 
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
+    broker = store.getbroker(broker_mapping=broker_mapping)
     cerebro.setbroker(broker)
-    print("Balance: {}".format(cerebro.broker.get_balance()))
-    print("Value: {}".format(cerebro.broker.getvalue()))
-    print("FundValue: {}".format(cerebro.broker.fundvalue))
-    print("FundShares: {}".format(cerebro.broker.fundshares))
-    print("Starting Vaoue: {}".format(cerebro.broker.startingvalue))
-    print("Position: {}".format(len(cerebro.broker.positions)))
-    print("Cash: {}".format(cerebro.broker.cash))
-
-    print("Shares: ", dir(cerebro.broker))
 
     cerebro.adddata(data)
-    cerebro.addsizer(bt.sizers.PercentSizer, percents=90)
+
     cerebro.addstrategy(SimpleTesting)
     cerebro.run()
+    cerebro.plot()

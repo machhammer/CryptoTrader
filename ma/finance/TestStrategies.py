@@ -8,6 +8,21 @@ from backtrader import Order
 
 import ccxt
 
+Opt = False
+Live = True
+
+coin = "VARA"
+
+coins = {
+    "XRP": "XRP/USDC",
+    "SOL": "SOL/USDC",
+    "ETH": "ETC/USDC",
+    "BTC": "BTC/USDC",
+    "XLM": "XLM/USDC",
+    "VARA": "VARA/USDC",
+    "SHIB": "SHIB/USDC",
+}
+
 
 api_key = credentials.provider_1.get("key")
 api_secret = credentials.provider_1.get("secret")
@@ -23,8 +38,9 @@ exchange = ccxt.coinbase(
 )
 
 store = CCXTStore(
-    exchange="coinbase", currency="XRP", config=config, retries=5, debug=False
+    exchange="coinbase", currency=coin, config=config, retries=5, debug=False
 )
+
 
 broker_mapping = {
     "order_types": {
@@ -39,9 +55,6 @@ broker_mapping = {
     },
 }
 
-broker = store.getbroker(broker_mapping=broker_mapping)
-
-
 
 class SimpleTesting(bt.Strategy):
     params = (
@@ -53,6 +66,8 @@ class SimpleTesting(bt.Strategy):
         ("macdepsilon", 8),
         ("rsi_sell_threshold", 73),
         ("rsi_buy_threshold", 33),
+        ("coin", [coin, coins[coin]]),
+        ("sell_threshold", 15),
     )
 
     def __init__(self):
@@ -73,11 +88,10 @@ class SimpleTesting(bt.Strategy):
         self.macd_threshold = self.macd_diff > self.p.macdepsilon
 
         self.initial_position = 0
-        try: 
+        try:
             [self.initial_position, _] = self.broker.get_balance()
         except:
-            print ("No get Balance()")
-
+            pass
 
         print("Initial Position: {}".format(self.initial_position))
 
@@ -112,11 +126,7 @@ class SimpleTesting(bt.Strategy):
         self.executed_buy_price = -99
 
     def next(self):
-        if hasattr(self, "live_data") and self.live_data:
-            cash = self.broker.get_balance()
-        else:
-            cash = "NA"
-
+        size_position = 10
 
         # SMA Flag
         if self.sma < self.data.close:
@@ -200,7 +210,7 @@ class SimpleTesting(bt.Strategy):
                 "{} - {} | Cash {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
                     data.datetime.datetime().strftime("%H:%M"),
                     data._name,
-                    cash,
+                    size_position,
                     data.close[0],
                     self.sma[0],
                     self.rsi[0],
@@ -232,42 +242,135 @@ class SimpleTesting(bt.Strategy):
                     self.bb_buy_alert,
                     self.bb_sell_alert,
                     BUY_ALERT,
-                    SELL_ALERT
+                    SELL_ALERT,
                 )
-            
             )
 
-        # Check for BUY condition
+        # BUY/SELL -> only in test mode, or with live data
 
-        if (not self.position or self.initial_position == 0) and BUY_ALERT:
-            if self.buy_confirmation_2:
-                self.buy(size=broker.get_balance(), exectype=Order.Limit, price=data.close[0])
-                self.reset_flags()
-            else:
-                if self.buy_confirmation_1:
-                    self.buy_confirmation_2 = True
-                else:
-                    self.buy_confirmation_1 = True
-
-        # Check for SELL condition
-
-        if (
-            data.close[0] <= self.executed_buy_price * 0.9
-            or data.close[0] > self.executed_buy_price
-        ):
-            if (self.position or self.initial_position > 0) and SELL_ALERT:
-                if self.sell_confirmation_3:
-                    self.sell(size=broker.get_balance(), exectype=Order.Limit, price=data.close[0])
-                    self.reset_flags()
-
-                else:
-                    if self.sell_confirmation_2:
-                        self.sell_confirmation_3 = True
+        if not Live or (Live and self.live_data):
+            # Check for BUY condition
+            if BUY_ALERT:
+                self.log("*** BUY ALERT set")
+                if self.initial_position == 0 or self.position.size == 0.0:
+                    self.log(
+                        "*** Initial Position: {} has Position: {} ".format(
+                            self.initial_position, not not self.position
+                        )
+                    )
+                    if self.buy_confirmation_2:
+                        try:
+                            current_balance = exchange.fetch_balance()["USDC"]["free"]
+                            size_position = current_balance / data.close[0]
+                            self.log(
+                                "*** Size Position = {} / {} = {} ".format(
+                                    current_balance, data.close[0], size_position
+                                )
+                            )
+                        except Exception as e:
+                            print(e)
+                        self.log(
+                            "*** Execute BUY - Size: {}, Price: {} ".format(
+                                size_position, data.close[0]
+                            )
+                        )
+                        self.buy(
+                            size=size_position,
+                            exectype=Order.Limit,
+                            price=data.close[0],
+                        )
+                        self.initial_position = -99
+                        self.reset_flags()
                     else:
-                        if self.sell_confirmation_1:
-                            self.sell_confirmation_2 = True
+                        if self.buy_confirmation_1:
+                            self.log("*** Set BUY confirmation 2")
+                            self.buy_confirmation_2 = True
                         else:
-                            self.sell_confirmation_1 = True
+                            self.log("*** Set BUY confirmation 1")
+                            self.buy_confirmation_1 = True
+                else:
+                    self.log("*** BUY Aborted: Position exists already!")
+                    self.log(
+                        "*** Initial Position: {} has Position: {} ".format(
+                            self.initial_position, self.position
+                        )
+                    )
+            else:
+                self.reset_buy_confirmations()
+
+            # Check for SELL condition
+
+            # Urgency SELL
+            if data.close[0] <= self.executed_buy_price * (
+                1 - self.p.sell_threshold / 100
+            ):
+                self.log("*** URGENCY SELL")
+                self.log(
+                    "*** Current Price ({}) is {}% lower than Executed Buy Price ({})".format(
+                        data.close[0],
+                        self.p.sell_threshold,
+                        self.executed_buy_price,
+                    )
+                )
+                self.execute_sell_position(size_position)
+
+            # Regular SELL
+            if SELL_ALERT:
+                self.log("*** SELL ALERT set")
+                if self.position.size > 0.0 or self.initial_position > 0:
+                    if self.executed_buy_price == -99:
+                        self.executed_buy_price = data.close[-1]
+                    if data.close[0] > self.executed_buy_price:
+                        if self.sell_confirmation_2:
+                            self.execute_sell_position(size_position)
+                        else:
+                            if self.sell_confirmation_1:
+                                self.log("*** Set SELL confirmation 2")
+                                self.sell_confirmation_2 = True
+                            else:
+                                self.log("*** Set SELL confirmation 1")
+                                self.sell_confirmation_1 = True
+                else:
+                    self.log("*** SELL Aborted: No Position")
+                    self.log(
+                        "*** Initial Position: {} has Position: {} ".format(
+                            self.initial_position, self.position
+                        )
+                    )
+            else:
+                self.reset_sell_confirmations()
+
+    def reset_buy_confirmations(self):
+        if self.buy_confirmation_1 or self.buy_confirmation_2:
+            self.log("*** BUY aborted")
+            self.log("*** Reset BUY confirmations")
+            self.buy_confirmation_1 = False
+            self.buy_confirmation_2 = False
+
+    def reset_sell_confirmations(self):
+        if self.sell_confirmation_1 or self.sell_confirmation_2:
+            self.log("*** SELL aborted")
+            self.log("*** Reset SELL confirmations")
+            self.sell_confirmation_1 = False
+            self.sell_confirmation_2 = False
+
+    def execute_sell_position(self, size_position):
+        try:
+            current_balance = self.broker.get_balance()[0]
+            size_position = current_balance / self.data.close[0]
+        except Exception as e:
+            print(e)
+        self.log(
+            "*** Execute SELL - Size: {}, Price: {} ".format(
+                size_position, data.close[0]
+            )
+        )
+        self.sell(
+            size=self.position.size,
+            exectype=Order.Limit,
+            price=data.close[0],
+        )
+        self.reset_flags()
 
     def notify_data(self, data, status, *args, **kwargs):
         dn = data._name
@@ -283,23 +386,16 @@ class SimpleTesting(bt.Strategy):
         if order.status == order.Completed:
             if order.isbuy():
                 self.log(
-                    "Executed BUY (Price: %.2f, Value: %.2f, Commission %.2f)"
+                    "*** Executed BUY (Price: %.2f, Value: %.2f, Commission %.2f)"
                     % (order.executed.price, order.executed.value, order.executed.comm)
                 )
                 self.executed_buy_price = order.executed.price
-                self.log(
-                    "Sell if price lower than {:.2f}".format(
-                        self.executed_buy_price * 0.9
-                    )
-                )
             else:
                 self.log(
-                    "Executed SELL (Price: %.2f, Value: %.2f, Commission %.2f)"
+                    "*** Executed SELL (Price: %.2f, Value: %.2f, Commission %.2f)"
                     % (order.executed.price, order.executed.value, order.executed.comm)
                 )
-            self.bar_executed = len(
-                self
-            )
+            self.bar_executed = len(self)
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
             self.log("Order was canceled/margin/rejected")
         self.order = None
@@ -320,34 +416,29 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-    Opt = False
-    Live = True
+    # historical_data = 70
+    historical_data = 0.2
 
-    coin = "XRP/USDC"
-
-    historical_data = 60
-    
     hist_to_date = datetime.utcnow()
-    hist_start_date = hist_to_date - timedelta(hours=historical_data)
+    hist_start_date = hist_to_date - timedelta(minutes=historical_data * 1440)
 
     data = store.getdata(
-        dataname=coin,
-        name=coin,
+        dataname=coins[coin],
+        name=coins[coin],
         timeframe=bt.TimeFrame.Minutes,
         fromdate=hist_start_date,
-        compression=360,
+        compression=1,
         ohlcv_limit=1000,
         drop_newest=True,
         historical=not Live,
     )
 
-    
-
     cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
     if Live:
+        broker = store.getbroker(broker_mapping=broker_mapping)
         cerebro.setbroker(broker)
     else:
-        cerebro.broker.setcash(50.0)
+        cerebro.broker.setcash(10000)
         cerebro.broker.setcommission(commission=0.005)
 
     cerebro.adddata(data)
@@ -398,4 +489,4 @@ if __name__ == "__main__":
     else:
         cerebro.addstrategy(SimpleTesting)
         cerebro.run()
-        #cerebro.plot()
+        cerebro.plot()
