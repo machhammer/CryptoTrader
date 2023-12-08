@@ -8,9 +8,9 @@ from backtrader import Order
 
 import ccxt
 
-Live = True
+Live = False
 
-coin = "XLM"
+coin = "XRP"
 
 coins = {
     "XRP": "XRP/USDC",
@@ -86,15 +86,15 @@ class SimpleTesting(bt.Strategy):
         self.p.macdepsilon = self.p.macdepsilon / 1000
         self.macd_threshold = self.macd_diff > self.p.macdepsilon
 
-        self.original_initial_position = 0
         self.initial_position = 0
         try:
-            [self.original_initial_position, _] = self.broker.get_balance()
-            self.initial_position = self.original_initial_position
+            [self.initial_position, _] = self.broker.get_balance()
         except:
             pass
 
-        print("Initial Position: {}".format(self.initial_position))
+        self.log("Initial Position: {}".format(self.initial_position))
+
+        self.size_position = 10
 
         self.reset_flags()
 
@@ -129,10 +129,8 @@ class SimpleTesting(bt.Strategy):
         self.lowest_price = 99999999
 
     def next(self):
-        size_position = 10
-
         if self.initial_position > 0:
-            if self.original_initial_position * self.data.close[0] < 1:
+            if self.initial_position * self.data.close[0] < 1:
                 self.initial_position = 0
                 self.log("Initial Position set to 0 due to low value")
 
@@ -274,32 +272,36 @@ class SimpleTesting(bt.Strategy):
                     )
                     if self.buy_confirmation_2:
                         try:
-                            current_balance = exchange.fetch_balance()["USDC"]["free"]
-                            size_position = current_balance / data.close[0]
-                            self.log(
-                                "*** Size Position = {} / {} = {} ".format(
-                                    current_balance, data.close[0], size_position
-                                )
-                            )
-                            self.log(
-                                "*** Execute BUY - Size: {}, Price: {} ".format(
-                                    size_position, data.close[0]
-                                )
-                            )
                             if Live:
+                                current_balance = exchange.fetch_balance()["USDC"][
+                                    "free"
+                                ]
+                                self.size_position = current_balance / data.close[0]
+                                self.log(
+                                    "*** Size Position = {} / {} = {} ".format(
+                                        current_balance,
+                                        data.close[0],
+                                        self.size_position,
+                                    )
+                                )
+                                self.log(
+                                    "*** Execute BUY - Size: {}, Price: {} ".format(
+                                        self.size_position, data.close[0]
+                                    )
+                                )
                                 order = exchange.create_order(
                                     coins[coin],
                                     Order.Market,
                                     "buy",
-                                    size_position,
+                                    self.size_position,
                                     data.close[0],
                                 )
                                 print(order)
                                 self.executed_buy_price = data.close[0]
                             else:
                                 print("*** BUY OFFLINE")
-                                self.order = self.buy(size=10)
-                            self.initial_position = -99
+                                self.buy()
+                            self.initial_position = 0
                             self.reset_flags()
                         except Exception as e:
                             print(e)
@@ -345,7 +347,7 @@ class SimpleTesting(bt.Strategy):
                         0
                     ] <= self.highest_price * (1 - self.p.sell_threshold / 100):
                         if self.sell_confirmation_2:
-                            self.execute_sell_position(size_position)
+                            self.execute_sell_position()
                         else:
                             if self.sell_confirmation_1:
                                 self.log("*** Set SELL confirmation 2")
@@ -386,19 +388,19 @@ class SimpleTesting(bt.Strategy):
             self.sell_confirmation_1 = False
             self.sell_confirmation_2 = False
 
-    def execute_sell_position(self, size_position):
+    def execute_sell_position(self):
         try:
-            size_position = self.broker.get_balance()[0]
+            self.size_position = self.broker.get_balance()[0]
         except Exception as e:
             print(e)
         self.log(
             "*** Execute SELL - Size: {}, Price: {} ".format(
-                size_position, data.close[0]
+                self.size_position, data.close[0]
             )
         )
         if Live:
             order = exchange.create_order(
-                coins[coin], Order.Market, "sell", size_position, data.close[0]
+                coins[coin], Order.Market, "sell", self.size_position, data.close[0]
             )
             print(order)
         else:
@@ -476,6 +478,7 @@ if __name__ == "__main__":
     else:
         cerebro.broker.setcash(10000)
         cerebro.broker.setcommission(commission=0.005)
+        cerebro.addsizer(bt.sizers.SizerFix, stake=100)
 
     cerebro.adddata(data)
 
