@@ -8,7 +8,7 @@ from backtrader import Order
 
 import ccxt
 
-Live = False
+Live = True
 
 frequenz = '15 min'
 
@@ -93,10 +93,8 @@ class SimpleTesting(bt.Strategy):
         self.initial_position = 0
         try:
             [self.initial_position, _] = self.broker.get_balance()
-        except:
-            pass
-
-        self.log("Initial Position: {}".format(self.initial_position))
+        except Exception as e:
+            print(e)
 
         self.size_position = 10
 
