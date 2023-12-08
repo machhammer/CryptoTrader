@@ -10,7 +10,9 @@ import ccxt
 
 Live = False
 
-coin = "XRP"
+frequenz = '15 min'
+
+coin = "XLM"
 
 coins = {
     "XRP": "XRP/USDC",
@@ -66,7 +68,9 @@ class SimpleTesting(bt.Strategy):
         ("rsi_sell_threshold", 73),
         ("rsi_buy_threshold", 33),
         ("coin", [coin, coins[coin]]),
-        ("sell_threshold", 15),
+        ("sell_down_threshold", 15),
+        ("sell_up_threshold", 3)
+        ,
     )
 
     def __init__(self):
@@ -296,11 +300,10 @@ class SimpleTesting(bt.Strategy):
                                     self.size_position,
                                     data.close[0],
                                 )
-                                print(order)
                                 self.executed_buy_price = data.close[0]
                             else:
                                 print("*** BUY OFFLINE")
-                                self.buy()
+                                self.order = self.buy()
                             self.initial_position = 0
                             self.reset_flags()
                         except Exception as e:
@@ -326,7 +329,7 @@ class SimpleTesting(bt.Strategy):
             # Check for SELL condition
 
             # Urgency SELL
-            if data.close[0] <= data.close[-1] * (1 - self.p.sell_threshold / 100):
+            if data.close[0] <= data.close[-1] * (1 - self.p.sell_down_threshold / 100):
                 self.log("*** URGENCY SELL")
                 self.log(
                     "*** Current Price ({}) is {}% lower than Executed Buy Price ({})".format(
@@ -335,17 +338,26 @@ class SimpleTesting(bt.Strategy):
                         self.executed_buy_price,
                     )
                 )
-                self.execute_sell_position(size_position)
+                self.execute_sell_position()
 
             # Regular SELL
             if SELL_ALERT:
                 self.log("*** SELL ALERT set")
+                self.log("*** Excecuted Buy: {}".format(self.executed_buy_price))
                 if self.position.size > 0.0 or self.initial_position > 0:
                     if self.executed_buy_price == -99:
                         self.executed_buy_price = self.lowest_price
-                    if self.data.close[0] > self.executed_buy_price or self.data.close[
+                    if self.data.close[0] > (self.executed_buy_price +  (self.p.sell_up_threshold/100) * self.executed_buy_price)or self.data.close[
                         0
-                    ] <= self.highest_price * (1 - self.p.sell_threshold / 100):
+                    ] <= self.highest_price * (1 - self.p.sell_down_threshold / 100):
+                        self.log(
+                            "*** SELL price IN right range. Price {}, Executed {}, highest_price {}, highest 85% {} ".format(
+                                self.data.close[0],
+                                self.executed_buy_price,
+                                self.highest_price,
+                                self.highest_price * (1 - self.p.sell_down_threshold / 100),
+                            )
+                        )
                         if self.sell_confirmation_2:
                             self.execute_sell_position()
                         else:
@@ -361,14 +373,14 @@ class SimpleTesting(bt.Strategy):
                                 self.data.close[0],
                                 self.executed_buy_price,
                                 self.highest_price,
-                                self.highest_price * (1 - self.p.sell_threshold / 100),
+                                self.highest_price * (1 - self.p.sell_down_threshold / 100),
                             )
                         )
                 else:
                     self.log("*** SELL Aborted: No Position")
                     self.log(
                         "*** Initial Position: {} has Position: {} ".format(
-                            self.initial_position, self.position
+                            self.initial_position, self.position.size
                         )
                     )
             else:
@@ -424,14 +436,14 @@ class SimpleTesting(bt.Strategy):
         if order.status == order.Completed:
             if order.isbuy():
                 self.log(
-                    "*** Executed BUY (Price: %.2f, Value: %.2f, Commission %.2f)"
-                    % (order.executed.price, order.executed.value, order.executed.comm)
+                    "*** Executed BUY (Price: {}, Value: {}, Commission {})"
+                    .format(order.executed.price, order.executed.value, order.executed.comm)
                 )
                 self.executed_buy_price = order.executed.price
             else:
                 self.log(
-                    "*** Executed SELL (Price: %.2f, Value: %.2f, Commission %.2f)"
-                    % (order.executed.price, order.executed.value, order.executed.comm)
+                    "*** Executed SELL (Price: {}, Value: {}, Commission {})"
+                    .format(order.executed.price, order.executed.value, order.executed.comm)
                 )
             self.bar_executed = len(self)
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
@@ -454,24 +466,32 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-    # historical_data = 70
-    historical_data = 0.2
+    
+    frequenz_list = {
+        'daily': {'historical_data': 300, 'compression': 1440},
+        '1 min': {'historical_data': 0.2, 'compression': 1},
+        '15 min': {'historical_data': 3, 'compression': 15},
+        '30 min': {'historical_data': 6, 'compression': 30},
+        '1 h': {'historical_data': 12, 'compression': 60},
+        '6 h': {'historical_data': 70, 'compression': 360},
+    }
+
 
     hist_to_date = datetime.utcnow()
-    hist_start_date = hist_to_date - timedelta(minutes=historical_data * 1440)
+    hist_start_date = hist_to_date - timedelta(minutes=frequenz_list[frequenz]['historical_data'] * 1440)
 
     data = store.getdata(
         dataname=coins[coin],
         name=coins[coin],
         timeframe=bt.TimeFrame.Minutes,
         fromdate=hist_start_date,
-        compression=1,
+        compression=frequenz_list[frequenz]['compression'],
         ohlcv_limit=1000,
         drop_newest=True,
         historical=not Live,
     )
 
-    cerebro = bt.Cerebro()
+    cerebro = bt.Cerebro(maxcpus=None, optreturn=False, quicknotify=True, exactbars=-1)
     if Live:
         broker = store.getbroker(broker_mapping=broker_mapping)
         cerebro.setbroker(broker)
@@ -481,7 +501,7 @@ if __name__ == "__main__":
         cerebro.addsizer(bt.sizers.SizerFix, stake=100)
 
     cerebro.adddata(data)
-
+    cerebro.addobserver(bt.observers.BuySell, barplot=True, bardist=0.0025)
     cerebro.addstrategy(SimpleTesting)
     cerebro.run()
     cerebro.plot()
