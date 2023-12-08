@@ -10,7 +10,7 @@ import ccxt
 
 Live = True
 
-frequenz = '15 min'
+frequenz = "15 min"
 
 coin = "XLM"
 
@@ -24,6 +24,7 @@ coins = {
     "SHIB": "SHIB/USDC",
 }
 
+position_file = 'positions.csv'
 
 api_key = credentials.provider_1.get("key")
 api_secret = credentials.provider_1.get("secret")
@@ -69,8 +70,7 @@ class SimpleTesting(bt.Strategy):
         ("rsi_buy_threshold", 33),
         ("coin", [coin, coins[coin]]),
         ("sell_down_threshold", 15),
-        ("sell_up_threshold", 3)
-        ,
+        ("sell_up_threshold", 2),
     )
 
     def __init__(self):
@@ -298,11 +298,15 @@ class SimpleTesting(bt.Strategy):
                                     self.size_position,
                                     data.close[0],
                                 )
+                                file = open(position_file, 'w')
+                                file.write(coin + ';' + data.close[0])
+                                file.close()
                                 self.executed_buy_price = data.close[0]
+                                self.initial_position = self.executed_buy_price
                             else:
                                 print("*** BUY OFFLINE")
                                 self.order = self.buy()
-                            self.initial_position = 0
+                                self.initial_position = 0
                             self.reset_flags()
                         except Exception as e:
                             print(e)
@@ -345,15 +349,19 @@ class SimpleTesting(bt.Strategy):
                 if self.position.size > 0.0 or self.initial_position > 0:
                     if self.executed_buy_price == -99:
                         self.executed_buy_price = self.lowest_price
-                    if self.data.close[0] > (self.executed_buy_price +  (self.p.sell_up_threshold/100) * self.executed_buy_price)or self.data.close[
-                        0
-                    ] <= self.highest_price * (1 - self.p.sell_down_threshold / 100):
+                    if self.data.close[0] > (
+                        self.executed_buy_price
+                        + (self.p.sell_up_threshold / 100) * self.executed_buy_price
+                    ) or self.data.close[0] <= self.highest_price * (
+                        1 - self.p.sell_down_threshold / 100
+                    ):
                         self.log(
                             "*** SELL price IN right range. Price {}, Executed {}, highest_price {}, highest 85% {} ".format(
                                 self.data.close[0],
                                 self.executed_buy_price,
                                 self.highest_price,
-                                self.highest_price * (1 - self.p.sell_down_threshold / 100),
+                                self.highest_price
+                                * (1 - self.p.sell_down_threshold / 100),
                             )
                         )
                         if self.sell_confirmation_2:
@@ -371,7 +379,8 @@ class SimpleTesting(bt.Strategy):
                                 self.data.close[0],
                                 self.executed_buy_price,
                                 self.highest_price,
-                                self.highest_price * (1 - self.p.sell_down_threshold / 100),
+                                self.highest_price
+                                * (1 - self.p.sell_down_threshold / 100),
                             )
                         )
                 else:
@@ -434,14 +443,16 @@ class SimpleTesting(bt.Strategy):
         if order.status == order.Completed:
             if order.isbuy():
                 self.log(
-                    "*** Executed BUY (Price: {}, Value: {}, Commission {})"
-                    .format(order.executed.price, order.executed.value, order.executed.comm)
+                    "*** Executed BUY (Price: {}, Value: {}, Commission {})".format(
+                        order.executed.price, order.executed.value, order.executed.comm
+                    )
                 )
                 self.executed_buy_price = order.executed.price
             else:
                 self.log(
-                    "*** Executed SELL (Price: {}, Value: {}, Commission {})"
-                    .format(order.executed.price, order.executed.value, order.executed.comm)
+                    "*** Executed SELL (Price: {}, Value: {}, Commission {})".format(
+                        order.executed.price, order.executed.value, order.executed.comm
+                    )
                 )
             self.bar_executed = len(self)
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
@@ -464,26 +475,26 @@ class SimpleTesting(bt.Strategy):
 
 
 if __name__ == "__main__":
-    
     frequenz_list = {
-        'daily': {'historical_data': 300, 'compression': 1440},
-        '1 min': {'historical_data': 0.2, 'compression': 1},
-        '15 min': {'historical_data': 3, 'compression': 15},
-        '30 min': {'historical_data': 6, 'compression': 30},
-        '1 h': {'historical_data': 12, 'compression': 60},
-        '6 h': {'historical_data': 70, 'compression': 360},
+        "daily": {"historical_data": 300, "compression": 1440},
+        "1 min": {"historical_data": 0.2, "compression": 1},
+        "15 min": {"historical_data": 3, "compression": 15},
+        "30 min": {"historical_data": 6, "compression": 30},
+        "1 h": {"historical_data": 12, "compression": 60},
+        "6 h": {"historical_data": 70, "compression": 360},
     }
 
-
     hist_to_date = datetime.utcnow()
-    hist_start_date = hist_to_date - timedelta(minutes=frequenz_list[frequenz]['historical_data'] * 1440)
+    hist_start_date = hist_to_date - timedelta(
+        minutes=frequenz_list[frequenz]["historical_data"] * 1440
+    )
 
     data = store.getdata(
         dataname=coins[coin],
         name=coins[coin],
         timeframe=bt.TimeFrame.Minutes,
         fromdate=hist_start_date,
-        compression=frequenz_list[frequenz]['compression'],
+        compression=frequenz_list[frequenz]["compression"],
         ohlcv_limit=1000,
         drop_newest=True,
         historical=not Live,
