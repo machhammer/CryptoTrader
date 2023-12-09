@@ -5,7 +5,7 @@ import data_provider.DataReader as data_provider
 import backtrader as bt
 from ccxtbt import CCXTStore
 from backtrader import Order
-
+import json
 import ccxt
 
 Live = True
@@ -15,16 +15,16 @@ frequenz = "15 min"
 coin = "XLM"
 
 coins = {
-    "XRP": "XRP/USDC",
-    "SOL": "SOL/USDC",
-    "ETH": "ETC/USDC",
-    "BTC": "BTC/USDC",
-    "XLM": "XLM/USDC",
-    "VARA": "VARA/USDC",
-    "SHIB": "SHIB/USDC",
+    "XRP": {'product': "XRP/USDC", 'last_executed_buy_price': 0},
+    "SOL": {'product': "SOL/USDC", 'last_executed_buy_price': 0},
+    "ETH": {'product': "ETC/USDC", 'last_executed_buy_price': 0},
+    "BTC": {'product': "BTC/USDC", 'last_executed_buy_price': 0},
+    "XLM": {'product': "XLM/USDC", 'last_executed_buy_price': 0},
+    "VARA": {'product': "VARA/USDC", 'last_executed_buy_price': 0},
+    "SHIB": {'product': "SHIB/USDC", 'last_executed_buy_price': 0}
 }
 
-position_file = 'positions.csv'
+position_file = 'positions.json'
 
 api_key = credentials.provider_1.get("key")
 api_secret = credentials.provider_1.get("secret")
@@ -96,6 +96,12 @@ class SimpleTesting(bt.Strategy):
         except Exception as e:
             print(e)
 
+        coins = self.positions_from_file()  
+        print(coins)      
+        self.executed_buy_price = coins[coin]['last_executed_buy_price']
+        
+        print(self.executed_buy_price)
+
         self.size_position = 10
 
         self.reset_flags()
@@ -126,7 +132,6 @@ class SimpleTesting(bt.Strategy):
         self.sell_confirmation_2 = False
         self.sell_confirmation_3 = False
 
-        self.executed_buy_price = -99
         self.highest_price = -99
         self.lowest_price = 99999999
 
@@ -219,13 +224,18 @@ class SimpleTesting(bt.Strategy):
         # print Log information
 
         for data in self.datas:
+            
+            self.log("{} | Coin: {} | Initial Position: {} | Executed Buy Price: {} | Price: {} | Next Sell > {} | Next Sell < {}".format(data.datetime.datetime().strftime("%H:%M"), coin, self.initial_position, self.executed_buy_price, self.data.close[0], self.executed_buy_price
+                        + (self.p.sell_up_threshold / 100) * self.executed_buy_price, self.highest_price * (
+                        1 - self.p.sell_down_threshold / 100)))
+
             self.log(
                 "{} - {} | High {} | Low {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
                     data.datetime.datetime().strftime("%H:%M"),
                     data._name,
                     self.highest_price,
                     self.lowest_price,
-                    data.close[0],
+                    self.data.close[0],
                     self.sma[0],
                     self.rsi[0],
                     self.macd.macd[0],
@@ -292,21 +302,22 @@ class SimpleTesting(bt.Strategy):
                                     )
                                 )
                                 order = exchange.create_order(
-                                    coins[coin],
+                                    coins[coin]['product'],
                                     Order.Market,
                                     "buy",
                                     self.size_position,
                                     data.close[0],
                                 )
-                                file = open(position_file, 'w')
-                                file.write(coin + ';' + data.close[0])
-                                file.close()
+                                
                                 self.executed_buy_price = data.close[0]
                                 self.initial_position = self.executed_buy_price
                             else:
                                 print("*** BUY OFFLINE")
                                 self.order = self.buy()
                                 self.initial_position = 0
+                            
+                            coins[coin]['last_executed_buy_price'] = data.close[0]
+                            self.positions_to_file()
                             self.reset_flags()
                         except Exception as e:
                             print(e)
@@ -331,7 +342,7 @@ class SimpleTesting(bt.Strategy):
             # Check for SELL condition
 
             # Urgency SELL
-            if data.close[0] <= data.close[-1] * (1 - self.p.sell_down_threshold / 100):
+            if data.close[0] <= data.close[-4] * (1 - self.p.sell_down_threshold / 100):
                 self.log("*** URGENCY SELL")
                 self.log(
                     "*** Current Price ({}) is {}% lower than Executed Buy Price ({})".format(
@@ -347,8 +358,6 @@ class SimpleTesting(bt.Strategy):
                 self.log("*** SELL ALERT set")
                 self.log("*** Excecuted Buy: {}".format(self.executed_buy_price))
                 if self.position.size > 0.0 or self.initial_position > 0:
-                    if self.executed_buy_price == -99:
-                        self.executed_buy_price = self.lowest_price
                     if self.data.close[0] > (
                         self.executed_buy_price
                         + (self.p.sell_up_threshold / 100) * self.executed_buy_price
@@ -419,13 +428,15 @@ class SimpleTesting(bt.Strategy):
         )
         if Live:
             order = exchange.create_order(
-                coins[coin], Order.Market, "sell", self.size_position, data.close[0]
+                coins[coin]['product'], Order.Market, "sell", self.size_position, data.close[0]
             )
             print(order)
         else:
             print("*** SELL OFFLINE")
             self.order = self.sell()
-        self.executed_buy_price = -99
+        
+        coins[coin]['last_executed_buy_price'] = 0
+        self.positions_to_file()
         self.initial_position = 0
         self.reset_flags()
 
@@ -474,7 +485,20 @@ class SimpleTesting(bt.Strategy):
         print("%s, %s" % (dt.isoformat(), txt))
 
 
+    def positions_to_file(self):
+        with open(position_file, 'w') as pf:
+            json.dump(coins, pf)
+
+    def positions_from_file(self):
+        with open(position_file, 'r') as pf:
+            return json.load(pf)
+        
+
+        
+
 if __name__ == "__main__":
+
+
     frequenz_list = {
         "daily": {"historical_data": 300, "compression": 1440},
         "1 min": {"historical_data": 0.2, "compression": 1},
@@ -490,8 +514,8 @@ if __name__ == "__main__":
     )
 
     data = store.getdata(
-        dataname=coins[coin],
-        name=coins[coin],
+        dataname=coins[coin]['product'],
+        name=coins[coin]['product'],
         timeframe=bt.TimeFrame.Minutes,
         fromdate=hist_start_date,
         compression=frequenz_list[frequenz]["compression"],
