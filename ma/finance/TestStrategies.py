@@ -96,11 +96,8 @@ class SimpleTesting(bt.Strategy):
         except Exception as e:
             print(e)
 
-        try:
-            coins = self.positions_from_file()  
-        except:
-            self.positions_to_file()
-
+        coins = self.positions_from_file()  
+        print(coins)      
         self.executed_buy_price = coins[coin]['last_executed_buy_price']
         
         print(self.executed_buy_price)
