@@ -15,13 +15,13 @@ frequenz = "15 min"
 coin = "XLM"
 
 coins = {
-    "XRP": {'product': "XRP/USDC", 'last_executed_buy_price': 0},
-    "SOL": {'product': "SOL/USDC", 'last_executed_buy_price': 0},
-    "ETH": {'product': "ETC/USDC", 'last_executed_buy_price': 0},
-    "BTC": {'product': "BTC/USDC", 'last_executed_buy_price': 0},
-    "XLM": {'product': "XLM/USDC", 'last_executed_buy_price': 0},
-    "VARA": {'product': "VARA/USDC", 'last_executed_buy_price': 0},
-    "SHIB": {'product': "SHIB/USDC", 'last_executed_buy_price': 0}
+    "XRP": {'product': "XRP/USDC", 'last_executed_buy_price': 0, 'dist': 0.4},
+    "SOL": {'product': "SOL/USDC", 'last_executed_buy_price': 0, 'dist': 0.4},
+    "ETH": {'product': "ETC/USDC", 'last_executed_buy_price': 0, 'dist': 0},
+    "BTC": {'product': "BTC/USDC", 'last_executed_buy_price': 0, 'dist': 0},
+    "XLM": {'product': "XLM/USDC", 'last_executed_buy_price': 0, 'dist': 0.1},
+    "VARA": {'product': "VARA/USDC", 'last_executed_buy_price': 0, 'dist': 0.1},
+    "SHIB": {'product': "SHIB/USDC", 'last_executed_buy_price': 0, 'dist': 0}
 }
 
 position_file = 'positions.json'
