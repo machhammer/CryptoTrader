@@ -42,10 +42,6 @@ exchange = ccxt.coinbase(
     }
 )
 
-store = CCXTStore(
-    exchange="coinbase", currency=coin, config=config, retries=5, debug=False
-)
-
 
 broker_mapping = {
     "order_types": {
@@ -105,7 +101,9 @@ class SimpleTesting(bt.Strategy):
 
         self.initial_position = 0
         try:
+            print(coin)
             [self.initial_position, _] = self.broker.get_balance()
+            print(self.initial_position)
         except Exception as e:
             self.log(e)
 
@@ -566,6 +564,10 @@ if __name__ == "__main__":
     hist_to_date = datetime.utcnow()
     hist_start_date = hist_to_date - timedelta(
         minutes=frequenz_list[frequenz]["historical_data"] * 1440
+    )
+
+    store = CCXTStore(
+        exchange="coinbase", currency=coin, config=config, retries=5, debug=False
     )
 
     data = store.getdata(
