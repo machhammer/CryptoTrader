@@ -5,26 +5,29 @@ import data_provider.DataReader as data_provider
 import backtrader as bt
 from ccxtbt import CCXTStore
 from backtrader import Order
+import argparse
+import logging
 import json
 import ccxt
 
-Live = True
+
+Live = False
 
 frequenz = "15 min"
 
 coin = "XLM"
 
 coins = {
-    "XRP": {'product': "XRP/USDC", 'last_executed_buy_price': 0, 'dist': 0.4},
-    "SOL": {'product': "SOL/USDC", 'last_executed_buy_price': 0, 'dist': 0.4},
-    "ETH": {'product': "ETC/USDC", 'last_executed_buy_price': 0, 'dist': 0},
-    "BTC": {'product': "BTC/USDC", 'last_executed_buy_price': 0, 'dist': 0},
-    "XLM": {'product': "XLM/USDC", 'last_executed_buy_price': 0, 'dist': 0.1},
-    "VARA": {'product': "VARA/USDC", 'last_executed_buy_price': 0, 'dist': 0.1},
-    "SHIB": {'product': "SHIB/USDC", 'last_executed_buy_price': 0, 'dist': 0}
+    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
+    "SOL": {"product": "SOL/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
+    "ETH": {"product": "ETC/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
+    "BTC": {"product": "BTC/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
+    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.1},
+    "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.1},
+    "SHIB": {"product": "SHIB/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
 }
 
-position_file = 'positions.json'
+position_file = "positions.json"
 
 api_key = credentials.provider_1.get("key")
 api_secret = credentials.provider_1.get("secret")
@@ -56,6 +59,16 @@ broker_mapping = {
         "canceled_order": {"key": "result", "value": 1},
     },
 }
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description="Sample for pivot point and cross plotting",
+    )
+    parser.add_argument("--coin", required=True, help="Coin to trade")
+    parser.add_argument("--live", required=True, help="Live (True/False)")
+    return parser.parse_args()
 
 
 class SimpleTesting(bt.Strategy):
@@ -94,13 +107,16 @@ class SimpleTesting(bt.Strategy):
         try:
             [self.initial_position, _] = self.broker.get_balance()
         except Exception as e:
-            print(e)
+            self.log(e)
 
-        coins = self.positions_from_file()  
-        print(coins)      
-        self.executed_buy_price = coins[coin]['last_executed_buy_price']
-        
-        print(self.executed_buy_price)
+        try:
+            self.positions_from_file()
+        except:
+            self.positions_to_file()
+
+        coins = self.positions_from_file()
+
+        self.executed_buy_price = coins[coin]["last_executed_buy_price"]
 
         self.size_position = 10
 
@@ -224,10 +240,18 @@ class SimpleTesting(bt.Strategy):
         # print Log information
 
         for data in self.datas:
-            
-            self.log("{} | Coin: {} | Initial Position: {} | Executed Buy Price: {} | Price: {} | Next Sell > {} | Next Sell < {}".format(data.datetime.datetime().strftime("%H:%M"), coin, self.initial_position, self.executed_buy_price, self.data.close[0], self.executed_buy_price
-                        + (self.p.sell_up_threshold / 100) * self.executed_buy_price, self.highest_price * (
-                        1 - self.p.sell_down_threshold / 100)))
+            self.log(
+                "{} | Coin: {} | Initial Position: {} | Executed Buy Price: {} | Price: {} | Next Sell > {} | Next Sell < {:.7f}".format(
+                    data.datetime.datetime().strftime("%H:%M"),
+                    coin,
+                    self.initial_position,
+                    self.executed_buy_price,
+                    self.data.close[0],
+                    self.executed_buy_price
+                    + (self.p.sell_up_threshold / 100) * self.executed_buy_price,
+                    self.highest_price * (1 - self.p.sell_down_threshold / 100),
+                )
+            )
 
             self.log(
                 "{} - {} | High {} | Low {} | C: {:.4f} | SMA: {:.5f} | RSI: {:.0f} | MACD: {:.5f} | MACD S: {:.5f} | MACD D: {:.7f} | DI: {:.0f} | ADX: {:.0f} | Ad: {:.0f} | Au: {:.0f} | Bt: {:.4f} | Bb: {:.4f}".format(
@@ -285,9 +309,7 @@ class SimpleTesting(bt.Strategy):
                     if self.buy_confirmation_2:
                         try:
                             if Live:
-                                current_balance = exchange.fetch_balance()["USDC"][
-                                    "free"
-                                ]
+                                current_balance = self.get_funding()
                                 self.size_position = current_balance / data.close[0]
                                 self.log(
                                     "*** Size Position = {} / {} = {} ".format(
@@ -302,25 +324,27 @@ class SimpleTesting(bt.Strategy):
                                     )
                                 )
                                 order = exchange.create_order(
-                                    coins[coin]['product'],
+                                    coins[coin]["product"],
                                     Order.Market,
                                     "buy",
                                     self.size_position,
                                     data.close[0],
                                 )
-                                
+
                                 self.executed_buy_price = data.close[0]
-                                self.initial_position = self.executed_buy_price
+                                self.initial_position = (
+                                    self.size_position * self.executed_buy_price
+                                )
                             else:
-                                print("*** BUY OFFLINE")
+                                self.log("*** BUY OFFLINE")
                                 self.order = self.buy()
                                 self.initial_position = 0
-                            
-                            coins[coin]['last_executed_buy_price'] = data.close[0]
+
+                            coins[coin]["last_executed_buy_price"] = data.close[0]
                             self.positions_to_file()
                             self.reset_flags()
                         except Exception as e:
-                            print(e)
+                            self.log(e)
 
                     else:
                         if self.buy_confirmation_1:
@@ -420,7 +444,7 @@ class SimpleTesting(bt.Strategy):
         try:
             self.size_position = self.broker.get_balance()[0]
         except Exception as e:
-            print(e)
+            self.log(e)
         self.log(
             "*** Execute SELL - Size: {}, Price: {} ".format(
                 self.size_position, data.close[0]
@@ -428,14 +452,18 @@ class SimpleTesting(bt.Strategy):
         )
         if Live:
             order = exchange.create_order(
-                coins[coin]['product'], Order.Market, "sell", self.size_position, data.close[0]
+                coins[coin]["product"],
+                Order.Market,
+                "sell",
+                self.size_position,
+                data.close[0],
             )
-            print(order)
+            self.log(order)
         else:
-            print("*** SELL OFFLINE")
+            self.log("*** SELL OFFLINE")
             self.order = self.sell()
-        
-        coins[coin]['last_executed_buy_price'] = 0
+
+        coins[coin]["last_executed_buy_price"] = 0
         self.positions_to_file()
         self.initial_position = 0
         self.reset_flags()
@@ -444,7 +472,7 @@ class SimpleTesting(bt.Strategy):
         dn = data._name
         dt = datetime.now()
         msg = "Data Status: {}".format(data._getstatusname(status))
-        print(dt, dn, msg)
+        self.log("{}, {}, {}".format(dt, dn, msg))
         if data._getstatusname(status) == "LIVE":
             self.live_data = True
         else:
@@ -481,23 +509,50 @@ class SimpleTesting(bt.Strategy):
         )
 
     def log(self, txt):
-        dt = self.datas[0].datetime.date(0)
-        print("%s, %s" % (dt.isoformat(), txt))
-
+        dt = None
+        try:
+            dt = self.datas[0].datetime.date(0)
+            txt = "%s, %s" % (dt.isoformat(), txt)
+        except:
+            txt = "%s" % (txt)
+        logging.info(txt)
 
     def positions_to_file(self):
-        with open(position_file, 'w') as pf:
+        with open(position_file, "w") as pf:
             json.dump(coins, pf)
 
     def positions_from_file(self):
-        with open(position_file, 'r') as pf:
+        with open(position_file, "r") as pf:
             return json.load(pf)
-        
 
-        
+    def get_funding(self):
+        total = 0
+        coin_keys = coins.keys()
+        for key in coin_keys:
+            current_balance = exchange.fetch_balance()[key]["free"]
+            current_price = exchange.fetch_ticker(coins[key]["product"])["last"]
+            if current_balance * current_price < 1:
+                total = total + float(coins[key]["dist_ratio"]) * 10
+
+        ratio = (coins[coin]["dist_ratio"] * 10) / total
+        return (exchange.fetch_balance()["USDC"]["free"] * ratio) - 1
+
 
 if __name__ == "__main__":
+    args = parse_args()
 
+    Live = bool(args.live)
+    coin = args.coin
+
+    if coin not in coins.keys():
+        raise Exception("Coin {} not in repository!".format(coin))
+
+    logging.basicConfig(
+        filename="trading-" + coin + ".log",
+        filemode="w",
+        encoding="utf-8",
+        level=logging.INFO,
+    )
 
     frequenz_list = {
         "daily": {"historical_data": 300, "compression": 1440},
@@ -514,8 +569,8 @@ if __name__ == "__main__":
     )
 
     data = store.getdata(
-        dataname=coins[coin]['product'],
-        name=coins[coin]['product'],
+        dataname=coins[coin]["product"],
+        name=coins[coin]["product"],
         timeframe=bt.TimeFrame.Minutes,
         fromdate=hist_start_date,
         compression=frequenz_list[frequenz]["compression"],
