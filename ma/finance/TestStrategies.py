@@ -18,12 +18,12 @@ frequenz = "15 min"
 coin = "XLM"
 
 coins = {
-    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
+    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.6},
     "SOL": {"product": "SOL/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
     "ETH": {"product": "ETC/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
     "BTC": {"product": "BTC/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
-    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.1},
-    "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.1},
+    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
+    "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
     "SHIB": {"product": "SHIB/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
 }
 
