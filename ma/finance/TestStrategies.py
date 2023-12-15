@@ -9,6 +9,7 @@ import argparse
 import logging
 import json
 import ccxt
+import os
 
 
 Live = False
@@ -59,6 +60,7 @@ broker_mapping = {
 
 
 def synchronize_coins_dict():
+    print(os.getcwd())
     try:
         coins_from_file = coins_dict_from_file()
         for f_coin in coins_from_file.keys():
@@ -74,6 +76,7 @@ def synchronize_coins_dict():
 
 def coins_dict_to_file():
     with open(position_file, "w") as pf:
+        print(pf)
         json.dump(coins, pf)
 
 
@@ -139,9 +142,7 @@ class SimpleTesting(bt.Strategy):
 
         self.initial_position = 0
         try:
-            print(coin)
             [self.initial_position, _] = self.broker.get_balance()
-            print(self.initial_position)
         except Exception as e:
             self.log(e)
 
