@@ -76,7 +76,6 @@ def synchronize_coins_dict():
 
 def coins_dict_to_file():
     with open(position_file, "w") as pf:
-        print(pf)
         json.dump(coins, pf)
 
 
