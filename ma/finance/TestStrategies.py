@@ -335,7 +335,7 @@ class SimpleTesting(bt.Strategy):
                     if self.buy_confirmation_2:
                         try:
                             if Live:
-                                current_balance = self.get_funding()
+                                current_balance = get_funding()
                                 self.size_position = current_balance / data.close[0]
                                 self.log(
                                     "*** Size Position = {} / {} = {} ".format(
