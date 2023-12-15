@@ -22,11 +22,6 @@ coins = {
     "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
     "SOL": {"product": "SOL/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
     "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-    "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
-    "SHIB": {"product": "SHIB/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
-    "ADA": {"product": "ADA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
-    "AAVE": {"product": "AAVE/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
-    "UNI": {"product": "UNI/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
 }
 
 position_file = "positions.json"
@@ -146,7 +141,7 @@ class SimpleTesting(bt.Strategy):
             self.log(e)
 
         coins = synchronize_coins_dict()
-
+        print(coins)
         self.executed_buy_price = coins[coin]["last_executed_buy_price"]
 
         self.size_position = 10
