@@ -18,13 +18,14 @@ frequenz = "15 min"
 coin = "XLM"
 
 coins = {
-    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.6},
+    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
     "SOL": {"product": "SOL/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
-    "ETH": {"product": "ETC/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
-    "BTC": {"product": "BTC/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
-    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
+    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.2},
     "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
     "SHIB": {"product": "SHIB/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
+    "ADA": {"product": "ADA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
+    "AAVE": {"product": "AAVE/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
+    "UNI": {"product": "UNI/USDC", "last_executed_buy_price": 0, "dist_ratio": 0},
 }
 
 position_file = "positions.json"
@@ -55,6 +56,43 @@ broker_mapping = {
         "canceled_order": {"key": "result", "value": 1},
     },
 }
+
+
+def synchronize_coins_dict():
+    try:
+        coins_from_file = coins_dict_from_file()
+        for f_coin in coins_from_file.keys():
+            if f_coin in coins:
+                coins[f_coin]["last_executed_buy_price"] = coins_from_file[f_coin][
+                    "last_executed_buy_price"
+                ]
+    except Exception as e:
+        print(e)
+    coins_dict_to_file()
+    return coins
+
+
+def coins_dict_to_file():
+    with open(position_file, "w") as pf:
+        json.dump(coins, pf)
+
+
+def coins_dict_from_file():
+    with open(position_file, "r") as pf:
+        return json.load(pf)
+
+
+def get_funding():
+    total = 0
+    coin_keys = coins.keys()
+    for key in coin_keys:
+        current_balance = exchange.fetch_balance()[key]["free"]
+        current_price = exchange.fetch_ticker(coins[key]["product"])["last"]
+        if current_balance * current_price < 1:
+            total = total + float(coins[key]["dist_ratio"]) * 10
+
+    ratio = (coins[coin]["dist_ratio"] * 10) / total
+    return (exchange.fetch_balance()["USDC"]["free"] * ratio) - 1
 
 
 def parse_args():
@@ -107,12 +145,7 @@ class SimpleTesting(bt.Strategy):
         except Exception as e:
             self.log(e)
 
-        try:
-            self.positions_from_file()
-        except:
-            self.positions_to_file()
-
-        coins = self.positions_from_file()
+        coins = synchronize_coins_dict()
 
         self.executed_buy_price = coins[coin]["last_executed_buy_price"]
 
@@ -462,7 +495,7 @@ class SimpleTesting(bt.Strategy):
             self.order = self.sell()
 
         coins[coin]["last_executed_buy_price"] = 0
-        self.positions_to_file()
+        coins_dict_to_file()
         self.initial_position = 0
         self.reset_flags()
 
@@ -515,32 +548,14 @@ class SimpleTesting(bt.Strategy):
             txt = "%s" % (txt)
         logging.info(txt)
 
-    def positions_to_file(self):
-        with open(position_file, "w") as pf:
-            json.dump(coins, pf)
-
-    def positions_from_file(self):
-        with open(position_file, "r") as pf:
-            return json.load(pf)
-
-    def get_funding(self):
-        total = 0
-        coin_keys = coins.keys()
-        for key in coin_keys:
-            current_balance = exchange.fetch_balance()[key]["free"]
-            current_price = exchange.fetch_ticker(coins[key]["product"])["last"]
-            if current_balance * current_price < 1:
-                total = total + float(coins[key]["dist_ratio"]) * 10
-
-        ratio = (coins[coin]["dist_ratio"] * 10) / total
-        return (exchange.fetch_balance()["USDC"]["free"] * ratio) - 1
-
 
 if __name__ == "__main__":
     args = parse_args()
 
-    Live = bool(args.live)
+    Live = True if args.live.lower() == "true" else False
     coin = args.coin
+
+    print("Crypto Trader started for coin {}. Live Mode: {} ".format(coin, Live))
 
     if coin not in coins.keys():
         raise Exception("Coin {} not in repository!".format(coin))
