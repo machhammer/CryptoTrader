@@ -1,17 +1,17 @@
 {
   "XRP": {
     "product": "XRP/USDC",
-    "last_executed_buy_price": 0,
+    "last_executed_buy_price": 0.6219,
     "dist_ratio": 0.4
   },
   "SOL": {
     "product": "SOL/USDC",
-    "last_executed_buy_price": 69.31,
+    "last_executed_buy_price": 73.85,
     "dist_ratio": 0.4
   },
   "XLM": {
     "product": "XLM/USDC",
-    "last_executed_buy_price": 0,
+    "last_executed_buy_price": 0.124,
     "dist_ratio": 0.2
   }
 }
