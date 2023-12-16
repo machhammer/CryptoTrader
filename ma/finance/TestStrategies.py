@@ -367,7 +367,7 @@ class SimpleTesting(bt.Strategy):
                                 self.initial_position = 0
 
                             coins[coin]["last_executed_buy_price"] = data.close[0]
-                            coins_dict_to_file
+                            coins_dict_to_file()
                             self.reset_flags()
                         except Exception as e:
                             self.log(e)
