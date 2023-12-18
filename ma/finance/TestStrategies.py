@@ -415,10 +415,11 @@ class SimpleTesting(bt.Strategy):
                         1 - self.p.sell_down_threshold / 100
                     ):
                         self.log(
-                            "*** SELL price IN right range. Price {}, Executed {}, highest_price {}, highest 85% {} ".format(
+                            "*** SELL price IN right range. Price {}, Executed {}, highest_price {}, highest {}% {} ".format(
                                 self.data.close[0],
                                 self.executed_buy_price,
                                 self.highest_price,
+                                (1 - self.p.sell_down_threshold),
                                 self.highest_price
                                 * (1 - self.p.sell_down_threshold / 100),
                             )
