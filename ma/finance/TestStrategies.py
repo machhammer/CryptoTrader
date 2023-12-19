@@ -189,6 +189,8 @@ class SimpleTesting(bt.Strategy):
 
         if self.data.close[0] > self.highest_price:
             self.highest_price = self.data.close[0]
+        if self.executed_buy_price > self.highest_price:
+            self.highest_price = self.executed_buy_price
         if self.data.close[0] < self.lowest_price:
             self.lowest_price = self.data.close[0]
 
