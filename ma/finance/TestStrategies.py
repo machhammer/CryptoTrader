@@ -19,9 +19,13 @@ frequenz = "15 min"
 coin = "XLM"
 
 coins = {
-    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
-    "SOL": {"product": "SOL/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.4},
-    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.3},
+    "SOL": {"product": "SOL/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.3},
+    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.15},
+    "VET": {"product": "VET/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.1},
+    "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05},
+    "GRT": {"product": "GRT/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05},
+    "NEAR": {"product": "NEAR/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05}
 }
 
 position_file = "positions.json"
