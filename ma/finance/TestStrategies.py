@@ -113,7 +113,7 @@ class SimpleTesting(bt.Strategy):
         ("rsi_sell_threshold", 73),
         ("rsi_buy_threshold", 33),
         ("coin", [coin, coins[coin]]),
-        ("sell_down_threshold", 8),
+        ("sell_down_threshold", 5),
         ("sell_up_threshold", 2),
     )
 
@@ -435,10 +435,11 @@ class SimpleTesting(bt.Strategy):
                                 self.sell_confirmation_1 = True
                     else:
                         self.log(
-                            "*** SELL price not in right range. Price {}, Executed {}, highest_price {}, highest 85% {} ".format(
+                            "*** SELL price not in right range. Price {}, Executed {}, highest_price {}, highest {}% {} ".format(
                                 self.data.close[0],
                                 self.executed_buy_price,
                                 self.highest_price,
+                                (1 - self.p.sell_down_threshold),t
                                 self.highest_price
                                 * (1 - self.p.sell_down_threshold / 100),
                             )
