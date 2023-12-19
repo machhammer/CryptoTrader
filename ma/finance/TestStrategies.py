@@ -398,13 +398,15 @@ class SimpleTesting(bt.Strategy):
             # Check for SELL condition
 
             # Urgency SELL
-            if data.close[0] <= data.close[-4] * (1 - self.p.sell_down_threshold / 100):
+            if self.data.close[0] <= self.data.close[-1] * (
+                1 - self.p.sell_down_threshold / 100
+            ):
                 self.log("*** URGENCY SELL")
                 self.log(
-                    "*** Current Price ({}) is {}% lower than Executed Buy Price ({})".format(
-                        data.close[0],
+                    "*** Current Price ({}) is {}% lower than previous Price ({})".format(
+                        self.data.close[0],
                         self.p.sell_threshold,
-                        self.executed_buy_price,
+                        self.data.close[-1],
                     )
                 )
                 self.execute_sell_position()
