@@ -25,7 +25,7 @@ coins = {
     "VET": {"product": "VET/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.1},
     "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05},
     "GRT": {"product": "GRT/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05},
-    "NEAR": {"product": "NEAR/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05}
+    "NEAR": {"product": "NEAR/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05},
 }
 
 position_file = "positions.json"
@@ -443,7 +443,7 @@ class SimpleTesting(bt.Strategy):
                                 self.data.close[0],
                                 self.executed_buy_price,
                                 self.highest_price,
-                                (1 - self.p.sell_down_threshold),t
+                                (1 - self.p.sell_down_threshold),
                                 self.highest_price
                                 * (1 - self.p.sell_down_threshold / 100),
                             )
