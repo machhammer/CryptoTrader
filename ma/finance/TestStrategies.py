@@ -367,9 +367,7 @@ class SimpleTesting(bt.Strategy):
                                 self.log(order)
                                 self.executed_buy_price = data.close[0]
                                 self.highest_price = self.executed_buy_price
-                                self.initial_position = (
-                                    self.size_position * self.executed_buy_price
-                                )
+                                self.initial_position = self.size_position
                                 self.log(
                                     "*** Initial Position has been set to: {}".format(
                                         self.initial_position
