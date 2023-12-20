@@ -153,6 +153,8 @@ class SimpleTesting(bt.Strategy):
         self.reset_flags()
 
     def reset_flags(self):
+        self.log("*** Reset Flags.")
+
         self.sma_buy_alert = False
         self.sma_sell_alert = False
 
@@ -362,11 +364,16 @@ class SimpleTesting(bt.Strategy):
                                     self.size_position,
                                     data.close[0],
                                 )
-
+                                self.log(order)
                                 self.executed_buy_price = data.close[0]
                                 self.highest_price = self.executed_buy_price
                                 self.initial_position = (
                                     self.size_position * self.executed_buy_price
+                                )
+                                self.log(
+                                    "*** Initial Position has been set to: {}".format(
+                                        self.initial_position
+                                    )
                                 )
                             else:
                                 self.log("*** BUY OFFLINE")
