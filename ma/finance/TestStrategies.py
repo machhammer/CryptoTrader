@@ -117,7 +117,7 @@ class SimpleTesting(bt.Strategy):
         ("rsi_sell_threshold", 73),
         ("rsi_buy_threshold", 33),
         ("coin", [coin, coins[coin]]),
-        ("sell_down_threshold", 5),
+        ("sell_down_threshold", 2),
         ("sell_up_threshold", 2),
     )
 
