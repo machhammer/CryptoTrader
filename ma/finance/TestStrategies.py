@@ -411,7 +411,7 @@ class SimpleTesting(bt.Strategy):
                 self.log(
                     "*** Current Price ({}) is {}% lower than previous Price ({})".format(
                         self.data.close[0],
-                        self.p.sell_threshold,
+                        self.p.sell_down_threshold,
                         self.data.close[-1],
                     )
                 )
