@@ -260,7 +260,7 @@ class SimpleTesting(bt.Strategy):
             self.adx_buy_alert,
             self.aroon_buy_alert,
             self.bb_buy_alert,
-        ].count(True) > 4
+        ].count(True) >= 4
 
         SELL_ALERT = [
             self.sma_sell_alert,
