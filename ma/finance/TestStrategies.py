@@ -404,18 +404,19 @@ class SimpleTesting(bt.Strategy):
             # Check for SELL condition
 
             # Urgency SELL
-            if self.data.close[0] <= self.data.close[-1] * (
-                1 - self.p.sell_down_threshold / 100
-            ):
-                self.log("*** URGENCY SELL")
-                self.log(
-                    "*** Current Price ({}) is {}% lower than previous Price ({})".format(
-                        self.data.close[0],
-                        self.p.sell_down_threshold,
-                        self.data.close[-1],
+            if self.position.size > 0.0 or self.initial_position > 0:
+                if self.data.close[0] <= self.data.close[-1] * (
+                    1 - self.p.sell_down_threshold / 100
+                ):
+                    self.log("*** URGENCY SELL")
+                    self.log(
+                        "*** Current Price ({}) is {}% lower than previous Price ({})".format(
+                            self.data.close[0],
+                            self.p.sell_down_threshold,
+                            self.data.close[-1],
+                        )
                     )
-                )
-                self.execute_sell_position()
+                    self.execute_sell_position()
 
             # Regular SELL
             if SELL_ALERT:
@@ -493,14 +494,17 @@ class SimpleTesting(bt.Strategy):
             )
         )
         if Live:
-            order = exchange.create_order(
-                coins[coin]["product"],
-                Order.Market,
-                "sell",
-                self.size_position,
-                data.close[0],
-            )
-            self.log(order)
+            try:
+                order = exchange.create_order(
+                    coins[coin]["product"],
+                    Order.Market,
+                    "sell",
+                    self.size_position,
+                    data.close[0],
+                )
+                self.log(order)
+            except Exception as e:
+                self.log(e)
         else:
             self.log("*** SELL OFFLINE")
             self.order = self.sell()
