@@ -269,7 +269,7 @@ class SimpleTesting(bt.Strategy):
             self.adx_sell_alert,
             self.aroon_sell_alert,
             self.bb_sell_alert,
-        ].count(True) > 4
+        ].count(True) >= 4
 
         # print Log information
 
