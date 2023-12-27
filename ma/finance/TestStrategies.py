@@ -14,7 +14,7 @@ import os
 
 Live = False
 
-frequenz = "15 min"
+frequenz = "1 h"
 
 coin = "XLM"
 
@@ -375,7 +375,7 @@ class SimpleTesting(bt.Strategy):
                                 )
                             else:
                                 self.log("*** BUY OFFLINE")
-                                self.order = self.buy()
+                                self.order = self.buy(size=10)
                                 self.initial_position = 0
 
                             coins[coin]["last_executed_buy_price"] = data.close[0]

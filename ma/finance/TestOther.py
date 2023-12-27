@@ -61,4 +61,4 @@ def load_transactions_from_file():
 
 if __name__ == "__main__":
     load_transactions_from_exchange()
-    # print(load_transactions_from_file())
+    print(load_transactions_from_file())
