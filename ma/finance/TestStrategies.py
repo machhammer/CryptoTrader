@@ -19,23 +19,23 @@ frequenz = "1 h"
 coin = "XLM"
 
 coins = {
-    "XRP": {"product": "XRP/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-    "SOL": {"product": "SOL/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.3},
-    "XLM": {"product": "XLM/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.1},
-    "VET": {"product": "VET/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.025},
-    "VARA": {"product": "VARA/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.025},
-    "TRB": {"product": "TRB/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.3},
-    "NEAR": {"product": "NEAR/USDC", "last_executed_buy_price": 0, "dist_ratio": 0.05},
+    "XRP": {"product": "XRP/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "SOL": {"product": "SOL/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.3},
+    "XLM": {"product": "XLM/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.1},
+    "VET": {"product": "VET/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.025},
+    "CRO": {"product": "TRB/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.3},
+    "NEAR": {"product": "NEAR/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.05},
+
 }
 
 position_file = "positions.json"
 
-api_key = credentials.provider_1.get("key")
-api_secret = credentials.provider_1.get("secret")
+api_key = credentials.provider_2.get("key")
+api_secret = credentials.provider_2.get("secret")
 
 config = {"apiKey": api_key, "secret": api_secret, "enableRateLimit": True}
 
-exchange = ccxt.coinbase(
+exchange = ccxt.cryptocom(
     {
         "apiKey": api_key,
         "secret": api_secret,
