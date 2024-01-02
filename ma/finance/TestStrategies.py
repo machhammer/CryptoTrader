@@ -20,11 +20,11 @@ coin = "XLM"
 
 coins = {
     "XRP": {"product": "XRP/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-    "SOL": {"product": "SOL/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.3},
-    "XLM": {"product": "XLM/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.1},
-    "VET": {"product": "VET/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.025},
-    "CRO": {"product": "TRB/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.3},
-    "NEAR": {"product": "NEAR/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.05},
+    "SOL": {"product": "SOL/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "XLM": {"product": "XLM/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "VET": {"product": "VET/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.1},
+    "CRO": {"product": "TRB/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "NEAR": {"product": "NEAR/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.1},
 
 }
 
@@ -597,7 +597,7 @@ if __name__ == "__main__":
     )
 
     store = CCXTStore(
-        exchange="coinbase", currency=coin, config=config, retries=5, debug=False
+        exchange="cryptocom", currency=coin, config=config, retries=5, debug=False
     )
 
     data = store.getdata(
