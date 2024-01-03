@@ -24,7 +24,6 @@ coins = {
     "XLM": {"product": "XLM/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
     "CRO": {"product": "CRO/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
     "NEAR": {"product": "NEAR/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-
 }
 
 position_file = "positions.json"
@@ -92,7 +91,7 @@ def get_funding():
             total = total + float(coins[key]["dist_ratio"]) * 10
 
     ratio = (coins[coin]["dist_ratio"] * 10) / total
-    return (exchange.fetch_balance()["USDC"]["free"] * ratio) - 1
+    return (exchange.fetch_balance()["USDT"]["free"] * ratio) - 1
 
 
 def parse_args():
