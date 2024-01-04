@@ -7,12 +7,16 @@ import argparse
 import schedule
 import credentials
 import matplotlib.pyplot as plt
+from datetime import datetime
 from ta.trend import SMAIndicator
 from ta.trend import ADXIndicator
 from ta.trend import AroonIndicator
 from ta.trend import MACD
 from ta.momentum import RSIIndicator
 from ta.volatility import BollingerBands
+
+dataset = None
+has_position = False
 
 params = {
      "sma": 10,
@@ -29,12 +33,12 @@ params = {
 }
 
 
-api_key = credentials.provider_1.get("key")
-api_secret = credentials.provider_1.get("secret")
+api_key = credentials.provider_2.get("key")
+api_secret = credentials.provider_2.get("secret")
 
 config = {"apiKey": api_key, "secret": api_secret, "enableRateLimit": True}
 
-exchange = ccxt.coinbase(
+exchange = ccxt.cryptocom(
     {
         "apiKey": api_key,
         "secret": api_secret,
@@ -42,15 +46,11 @@ exchange = ccxt.coinbase(
     }
 )
 
+def log(txt):
+    dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    txt = "%s - %s" % (dt, txt)
+    logging.info(txt)
 
-def log(self, txt):
-        dt = None
-        try:
-            dt = self.datas[0].datetime.date(0)
-            txt = "%s, %s" % (dt.isoformat(), txt)
-        except:
-            txt = "%s" % (txt)
-        logging.info(txt)
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -63,16 +63,14 @@ def parse_args():
     return parser.parse_args()
 
 
+
 def fetch_data(frequency):
-    logging.info("Fetching new data for: {}".format(coin))
-    bars = exchange.fetch_ohlcv(coin + '/USDC', timeframe=frequency, limit=300)
+
+    bars = exchange.fetch_ohlcv(coin + '/USDT', timeframe=frequency, limit=300)
     df = pd.DataFrame(bars[:-1], columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-    
-    check_buy_sell_signals(df)
-    
-    return df
 
+    return df
 
 
 
@@ -153,32 +151,108 @@ def check_buy_sell_signals(df):
     df['SELL_ALERT'] = df.apply(set_sell_alert, axis=1)
 
 
-    df['ACTION'] = None
+    df['ACTION'] = 0
 
     
-    
 
-def backtrading(df, has_position=False):
-    for i in range(len(df)):
+def backtrading_engine(dataset, has_position=False):
+    for i in range(len(dataset)):
         if i > 1:
             if has_position:
-                df.iloc[i, -1] = np.where((df.iloc[i, -2]==True) & (df.iloc[i, -2] == df.iloc[i-1, -2]),-1, None)
-                has_position = np.where((df.iloc[i, -1]==-1), False, True)
+                dataset.iloc[i, -1] = np.where((dataset.iloc[i, -2]==True) & (dataset.iloc[i, -2] == dataset.iloc[i-1, -2]),-1, 0)
+                has_position = np.where((dataset.iloc[i, -1]==-1), False, True)
             else:
-                df.iloc[i, -1] = np.where((df.iloc[i, -3]==True) & (df.iloc[i, -3] == df.iloc[i-1, -3]), 1, None)
-                has_position = np.where((df.iloc[i, -1]==1), True, False)
+                dataset.iloc[i, -1] = np.where((dataset.iloc[i, -3]==True) & (dataset.iloc[i, -3] == dataset.iloc[i-1, -3]), 1, 0)
+                has_position = np.where((dataset.iloc[i, -1]==1), True, False)
 
 
-def plot_data(df):
+def live_trading_engine(dataset):
+    global has_position
+    i = -1
+    
+    current_buy_ts = dataset.iloc[i, 0]
+    current_buy_alert = dataset.iloc[i, -3]
+    previous_buy_ts = dataset.iloc[i-1, 0]
+    previous_buy_alert = dataset.iloc[i-1, -3]
+    log("Current: {}, Buy: {}".format(current_buy_ts, previous_buy_alert))
+    log("Previous: {}, Buy: {}".format(previous_buy_ts, previous_buy_alert))
+    if (current_buy_alert == True and previous_buy_alert == True):
+        if not has_position:    
+            log("Trading: Ready to BUY")
+            dataset.iloc[i-1, -1] = 1
+            live_buy()
+            has_position = True
+        else:
+            log("Trading: Would BUY but already has position.")
+    else:
+        log("Buy not equal TRUE")
+
+    current_sell_ts = dataset.iloc[i, 0]
+    current_sell_alert = dataset.iloc[i, -2]
+    previous_sell_ts = dataset.iloc[i-1, 0]
+    previous_sell_alert = dataset.iloc[i-1, -2]
+    log("Current: {}, Sell: {}".format(current_sell_ts, previous_sell_alert))
+    log("Previous: {}, Sell: {}".format(previous_sell_ts, previous_sell_alert))
+    if (current_sell_alert == True and previous_sell_alert == True):
+        if has_position:
+            log("Trading: Ready to SELL")
+            dataset.iloc[i-1, -1] = -1
+            live_sell()
+            has_position = False
+        else:
+            log("Trading: Would SELL but no position.")
+    else:
+        log("Sell not equal TRUE")
+
+def live_buy():
+    log("Trading: BUY")
+
+def live_sell():
+    log("Trading: SELL")
+
+
+def data_processing(frequency, trading_mode):
+    global dataset
+    
+    data = fetch_data(frequency)
+    
+    check_buy_sell_signals(data)
+
+    new_data_available = False    
+    if (not dataset is None):
+        data = pd.concat([dataset, data])
+        c_names = list(data.columns.values)
+        data = data.drop_duplicates()
+        new_data = data.merge(dataset, on=['timestamp'], how='left', indicator=True)
+        new_data = new_data[new_data['_merge'] == 'left_only']
+        new_data.drop(new_data.columns[len(new_data.columns)-1], axis=1, inplace=True)
+        new_data = new_data.dropna(axis=1, how='all')
+        if (not new_data.empty):
+            new_data_available = True
+            #log_data = log_data.set_axis(c_names, axis=1)
+            #log(log_data.to_string(index=False))
+
+    if trading_mode == 'live':
+        if new_data_available:
+            live_trading_engine(data)
+    if trading_mode == 'back':
+        backtrading_engine(data)
+
+    if new_data_available or (dataset is None):
+        log("TS: {}, Last Price: {}, Buy: {}, Sell: {}".format(data.iloc[-1, 0], data.iloc[-1, 4], data.iloc[-1, -3], data.iloc[-1, -2]))
+
+    dataset = data.copy(deep=True)
+
+
+def show_plot(df):
 
     figure, axis = plt.subplots(6, figsize=(16,9), gridspec_kw={'height_ratios': [4, 1, 1, 1, 1, 1]})
 
-    axis[0].plot(df['close'])
+    axis[0].plot(df['close'])    
     axis[0].plot(df['bb_top'])
     axis[0].plot(df['bb_bot'])
     axis[0].plot(df['bb_avg'])
-    
-    
+        
     axis[1].plot(df['ACTION'], 'ro')
     
     axis[2].plot(df['rsi'])
@@ -191,8 +265,9 @@ def plot_data(df):
 
     axis[5].plot(df['aroon_up'])
     axis[5].plot(df['aroon_down'])
-        
-    return plt
+
+    plt.show()
+
 
 
 if __name__ == "__main__":
@@ -201,23 +276,25 @@ if __name__ == "__main__":
     coin = args.coin
     frequency = args.frequency
 
+   
     logging.basicConfig(
-        filename="trading-" + coin + ".log",
-        filemode="w",
-        encoding="utf-8",
+        format='%(message)s',
         level=logging.INFO,
+        handlers=[
+            logging.FileHandler(filename="trading-" + coin + ".log", mode="w", encoding="utf-8"),
+            logging.StreamHandler()
+        ]
     )
 
-    data = fetch_data(frequency)
-    backtrading(data)
-    plt = plot_data(data)
-    plt.draw()
+    log("Starting Trader for Coin: {}, Live mode: {}, Frequency: {}".format(coin, Live, frequency))
     
-
     if Live:
-        data = fetch_data(frequency)
-        schedule.every(10).seconds.do(data)
-        plt.draw()
+        data_processing(frequency=frequency, trading_mode='none')
+        schedule.every(1).minutes.do(data_processing, frequency=frequency, trading_mode='live')
         while True:
             schedule.run_pending()
             time.sleep(1)
+    else:
+        data_processing(frequency=frequency, trading_mode='back')
+        show_plot(dataset)
+    
