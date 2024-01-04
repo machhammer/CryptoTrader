@@ -1,10 +1,7 @@
 from datetime import datetime, timedelta
 import credentials
-from dateutil.relativedelta import relativedelta
-import data_provider.DataReader as data_provider
 import backtrader as bt
 from ccxtbt import CCXTStore
-from backtrader import Order
 import argparse
 import logging
 import json
