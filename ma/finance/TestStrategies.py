@@ -14,7 +14,7 @@ import os
 
 Live = False
 
-frequenz = "1 min"
+frequenz = "1 h"
 
 coin = "XLM"
 
