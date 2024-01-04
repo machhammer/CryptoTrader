@@ -85,7 +85,10 @@ def get_funding():
     total = 0
     coin_keys = coins.keys()
     for key in coin_keys:
-        current_balance = exchange.fetch_balance()[key]["free"]
+        try:
+            current_balance = exchange.fetch_balance()[key]["free"]
+        except:
+            current_balance = 0
         current_price = exchange.fetch_ticker(coins[key]["product"])["last"]
         if current_balance * current_price < 1:
             total = total + float(coins[key]["dist_ratio"]) * 10

@@ -8,31 +8,41 @@ import backtrader.feeds as btfeeds
 from decimal import Decimal
 
 
-api_key = credentials.provider_1.get("key")
-api_secret = credentials.provider_1.get("secret")
+api_key = credentials.provider_2.get("key")
+api_secret = credentials.provider_2.get("secret")
 
 
-exchange = ccxt.coinbase({
+exchange = ccxt.cryptocom({
     'apiKey': api_key,
     'secret': api_secret,
     # 'verbose': True,  # for debug output
 })
 
-print(exchange)
 
-symbol = 'XRP-USDC'
-order_type = 'limit'
-side = 'sell'
-amount = 1
-order_price = 0.7
-#stop_params = {
-#    'triggerPrice': 0.700
-#}
+coin = "CRO"
 
-limit_order = exchange.create_order(symbol, order_type, side, amount, order_price)
+coins = {
+    "XRP": {"product": "XRP/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "SOL": {"product": "SOL/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "XLM": {"product": "XLM/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "CRO": {"product": "CRO/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+    "NEAR": {"product": "NEAR/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
+}
 
-#limit_order = exchange.create_order(symbol, order_type, side, amount, order_price)
+def get_funding():
+    total = 0
+    coin_keys = coins.keys()
+    for key in coin_keys:
+        print(key)
+        try:
+            current_balance = exchange.fetch_balance()[key]["free"]
+        except:
+            current_balance = 0
+        current_price = exchange.fetch_ticker(coins[key]["product"])["last"]
+        if current_balance * current_price < 1:
+            total = total + float(coins[key]["dist_ratio"]) * 10
 
-#order = exchange.create_order(symbol, order_type, side, amount)
+    ratio = (coins[coin]["dist_ratio"] * 10) / total
+    return (exchange.fetch_balance()["USDT"]["free"] * ratio) - 1
 
-pprint(limit_order)
+print(get_funding())
