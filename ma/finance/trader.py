@@ -173,7 +173,7 @@ if __name__ == "__main__":
         format='%(message)s',
         level=logging.INFO,
         handlers=[
-            logging.FileHandler(filename="trading-" + coin + ".log", mode="w", encoding="utf-8"),
+            logging.FileHandler(filename="trading-" + coin + "-v2.log", mode="w", encoding="utf-8"),
             logging.StreamHandler()
         ]
     )
