@@ -18,31 +18,25 @@ exchange = ccxt.cryptocom({
     # 'verbose': True,  # for debug output
 })
 
+print(exchange)
+usdt = exchange.fetch_balance()["USDT"]["free"]
+print(usdt)
 
-coin = "CRO"
+print("**************** create order")
 
-coins = {
-    "XRP": {"product": "XRP/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-    "SOL": {"product": "SOL/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-    "XLM": {"product": "XLM/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-    "CRO": {"product": "CRO/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-    "NEAR": {"product": "NEAR/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
-}
+symbol = 'XRP/USDT'
+order_type = 'market'
+side = 'sell'
+amount = 2
+order_price = 0.576
+#stop_params = {
+#    'triggerPrice': 0.700
+#}
 
-def get_funding():
-    total = 0
-    coin_keys = coins.keys()
-    for key in coin_keys:
-        print(key)
-        try:
-            current_balance = exchange.fetch_balance()[key]["free"]
-        except:
-            current_balance = 0
-        current_price = exchange.fetch_ticker(coins[key]["product"])["last"]
-        if current_balance * current_price < 1:
-            total = total + float(coins[key]["dist_ratio"]) * 10
+limit_order = exchange.create_order(symbol, order_type, side, amount, order_price)
 
-    ratio = (coins[coin]["dist_ratio"] * 10) / total
-    return (exchange.fetch_balance()["USDT"]["free"] * ratio) - 1
+#limit_order = exchange.create_order(symbol, order_type, side, amount, order_price)
 
-print(get_funding())
+#order = exchange.create_order(symbol, order_type, side, amount)
+
+pprint(limit_order)

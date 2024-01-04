@@ -14,7 +14,7 @@ import os
 
 Live = False
 
-frequenz = "1 h"
+frequenz = "1 min"
 
 coin = "XLM"
 
@@ -73,7 +73,7 @@ def synchronize_coins_dict():
 
 def coins_dict_to_file():
     with open(position_file, "w") as pf:
-        json.dump(coins, pf)
+        json.dump(coins, pf, indent = 2)
 
 
 def coins_dict_from_file():
@@ -342,7 +342,7 @@ class SimpleTesting(bt.Strategy):
                         )
                     )
                     if self.buy_confirmation_2:
-                        try:
+                        #try:
                             if Live:
                                 current_balance = get_funding()
                                 self.size_position = current_balance / data.close[0]
@@ -360,7 +360,7 @@ class SimpleTesting(bt.Strategy):
                                 )
                                 order = exchange.create_order(
                                     coins[coin]["product"],
-                                    Order.Market,
+                                    "market",
                                     "buy",
                                     self.size_position,
                                     data.close[0],
@@ -382,8 +382,8 @@ class SimpleTesting(bt.Strategy):
                             coins[coin]["last_executed_buy_price"] = data.close[0]
                             coins_dict_to_file()
                             self.reset_flags()
-                        except Exception as e:
-                            self.log(e)
+                        #except Exception as e:
+                        #    self.log(e)
 
                     else:
                         if self.buy_confirmation_1:
@@ -420,6 +420,7 @@ class SimpleTesting(bt.Strategy):
                     self.execute_sell_position()
 
             # Regular SELL
+
             if SELL_ALERT:
                 self.log("*** SELL ALERT set")
                 self.log("*** Excecuted Buy: {}".format(self.executed_buy_price))
@@ -495,17 +496,17 @@ class SimpleTesting(bt.Strategy):
             )
         )
         if Live:
-            try:
+            #try:
                 order = exchange.create_order(
                     coins[coin]["product"],
-                    Order.Market,
+                    "market",
                     "sell",
                     self.size_position,
                     data.close[0],
                 )
                 self.log(order)
-            except Exception as e:
-                self.log(e)
+            #except Exception as e:
+            #    self.log(e)
         else:
             self.log("*** SELL OFFLINE")
             self.order = self.sell()

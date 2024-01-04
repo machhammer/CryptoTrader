@@ -17,6 +17,9 @@ from ta.volatility import BollingerBands
 
 dataset = None
 has_position = False
+position = {'price': 0, 'size': 0, 'total': 0}
+pnl = 0
+commission = 0.075 / 100
 
 params = {
      "sma": 10,
@@ -155,16 +158,40 @@ def check_buy_sell_signals(df):
 
     
 
-def backtrading_engine(dataset, has_position=False):
+def backtrading_engine(dataset):
+    global has_position
     for i in range(len(dataset)):
         if i > 1:
             if has_position:
                 dataset.iloc[i, -1] = np.where((dataset.iloc[i, -2]==True) & (dataset.iloc[i, -2] == dataset.iloc[i-1, -2]),-1, 0)
+                if (dataset.iloc[i, -1] == -1): offline_sell(dataset.iloc[i, 4], dataset.iloc[i, 0])
                 has_position = np.where((dataset.iloc[i, -1]==-1), False, True)
             else:
                 dataset.iloc[i, -1] = np.where((dataset.iloc[i, -3]==True) & (dataset.iloc[i, -3] == dataset.iloc[i-1, -3]), 1, 0)
+                if (dataset.iloc[i, -1] == 1): offline_buy(dataset.iloc[i, 4], dataset.iloc[i, 0])
                 has_position = np.where((dataset.iloc[i, -1]==1), True, False)
 
+def offline_buy(price, ts):
+    global position
+    global pnl
+    position['price'] = price
+    position['size'] = 10
+    position['total'] = position['price'] * position['size']
+    position['total'] = position['total'] - position['total'] * commission
+    log("Offline Trading:\t{}\tBuy Price:\t{:.5f}\tSize:\t{:.5f}\tTotal:\t{:.5f}\t\tCommission:\t{:.5f}".format(ts, price, position['size'], position['total'], position['total'] * commission))
+
+def offline_sell(price, ts):
+    global position
+    global pnl
+    sell_com = price * position['size'] * commission
+    sell_total = price * position['size'] - sell_com
+    pnl = pnl + (sell_total - position['total'])
+    log("Offline Trading:\t{}\tSell Price:\t{:.5f}\tSize:\t{:.5f}\tTotal:\t{:.5f}\t\tCommission:\t{:.5f}\tPnL:\t{:.5f}".format(ts, price, position['size'], sell_total, sell_com, pnl))
+    position['price'] = 0
+    position['size'] = 0
+    position['total'] = 0
+    
+    
 
 def live_trading_engine(dataset):
     global has_position
@@ -246,25 +273,40 @@ def data_processing(frequency, trading_mode):
 
 def show_plot(df):
 
-    figure, axis = plt.subplots(6, figsize=(16,9), gridspec_kw={'height_ratios': [4, 1, 1, 1, 1, 1]})
+    figure, axis = plt.subplots(5, sharex=True, figsize=(16,9), gridspec_kw={'height_ratios': [4, 1, 1, 1, 1]})
 
-    axis[0].plot(df['close'])    
-    axis[0].plot(df['bb_top'])
-    axis[0].plot(df['bb_bot'])
-    axis[0].plot(df['bb_avg'])
-        
-    axis[1].plot(df['ACTION'], 'ro')
+    axis[0].set_title(coin, fontsize='small', loc='left')
+    axis[0].plot(df['timestamp'], df['close'], linewidth=2)
+    axis[0].plot(df['timestamp'], df['bb_top'])
+    axis[0].plot(df['timestamp'], df['bb_bot'])
+    axis[0].plot(df['timestamp'], df['bb_avg'])
     
-    axis[2].plot(df['rsi'])
+    action_copy = df.copy(deep=True)
+    action_copy = action_copy[action_copy['ACTION'] == 1]
+    axis[0].scatter(action_copy['timestamp'],  action_copy['close'], c ="blue")
+    action_copy = None
+
+    action_copy = df.copy(deep=True)
+    action_copy = action_copy[action_copy['ACTION'] == -1]
+    axis[0].scatter(action_copy['timestamp'],  action_copy['close'], c ="red")
+    action_copy = None
     
-    axis[3].plot(df['macd'])
-    axis[3].plot(df['macd_signal'])
+    axis[1].set_title("RSI", fontsize='small', loc='left')
+    axis[1].plot(df['timestamp'], df['rsi'])
+    axis[1].axhline(y=30, color='g', linestyle='dotted')
+    axis[1].axhline(y=70, color='g', linestyle='dotted')
 
-    axis[4].plot(df['adx_plus'])
-    axis[4].plot(df['adx_neg'])
+    axis[2].set_title("MACD", fontsize='small', loc='left')
+    axis[2].plot(df['timestamp'], df['macd'])
+    axis[2].plot(df['timestamp'], df['macd_signal'])
 
-    axis[5].plot(df['aroon_up'])
-    axis[5].plot(df['aroon_down'])
+    axis[3].set_title("ADX", fontsize='small', loc='left')
+    axis[3].plot(df['timestamp'], df['adx_plus'])
+    axis[3].plot(df['timestamp'], df['adx_neg'])
+
+    axis[4].set_title("Aroon", fontsize='small', loc='left')
+    axis[4].plot(df['timestamp'], df['aroon_up'])
+    axis[4].plot(df['timestamp'], df['aroon_down'])
 
     plt.show()
 
@@ -296,5 +338,6 @@ if __name__ == "__main__":
             time.sleep(1)
     else:
         data_processing(frequency=frequency, trading_mode='back')
+        print(pnl)
         show_plot(dataset)
     
