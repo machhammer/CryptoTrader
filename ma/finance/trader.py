@@ -22,9 +22,6 @@ exchange = exchanges.cryptocom()
 coins = {
     "XRP": 0.2,
     "SOL": 0.2,
-    "XLM": 0.2,
-    "CRO": 0.2,
-    "NEAR": 0.2,
 }
 
 # Helper Functions
