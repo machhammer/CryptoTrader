@@ -1,14 +1,7 @@
-from datetime import datetime, timedelta
 import credentials
-from dateutil.relativedelta import relativedelta
-import data_provider.DataReader as data_provider
-import backtrader as bt
-from backtrader import Order
-from backtrader import Position
-
-from ccxtbt import CCXTStore
+import json
 import ccxt
-import warnings
+
 
 coin = "XLM"
 
@@ -33,24 +26,11 @@ exchange = ccxt.cryptocom(
     }
 )
 
-def get_funding():
-    total = 0
-    coin_keys = coins.keys()
-    for key in coin_keys:
-        print(key)
-        try:
-            current_balance = exchange.fetch_balance()[key]["free"]
-        except:
-            current_balance = 0
-        current_price = exchange.fetch_ticker(coins[key]["product"])["last"]
-        if current_balance * current_price < 1:
-            total = total + float(coins[key]["dist_ratio"]) * 10
+id ='4611686044110401397'
 
-    ratio = (coins[coin]["dist_ratio"] * 10) / total
-    return (exchange.fetch_balance()["USDT"]["free"] * ratio) - 1
+trades = exchange.fetch_my_trades(symbol=None, since=None, limit=None, params={})
+print(json.dumps(trades, indent=4))
 
-
-print(exchange.fetch_balance()["USDT"]["free"])
-
-print (get_funding())
-
+for trade in trades:
+    if (trade['order'] == id):
+        print(trade['price'], trade['amount'], trade['side'], trade['fee']['cost'])

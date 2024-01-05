@@ -1,19 +1,9 @@
-import pandas as pd
-import numpy as np
 
-data1 = {'Name': ['Tom', 'nick', 'krish', 'jack'],
-        'Age': [20, 21, 19, 18]}
+import json
 
-df1 = pd.DataFrame(data1)
+order = {'info': {'client_oid': '1704465267511', 'order_id': '4611686044110401397'}, 'id': '4611686044110401397', 'clientOrderId': '1704465267511', 'timestamp': None, 'datetime': None, 'lastTradeTimestamp': None, 'status': None, 'symbol': 'XLM/USDT', 'type': None, 'timeInForce': None, 'postOnly': None, 'side': None, 'price': None, 'amount': None, 'filled': None, 'remaining': None, 'average': None, 'cost': None, 'fee': {'currency': None, 'cost': None}, 'trades': [], 'fees': [{'currency': None, 'cost': None}], 'lastUpdateTimestamp': None, 'reduceOnly': None, 'stopPrice': None, 'triggerPrice': None, 'takeProfitPrice': None, 'stopLossPrice': None}
 
+print (json.dumps(order, indent=4))
 
-
-print(df1)
-
-print("********")
-
-for i in range(len(df1)):
-    print(df1.iloc[i, 1])
-
-
-print(df1.iloc[-1, 0])
+print(order['id'])
+print(order['fee'])

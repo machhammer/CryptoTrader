@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import json
 import time
 import logging
 import argparse
@@ -10,20 +11,23 @@ from datetime import datetime
 
 previous_dataset = None
 has_position = False
-position = {"price": 0, "size": 0, "total": 0}
+position = {'price': 0, 'size': 0, 'total': 0}
 pnl = 0
 commission = 0.075 / 100
+base_currency = 'USDT'
+coin = None
 
 exchange = exchanges.cryptocom()
 
+coins = {
+    "XRP": 0.2,
+    "SOL": 0.2,
+    "XLM": 0.2,
+    "CRO": 0.2,
+    "NEAR": 0.2,
+}
+
 # Helper Functions
-
-
-def log(txt):
-    dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    txt = "%s - %s" % (dt, txt)
-    logging.info(txt)
-
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -38,13 +42,56 @@ def parse_args():
     return parser.parse_args()
 
 
-def fetch_data(frequency):
-    bars = exchange.fetch_ohlcv(coin + "/USDT", timeframe=frequency, limit=300)
+def fetch_data(frequency, coin):
+    bars = exchange.fetch_ohlcv(coin + "/" + base_currency, timeframe=frequency, limit=300)
     df = pd.DataFrame(
         bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
     )
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     return df
+
+
+def get_initial_position(coin):
+    global position
+    global has_position
+    last_trade = exchange.fetch_my_trades(symbol=coin + "/" + base_currency, since=None, limit=None, params={})[-1]
+    if last_trade['side'] == 'buy':
+        position['price'] = last_trade['price']
+        position['size'] = exchange.fetch_balance()[coin]["free"]
+        position['total'] = last_trade['price'] * last_trade['amount']
+        has_position = True
+
+
+def get_funding(coin):
+    total = 0
+    coin_keys = coins.keys()
+    for key in coin_keys:
+        try:
+            current_balance = exchange.fetch_balance()[key]["free"]
+        except:
+            current_balance = 0
+        current_price = exchange.fetch_ticker(coin + "/" + base_currency)["last"]
+        if current_balance * current_price < 1:
+            total = total + float(coins[coin]) * 10
+
+    ratio = (coins[coin] * 10) / total
+    return (exchange.fetch_balance()[base_currency]["free"] * ratio) - 1
+
+
+def get_trade_price(coin, order_id):
+    trades = exchange.fetch_my_trades(symbol=coin + "/" + base_currency, since=None, limit=None, params={})
+    total_sum = 0
+    amount_sum = 0
+    found = False
+    while not found:
+        time.sleep(5)
+        for trade in trades:
+            if (trade['order'] == order_id):
+                found = True
+                total_sum = total_sum + (trade['price'] * trade['amount'])
+                amount_sum = amount_sum + trade['amount']
+    final_price = total_sum / amount_sum
+    return final_price
 
 
 # Trading Functions
@@ -68,7 +115,7 @@ def offline_buy(price, ts):
     position["size"] = 10
     position["total"] = position["price"] * position["size"]
     position["total"] = position["total"] - position["total"] * commission
-    log(
+    logging.info(
         "Offline Trading:\t{}\tBuy Price:\t{:.5f}\tSize:\t{:.5f}\tTotal:\t{:.5f}\t\tCommission:\t{:.5f}".format(
             ts,
             price,
@@ -85,7 +132,7 @@ def offline_sell(price, ts):
     sell_com = price * position["size"] * commission
     sell_total = price * position["size"] - sell_com
     pnl = pnl + (sell_total - position["total"])
-    log(
+    logging.info(
         "Offline Trading:\t{}\tSell Price:\t{:.5f}\tSize:\t{:.5f}\tTotal:\t{:.5f}\t\tCommission:\t{:.5f}\tPnL:\t{:.5f}".format(
             ts, price, position["size"], sell_total, sell_com, pnl
         )
@@ -98,12 +145,39 @@ def offline_sell(price, ts):
 # Live Trading
 
 
-def live_buy():
-    log("Trading: BUY")
+def live_buy(price, ts):
+    funding = get_funding(coin)
+    size = funding / price
+    order = exchange.create_order(
+        coin + "/" + base_currency,
+        "market",
+        "buy",
+        size,
+        price,
+    )
+    price = get_trade_price(coin, order['id'])
+    logging.info("Trading BUY: {}, order id: {}, price: {}".format(ts, order['id'], price))
 
 
-def live_sell():
-    log("Trading: SELL")
+def live_sell(ts):
+    global position
+    global pnl
+    
+    order = exchange.create_order(
+        coin + "/" + base_currency,
+        "market",
+        "sell",
+        position['size'],
+    )
+    position["price"] = 0
+    position["size"] = 0
+    position["total"] = 0
+        
+    price = get_trade_price(coin, order['id'])
+    pnl = pnl + price - position['price']
+    
+    logging.info("Trading SELL: {}, order id: {}, price: {}, PnL: {}".format(ts, order['id'], price, pnl))
+    
 
 
 # Data Processing
@@ -111,9 +185,8 @@ def live_sell():
 
 def data_processing(frequency, trading_mode):
     global previous_dataset
-    data = fetch_data(frequency)
-
-    log("Mode {}. Loading new data.".format(trading_mode))
+    global position
+    data = fetch_data(frequency, coin)
 
     new_data_available = True
     if not previous_dataset is None:
@@ -128,20 +201,18 @@ def data_processing(frequency, trading_mode):
         if new_data.empty:
             new_data_available = False
 
-    log("Mode {}. Loaded: {}".format(trading_mode, len(data)))
+    logging.info("Mode: {}, Loaded: {}, new: {}".format(trading_mode, len(data), new_data_available))
 
     previous_dataset = data.copy(deep=True)
 
     if trading_mode == "live":
         if new_data_available:
-            buy_sell_decision = V1.live_trading_model(data)
-            log("Mode {}. Decision: {}".format(trading_mode, buy_sell_decision))
+            buy_sell_decision = V1.live_trading_model(data, has_position, position)
             if buy_sell_decision == 1:
                 live_buy()
             if buy_sell_decision == -1:
-                live_buy()
-        else:
-            log("Mode {}. No new data.")
+                live_sell()
+
     if trading_mode == "back":
         dataset = V1.backtrading_model(data)
         V1.show_plot(dataset)
@@ -149,34 +220,40 @@ def data_processing(frequency, trading_mode):
 
 
 if __name__ == "__main__":
+
     args = parse_args()
     Live = True if args.live.lower() == "true" else False
     coin = args.coin
     frequency = args.frequency
 
     logging.basicConfig(
-        format="%(message)s",
+        format="%(asctime)s - %(levelname)s - %(message)s",
         level=logging.INFO,
         handlers=[
             logging.FileHandler(
                 filename="trading-" + coin + "-v2.log", mode="w", encoding="utf-8"
             ),
             logging.StreamHandler(),
+            
         ],
     )
 
-    log(
+    logging.info(
         "Starting Trader for Coin: {}, Live mode: {}, Frequency: {}".format(
             coin, Live, frequency
         )
     )
 
+    get_initial_position(coin)
+    logging.info("Initial Position: Size: {}, Price: {}, Total: {}".format(position['size'], position['price'], position['total']))
+
+    
     if Live:
         data_processing(frequency=frequency, trading_mode="live")
-        schedule.every(1).minutes.do(
+        schedule.every(15).minutes.do(
             data_processing, frequency=frequency, trading_mode="live"
         )
-        log("Wainting 30 minutes.")
+        logging.info("Wainting 15 minutes.")
 
         while True:
             schedule.run_pending()

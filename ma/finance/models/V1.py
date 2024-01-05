@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 
 from ta.trend import SMAIndicator
@@ -21,10 +22,13 @@ params = {
     "bb_dev": 2,
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
+    "profit_threshold": 73,
+    "urgency_sell": 3,
 }
 
 
 def generate_buy_sell_signals(df):
+
     indicator_SMA = SMAIndicator(close=df["close"], window=params["sma"])
     df["sma"] = indicator_SMA.sma_indicator()
 
@@ -143,14 +147,13 @@ def set_sell_alert(df):
     ].count(True) >= 4
 
 
-def live_trading_model(dataset):
+def live_trading_model(dataset, has_position=False, position=None):
     dataset = generate_buy_sell_signals(dataset)
 
     buy_sell_decision = 0
 
     i = -1
 
-    has_position = False
     current_buy_alert = dataset.iloc[i, -3]
     previous_buy_alert = dataset.iloc[i - 1, -3]
     if current_buy_alert == True and previous_buy_alert == True:
@@ -159,14 +162,22 @@ def live_trading_model(dataset):
             buy_sell_decision = 1
             has_position = True
 
+    if has_position:
+        if (dataset.iloc[i, 4] <= (dataset.iloc[i-1, 4] * (1 - params["urgency_sell"] / 100))):
+            logging.info("{}, URGENCY SELL - Price: {}, Position Price: {}".format(dataset.iloc[i, 0], dataset.iloc[i, 4]))
+
+                
     current_sell_alert = dataset.iloc[i, -2]
     previous_sell_alert = dataset.iloc[i - 1, -2]
     if current_sell_alert == True and previous_sell_alert == True:
         if has_position:
-            dataset.iloc[i - 1, -1] = -1
-            buy_sell_decision = -1
-            has_position = False
+            if position['price'] >= (1 + params["profit_threshold"] / 100) * dataset.iloc[i, 4]:
+                dataset.iloc[i - 1, -1] = -1
+                buy_sell_decision = -1
+                has_position = False
 
+    logging.info("{}, Price: {}, Previous Buy: {}, Current Buy: {}, Previous Sell: {}, Current Sell: {} -> {}".format(dataset.iloc[i, 0], dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
+    
     return buy_sell_decision
 
 
