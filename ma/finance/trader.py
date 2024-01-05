@@ -149,6 +149,7 @@ def offline_sell(price, ts):
 
 
 def live_buy(price, ts):
+    global position
     funding = get_funding(coin)
     size = funding / price
     order = exchange.create_order(
@@ -159,6 +160,9 @@ def live_buy(price, ts):
         price,
     )
     price = get_trade_price(coin, order['id'])
+    position["price"] = price
+    position["size"] = size
+    position["total"] = price * size
     logging.info("Trading BUY: {}, order id: {}, price: {}".format(ts, order['id'], price))
 
 
