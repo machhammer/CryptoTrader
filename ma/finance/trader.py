@@ -245,10 +245,10 @@ if __name__ == "__main__":
     
     if Live:
         data_processing(frequency=frequency, trading_mode="live")
-        schedule.every(15).minutes.do(
+        schedule.every(30).minutes.do(
             data_processing, frequency=frequency, trading_mode="live"
         )
-        logging.info("Wainting 15 minutes.")
+        logging.info("Waiting 30 minutes.")
 
         while True:
             schedule.run_pending()
