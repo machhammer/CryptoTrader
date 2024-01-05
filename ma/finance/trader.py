@@ -189,6 +189,7 @@ def live_sell(ts):
 def data_processing(frequency, trading_mode):
     global previous_dataset
     global position
+    global has_position
     data = fetch_data(frequency, coin)
 
     new_data_available = True
@@ -213,8 +214,10 @@ def data_processing(frequency, trading_mode):
             buy_sell_decision = V1.live_trading_model(data, has_position, position)
             if buy_sell_decision == 1:
                 live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
+                has_position = True
             if buy_sell_decision == -1:
                 live_sell(data.iloc[-1, 4])
+                has_position = False
 
     if trading_mode == "back":
         dataset = V1.backtrading_model(data)
