@@ -177,7 +177,7 @@ def live_trading_model(dataset, has_position=False, position=None):
                 buy_sell_decision = -1
                 has_position = False
 
-    logging.info("{}, Price: {}, Previous Buy: {}, Current Buy: {}, Previous Sell: {}, Current Sell: {} -> {}".format(dataset.iloc[i, 0], dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
+    logging.info("{}, Price: {}, Has Postion: {},  Previous Buy: {}, Current Buy: {}, Previous Sell: {}, Current Sell: {} -> {}".format(dataset.iloc[i, 0], has_position, dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
     
     return buy_sell_decision
 
