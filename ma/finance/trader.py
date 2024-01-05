@@ -20,8 +20,11 @@ coin = None
 exchange = exchanges.cryptocom()
 
 coins = {
-    "XRP": 0.2,
-    "SOL": 0.2,
+    "XRP": 0.25,
+    "SOL": 0.25,
+    "VELO": 0.25,
+    "POWR": 0.25
+
 }
 
 # Helper Functions
@@ -51,12 +54,15 @@ def fetch_data(frequency, coin):
 def get_initial_position(coin):
     global position
     global has_position
-    last_trade = exchange.fetch_my_trades(symbol=coin + "/" + base_currency, since=None, limit=None, params={})[-1]
-    if last_trade['side'] == 'buy':
-        position['price'] = last_trade['price']
-        position['size'] = exchange.fetch_balance()[coin]["free"]
-        position['total'] = last_trade['price'] * last_trade['amount']
-        has_position = True
+    try:
+        last_trade = exchange.fetch_my_trades(symbol=coin + "/" + base_currency, since=None, limit=None, params={})[-1]
+        if last_trade['side'] == 'buy':
+            position['price'] = last_trade['price']
+            position['size'] = exchange.fetch_balance()[coin]["free"]
+            position['total'] = last_trade['price'] * last_trade['amount']
+            has_position = True
+    except:
+        has_position = False
 
 
 def get_funding(coin):
@@ -206,9 +212,9 @@ def data_processing(frequency, trading_mode):
         if new_data_available:
             buy_sell_decision = V1.live_trading_model(data, has_position, position)
             if buy_sell_decision == 1:
-                live_buy()
+                live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
             if buy_sell_decision == -1:
-                live_sell()
+                live_sell(data.iloc[-1, 4])
 
     if trading_mode == "back":
         dataset = V1.backtrading_model(data)
