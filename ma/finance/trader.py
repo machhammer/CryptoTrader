@@ -61,6 +61,14 @@ def get_initial_position(coin):
             position['size'] = exchange.fetch_balance()[coin]["free"]
             position['total'] = last_trade['price'] * last_trade['amount']
             has_position = True
+        else:
+            current_balance = exchange.fetch_balance()[coin]["free"]
+            current_price = exchange.fetch_ticker(coin + "/" + base_currency)["last"]
+            if current_balance * current_price > 1:
+                position['price'] = current_price
+                position['size'] = current_balance
+                position['total'] = current_balance * current_price
+                has_position = True
     except:
         has_position = False
 
