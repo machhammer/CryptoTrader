@@ -86,10 +86,9 @@ def get_funding(coin):
             current_balance = 0
         current_price = exchange.fetch_ticker(key + "/" + base_currency)["last"]
         if current_balance * current_price < 1:
-            total = total + float(coins[coin]) * 10
-
+            total = total + float(coins[key]) * 10
     ratio = (coins[coin] * 10) / total
-    return (exchange.fetch_balance()[base_currency]["free"] * ratio) - 1
+    return (exchange.fetch_balance()[base_currency]["free"] * ratio) - 3
 
 
 def get_trade_price(coin, order_id):
