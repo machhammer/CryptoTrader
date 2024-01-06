@@ -84,7 +84,7 @@ def get_funding(coin):
             current_balance = exchange.fetch_balance()[key]["free"]
         except:
             current_balance = 0
-        current_price = exchange.fetch_ticker(coin + "/" + base_currency)["last"]
+        current_price = exchange.fetch_ticker(key + "/" + base_currency)["last"]
         if current_balance * current_price < 1:
             total = total + float(coins[coin]) * 10
 
