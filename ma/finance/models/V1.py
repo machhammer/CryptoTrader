@@ -188,8 +188,8 @@ def live_trading_model(dataset, has_position=False, position=None):
                 logging.info("Sell")
             else:
                 logging.info("Sell Condition 1 not met!")
-                logging.info("Condition 1: Sell if Current Price: {} <= Price: {}".format(dataset.iloc[i, 4], (1 - params["profit_threshold"] / 100) * position['price']))
-                if dataset.iloc[i, 4] >= (1 - params["profit_threshold"] / 100) * position['price']:
+                logging.info("Condition 2: Sell if Current Price: {} <= Price: {}".format(dataset.iloc[i, 4], (1 - params["profit_threshold"] / 100) * position['price']))
+                if dataset.iloc[i, 4] <= (1 - params["profit_threshold"] / 100) * position['price']:
                     logging.info("Sell condition 2 met!")
                     dataset.iloc[i - 1, -1] = -1
                     buy_sell_decision = -1

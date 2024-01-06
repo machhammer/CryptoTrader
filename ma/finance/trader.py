@@ -162,7 +162,10 @@ def offline_sell(price, ts):
 def live_buy(price, ts):
     global position
     global has_position
+    
+    time.sleep(randint(1,3))
     funding = get_funding(coin)
+    
     size = funding / price
     logging.info("Prepare BUY: Funding {}, Price: {}, Size: {}, Coin: {}".format(funding, price, size, coin))
     order = exchange.create_order(
@@ -185,6 +188,7 @@ def live_sell(ts):
     global pnl
     global has_position
     
+    time.sleep(randint(1,3))
     logging.info("Prepare SELL: Size: {}, Coin: {}".format(position['size'], coin))
 
     order = exchange.create_order(
