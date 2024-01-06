@@ -191,7 +191,7 @@ def live_trading_model(dataset, has_position=False, position=None):
                 logging.info("Sell condition not met!")
 
 
-    logging.info("{}, Has Position: {}, Price: {}, Previous Buy: {}, Current Buy: {}, Previous Sell: {}, Current Sell: {} -> {}".format(dataset.iloc[i, 0], has_position, dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
+    logging.info("{}, Has Pos: {}, O Price: {}, C Price: {}, P Buy: {}, C Buy: {}, P Sell: {}, C Sell: {} -> {}".format(dataset.iloc[i, 0], has_position, position['price'], dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
     
     return buy_sell_decision
 

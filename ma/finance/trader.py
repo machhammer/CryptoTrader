@@ -6,6 +6,7 @@ import logging
 import argparse
 import schedule
 import exchanges
+from random import randint
 from models import V1
 from datetime import datetime
 
@@ -69,6 +70,7 @@ def get_initial_position(coin):
                 position['size'] = current_balance
                 position['total'] = current_balance * current_price
                 has_position = True
+            has_position = False
     except:
         has_position = False
 
@@ -76,6 +78,7 @@ def get_initial_position(coin):
 def get_funding(coin):
     total = 0
     coin_keys = coins.keys()
+    time.sleep(randint(1,5))
     for key in coin_keys:
         try:
             current_balance = exchange.fetch_balance()[key]["free"]
@@ -158,8 +161,10 @@ def offline_sell(price, ts):
 
 def live_buy(price, ts):
     global position
+    global has_position
     funding = get_funding(coin)
     size = funding / price
+    logging.info("Prepare BUY: Funding {}, Price: {}, Size: {}, Coin: {}".format(funding, price, size, coin))
     order = exchange.create_order(
         coin + "/" + base_currency,
         "market",
@@ -171,12 +176,14 @@ def live_buy(price, ts):
     position["price"] = price
     position["size"] = size
     position["total"] = price * size
+    has_position = True
     logging.info("Trading BUY: {}, order id: {}, price: {}".format(ts, order['id'], price))
 
 
 def live_sell(ts):
     global position
     global pnl
+    global has_position
     
     order = exchange.create_order(
         coin + "/" + base_currency,
@@ -191,6 +198,8 @@ def live_sell(ts):
     price = get_trade_price(coin, order['id'])
     pnl = pnl + price - position['price']
     
+    has_position = False
+
     logging.info("Trading SELL: {}, order id: {}, price: {}, PnL: {}".format(ts, order['id'], price, pnl))
     
 
@@ -202,6 +211,8 @@ def data_processing(frequency, trading_mode):
     global previous_dataset
     global position
     global has_position
+
+    time.sleep(randint(1,5))
     data = fetch_data(frequency, coin)
 
     new_data_available = True
@@ -261,7 +272,7 @@ if __name__ == "__main__":
     )
 
     get_initial_position(coin)
-    logging.info("Initial Position: Size: {}, Price: {}, Total: {}".format(position['size'], position['price'], position['total']))
+    logging.info("Has Position: {}, Initial Position: Size: {}, Price: {}, Total: {}".format(has_position, position['size'], position['price'], position['total']))
 
     
     if Live:
