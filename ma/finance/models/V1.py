@@ -165,7 +165,7 @@ def live_trading_model(dataset, has_position=False, position=None):
             has_position = True
             logging.info("Buy")
 
-    logging.info("URGENCY SELL - Current Price: {}, Position Price: {}".format(dataset.iloc[i, 4], (dataset.iloc[i-1, 4] * (1 - params["urgency_sell"] / 100))))
+
 
     if has_position:
         if (dataset.iloc[i, 4] <= (dataset.iloc[i-1, 4] * (1 - params["urgency_sell"] / 100))):
