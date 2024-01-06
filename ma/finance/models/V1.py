@@ -22,7 +22,7 @@ params = {
     "bb_dev": 2,
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
-    "profit_threshold": 73,
+    "profit_threshold": 2,
     "urgency_sell": 3,
 }
 
@@ -157,28 +157,41 @@ def live_trading_model(dataset, has_position=False, position=None):
     current_buy_alert = dataset.iloc[i, -3]
     previous_buy_alert = dataset.iloc[i - 1, -3]
     if current_buy_alert == True and previous_buy_alert == True:
+        logging.info("Buy Alert!")
         if not has_position:
+            logging.info("Has no Postion")
             dataset.iloc[i - 1, -1] = 1
             buy_sell_decision = 1
             has_position = True
+            logging.info("Buy")
+
+    logging.info("URGENCY SELL - Current Price: {}, Position Price: {}".format(dataset.iloc[i, 4], (dataset.iloc[i-1, 4] * (1 - params["urgency_sell"] / 100))))
 
     if has_position:
         if (dataset.iloc[i, 4] <= (dataset.iloc[i-1, 4] * (1 - params["urgency_sell"] / 100))):
-            logging.info("{}, URGENCY SELL - Price: {}, Position Price: {}".format(dataset.iloc[i, 0], dataset.iloc[i, 4]))
+            logging.info("URGENCY SELL - Current Price: {}, Position Price: {}".format(dataset.iloc[i, 4], (dataset.iloc[i-1, 4] * (1 - params["urgency_sell"] / 100))))
             buy_sell_decision = -1
+            has_position = False
 
                 
     current_sell_alert = dataset.iloc[i, -2]
     previous_sell_alert = dataset.iloc[i - 1, -2]
     if current_sell_alert == True and previous_sell_alert == True:
+        logging.info("Sell Alert!")
         if has_position:
-            if position['price'] >= (1 + params["profit_threshold"] / 100) * dataset.iloc[i, 4]:
-                logging.info("{}, Price: {}, See Price: {}".format(position['price'], (1 + params["profit_threshold"] / 100) * dataset.iloc[i, 4]))
+            logging.info("Has Postion")
+            logging.info("Sell if: Current Price: {} >= Price: {}".format(dataset.iloc[i, 4], (1 + params["profit_threshold"] / 100) * position['price']))
+            if dataset.iloc[i, 4] >= (1 + params["profit_threshold"] / 100) * position['price']:
+                logging.info("Sell condition met!")
                 dataset.iloc[i - 1, -1] = -1
                 buy_sell_decision = -1
                 has_position = False
+                logging.info("Sell")
+            else:
+                logging.info("Sell condition not met!")
 
-    logging.info("{}, Has Postion: {}, Price: {}, Has Postion: {},  Previous Buy: {}, Current Buy: {}, Previous Sell: {}, Current Sell: {} -> {}".format(dataset.iloc[i, 0], has_position, dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
+
+    logging.info("{}, Has Position: {}, Price: {}, Previous Buy: {}, Current Buy: {}, Previous Sell: {}, Current Sell: {} -> {}".format(dataset.iloc[i, 0], has_position, dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
     
     return buy_sell_decision
 
