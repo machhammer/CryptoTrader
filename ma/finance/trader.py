@@ -185,6 +185,8 @@ def live_sell(ts):
     global pnl
     global has_position
     
+    logging.info("Prepare SELL: Size: {}, Coin: {}".format(position['size'], coin))
+
     order = exchange.create_order(
         coin + "/" + base_currency,
         "market",

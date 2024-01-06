@@ -179,17 +179,26 @@ def live_trading_model(dataset, has_position=False, position=None):
     if current_sell_alert == True and previous_sell_alert == True:
         logging.info("Sell Alert!")
         if has_position:
-            logging.info("Has Postion")
-            logging.info("Sell if: Current Price: {} >= Price: {}".format(dataset.iloc[i, 4], (1 + params["profit_threshold"] / 100) * position['price']))
+            logging.info("Condition 1: Sell if Current Price: {} >= Price: {}".format(dataset.iloc[i, 4], (1 + params["profit_threshold"] / 100) * position['price']))
             if dataset.iloc[i, 4] >= (1 + params["profit_threshold"] / 100) * position['price']:
-                logging.info("Sell condition met!")
+                logging.info("Sell condition 1 met!")
                 dataset.iloc[i - 1, -1] = -1
                 buy_sell_decision = -1
                 has_position = False
                 logging.info("Sell")
             else:
-                logging.info("Sell condition not met!")
-
+                logging.info("Sell Condition 1 not met!")
+                logging.info("Condition 1: Sell if Current Price: {} <= Price: {}".format(dataset.iloc[i, 4], (1 - params["profit_threshold"] / 100) * position['price']))
+                if dataset.iloc[i, 4] >= (1 - params["profit_threshold"] / 100) * position['price']:
+                    logging.info("Sell condition 2 met!")
+                    dataset.iloc[i - 1, -1] = -1
+                    buy_sell_decision = -1
+                    has_position = False
+                    logging.info("Sell")
+                else:
+                    logging.info("Sell Condition 2 not met!")
+        else:
+            logging.info("No position to sell!")
 
     logging.info("{}, Has Pos: {}, O Price: {}, C Price: {}, P Buy: {}, C Buy: {}, P Sell: {}, C Sell: {} -> {}".format(dataset.iloc[i, 0], has_position, position['price'], dataset.iloc[i, 4], current_buy_alert, previous_buy_alert, current_sell_alert, previous_sell_alert, buy_sell_decision))
     
