@@ -25,12 +25,8 @@ exchange = ccxt.cryptocom(
         #'verbose': True
     }
 )
+tickers = exchange.fetch_tickers()
 
-id ='4611686044110401397'
-
-trades = exchange.fetch_my_trades(symbol=None, since=None, limit=None, params={})
-print(json.dumps(trades, indent=4))
-
-for trade in trades:
-    if (trade['order'] == id):
-        print(trade['price'], trade['amount'], trade['side'], trade['fee']['cost'])
+for ticker in tickers:
+    if 'USDT' in ticker:
+        print(json.dumps(tickers[ticker], indent=4))
