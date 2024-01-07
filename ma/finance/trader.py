@@ -55,14 +55,17 @@ def fetch_data(frequency, coin):
 def get_initial_position(coin):
     global position
     global has_position
-    current_balance = exchange.fetch_balance()[coin]["free"]
-    current_price = exchange.fetch_ticker(coin + "/" + base_currency)["last"]
-    if current_balance * current_price > 1:
-        position['price'] = current_price
-        position['size'] = current_balance
-        position['total'] = current_balance * current_price
-        has_position = True
-    else:
+    try:
+        current_balance = exchange.fetch_balance()[coin]["free"]
+        current_price = exchange.fetch_ticker(coin + "/" + base_currency)["last"]
+        if current_balance * current_price > 1:
+            position['price'] = current_price
+            position['size'] = current_balance
+            position['total'] = current_balance * current_price
+            has_position = True
+        else:
+            has_position = False
+    except:
         has_position = False
 
 def get_funding(coin):
