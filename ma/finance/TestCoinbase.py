@@ -3,7 +3,7 @@ import json
 import ccxt
 
 
-coin = "XLM"
+coin = "XRP"
 
 coins = {
     "XRP": {"product": "XRP/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
@@ -25,13 +25,6 @@ exchange = ccxt.cryptocom(
         #'verbose': True
     }
 )
-tickers = exchange.fetch_tickers()
 
-dict = {}
-
-for ticker in tickers:
-    if 'USDT' in ticker:
-        dict['symbol']=ticker
-        dict['percentage']=tickers[ticker]['percentage']
-        
-print(dict)
+last_trade = exchange.fetch_my_trades(symbol=coin + "/USDT", since=None, limit=None, params={})
+print(last_trade)
