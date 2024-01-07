@@ -22,7 +22,7 @@ exchange = exchanges.cryptocom()
 
 coins = {
     "XRP": 0.25,
-    "CQT": 0.25,
+    "FITFI": 0.25,
     "GMT": 0.25,
     "SOL": 0.25
 
