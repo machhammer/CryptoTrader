@@ -186,15 +186,18 @@ def live_sell(ts):
     global position
     global pnl
     global has_position
-    
+
     time.sleep(randint(1,3))
-    logging.info("Prepare SELL: Size: {}, Coin: {}".format(position['size'], coin))
+
+    size = exchange.fetch_balance()[coin]["free"]
+    
+    logging.info("Prepare SELL: Size: {}, Coin: {}, Size: {}".format(position['size'], coin, size))
 
     order = exchange.create_order(
         coin + "/" + base_currency,
         "market",
         "sell",
-        position['size'],
+        size,
     )
     position["price"] = 0
     position["size"] = 0

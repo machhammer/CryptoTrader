@@ -27,6 +27,11 @@ exchange = ccxt.cryptocom(
 )
 tickers = exchange.fetch_tickers()
 
+dict = {}
+
 for ticker in tickers:
     if 'USDT' in ticker:
-        print(json.dumps(tickers[ticker], indent=4))
+        dict['symbol']=ticker
+        dict['percentage']=tickers[ticker]['percentage']
+        
+print(dict)
