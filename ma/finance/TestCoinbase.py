@@ -33,15 +33,12 @@ df = pd.DataFrame(tickers)
 
 df = df.T
 
-df = df[df['symbol'].str.contains("USDT")]
+df = df[df["symbol"].str.contains("USDT")]
 
+print(df["percentage"])
 
-
-looser = df[df['percentage'] <= 0]
+looser = df[df["percentage"] <= 0]
 print(len(looser))
 
-winner = df[df['percentage'] > 0]
+winner = df[df["percentage"] > 0]
 print(len(winner))
-
-high_volume = df.sort_values(by=['baseVolume'], ascending=False)
-print(high_volume.head(80))
