@@ -12,6 +12,7 @@ position_file = "positions.json"
 
 coins = {"XRP": 0.25, "XLM": 0.25, "STX": 0.25, "SOL": 0.25}
 
+
 traders = []
 threads = []
 
