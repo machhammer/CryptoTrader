@@ -284,9 +284,11 @@ class TraderClass:
                     self.position
                 )
                 if buy_sell_decision == 1:
-                    self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
+                    if self.has_position:
+                        self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
                 if buy_sell_decision == -1:
-                    self.live_sell(data.iloc[-1, 4])
+                    if not self.has_position:
+                        self.live_sell(data.iloc[-1, 4])
 
         if self.trading_mode == "back":
             dataset = V1.backtrading_model(data)

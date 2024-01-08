@@ -35,7 +35,6 @@ df = df.T
 
 df = df[df["symbol"].str.contains("USDT")]
 
-print(df["percentage"])
 
 looser = df[df["percentage"] <= 0]
 print(len(looser))
@@ -43,3 +42,5 @@ print(len(looser))
 winner = df[df["percentage"] > 0]
 print(len(winner))
 
+overall = df["percentage"].sum()
+print(overall)
