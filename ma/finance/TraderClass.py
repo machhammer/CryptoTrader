@@ -284,10 +284,10 @@ class TraderClass:
                     self.position
                 )
                 if buy_sell_decision == 1:
-                    if self.has_position:
+                    if not self.has_position:
                         self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
                 if buy_sell_decision == -1:
-                    if not self.has_position:
+                    if self.has_position:
                         self.live_sell(data.iloc[-1, 4])
 
         if self.trading_mode == "back":
