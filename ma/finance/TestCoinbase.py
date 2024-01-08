@@ -1,7 +1,7 @@
 import credentials
 import json
 import ccxt
-
+import pandas as pd
 
 coin = "XRP"
 
@@ -26,5 +26,22 @@ exchange = ccxt.cryptocom(
     }
 )
 
-last_trade = exchange.fetch_my_trades(symbol=coin + "/USDT", since=None, limit=None, params={})
-print(last_trade)
+tickers = exchange.fetch_tickers()
+
+
+df = pd.DataFrame(tickers)
+
+df = df.T
+
+df = df[df['symbol'].str.contains("USDT")]
+
+
+
+looser = df[df['percentage'] <= 0]
+print(len(looser))
+
+winner = df[df['percentage'] > 0]
+print(len(winner))
+
+high_volume = df.sort_values(by=['baseVolume'], ascending=False)
+print(high_volume.head(80))
