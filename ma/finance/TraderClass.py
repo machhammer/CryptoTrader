@@ -9,6 +9,7 @@ from random import randint
 from models import V1
 from datetime import datetime
 import threading
+import exchanges
 
 
 class TraderClass:
@@ -50,6 +51,10 @@ class TraderClass:
         else:
             self.has_position = False
 
+    def set_stop_running(self):
+        self.logger.info("Stop processing.")
+        self.stop_running = True
+
     def fetch_data(self):
         bars = self.exchange.fetch_ohlcv(
             self.coin + "/" + self.base_currency, timeframe=self.frequency, limit=300
@@ -61,18 +66,23 @@ class TraderClass:
         return data
 
     def get_initial_position(self):
-        try:
-            current_balance = self.exchange.fetch_balance()[self.coin]["free"]
+        current_balance = self.exchange.fetch_balance()[self.coin]["free"]
+
+        trades = self.exchange.fetch_my_trades(self.coin + "/" + self.base_currency)
+        current_price = 0
+        if len(trades) > 0:
+            if trades[-1]["side"] == "buy":
+                current_price = trades[-1]["price"]
+        else:
             current_price = self.exchange.fetch_ticker(
                 self.coin + "/" + self.base_currency
             )["last"]
-            if current_balance * current_price > 1:
-                self.set_position(
-                    current_price, current_balance, current_balance * current_price
-                )
-            else:
-                self.set_position(0, 0, 0)
-        except:
+
+        if current_balance * current_price > 1:
+            self.set_position(
+                current_price, current_balance, current_balance * current_price
+            )
+        else:
             self.set_position(0, 0, 0)
 
     def get_funding(self):
@@ -231,7 +241,11 @@ class TraderClass:
         if self.trading_mode == "live":
             if new_data_available:
                 buy_sell_decision = V1.live_trading_model(
-                    data, self.logger, self.has_position, self.position
+                    data,
+                    self.logger,
+                    self.has_position,
+                    self.position,
+                    self.highest_price,
                 )
                 if buy_sell_decision == 1:
                     self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
@@ -293,11 +307,13 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    exchange = exchanges.cryptocom()
     trader = TraderClass(
         trading_mode="live",
-        coin="XLM",
-        coin_distribution={"XRP": 0.25, "FITFI": 0.25, "GMT": 0.25, "SOL": 0.25},
-        frequency="1m",
+        coin="GMT",
+        coin_distribution={"XRP": 0.25, "XLM": 0.25, "GMT": 0.25, "SOL": 0.25},
+        frequency="15m",
+        exchange=exchange,
     )
 
     trader.run()
