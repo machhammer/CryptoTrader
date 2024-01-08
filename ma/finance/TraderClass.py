@@ -86,7 +86,11 @@ class TraderClass:
 
 
     def get_initial_position(self):
-        current_balance = self.exchange.fetch_balance()[self.coin]["free"]
+
+        try:
+            current_balance = self.exchange.fetch_balance()[self.coin]["free"]
+        except:
+            current_balance = 0
 
         trades = self.exchange.fetch_my_trades(self.coin + "/" + self.base_currency)
         current_price = 0
@@ -195,18 +199,21 @@ class TraderClass:
                 funding, price, size, self.coin
             )
         )
-        order = self.exchange.create_order(
-            self.coin + "/" + self.base_currency,
-            "market",
-            "buy",
-            size,
-            price,
-        )
-        price = self.get_trade_price(order["id"])
-        self.set_position(price, size, price * size, ts)
-        self.logger.info(
-            "Trading BUY: {}, order id: {}, price: {}".format(ts, order["id"], price)
-        )
+        try:
+            order = self.exchange.create_order(
+                self.coin + "/" + self.base_currency,
+                "market",
+                "buy",
+                size,
+                price,
+            )
+            price = self.get_trade_price(order["id"])
+            self.set_position(price, size, price * size, ts)
+            self.logger.info(
+                "Trading BUY: {}, order id: {}, price: {}".format(ts, order["id"], price)
+            )
+        except Exception as e:
+            self.logger.error(e)
 
     def live_sell(self, ts):
         time.sleep(randint(1, 3))
@@ -216,25 +223,28 @@ class TraderClass:
                 self.position["size"], self.coin, size
             )
         )
-        order = self.exchange.create_order(
-            self.coin + "/" + self.base_currency,
-            "market",
-            "sell",
-            size,
-        )
-        self.set_position(0, 0, 0, None)
-
-        price = self.get_trade_price(self.coin, order["id"])
-        pnl = pnl + price - self.position["price"]
-
-        has_position = False
-
-        self.logger.info(
-            "Trading SELL: {}, order id: {}, price: {}, PnL: {}".format(
-                ts, order["id"], price, pnl
+        try:
+            order = self.exchange.create_order(
+                self.coin + "/" + self.base_currency,
+                "market",
+                "sell",
+                size,
             )
-        )
+            self.set_position(0, 0, 0, None)
 
+            price = self.get_trade_price(self.coin, order["id"])
+            pnl = pnl + price - self.position["price"]
+
+            has_position = False
+
+            self.logger.info(
+                "Trading SELL: {}, order id: {}, price: {}, PnL: {}".format(
+                    ts, order["id"], price, pnl
+                )
+            )
+        except Exception as e:
+            self.logger.error(e)
+    
     # Data Processing
 
     def data_processing(self):
@@ -307,7 +317,7 @@ class TraderClass:
 
         if self.trading_mode:
             self.data_processing()
-            schedule.every(1).minutes.do(self.data_processing)
+            schedule.every(15).minutes.do(self.data_processing)
             self.logger.info("Waiting 15 minutes.")
 
             while not self.stop_running:
@@ -337,8 +347,8 @@ if __name__ == "__main__":
     exchange = exchanges.cryptocom()
     trader = TraderClass(
         trading_mode="live",
-        coin="GMT",
-        coin_distribution={"XRP": 0.25, "XLM": 0.25, "GMT": 0.25, "SOL": 0.25},
+        coin="STX",
+        coin_distribution={"XRP": 0.2, "XLM": 0.2, "GMT": 0.2, "SOL": 0.2, "STX": 0.2},
         frequency="15m",
         exchange=exchange,
     )

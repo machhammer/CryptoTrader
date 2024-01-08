@@ -10,7 +10,7 @@ exchange = exchanges.cryptocom()
 
 position_file = "positions.json"
 
-coins = {"XRP": 0.2, "XLM": 0.2, "GMT": 0.2, "SOL": 0.2, "STX": 0.2}
+coins = {"XRP": 0.25, "XLM": 0.25, "STX": 0.25, "SOL": 0.25}
 
 traders = []
 threads = []
