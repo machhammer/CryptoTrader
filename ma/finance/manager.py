@@ -36,3 +36,15 @@ y.start()
 
 x.join()
 y.join()
+
+print("wait")
+
+time.wait(15)
+
+print("stop")
+
+
+trader1.stop_running()
+trader2.stop_running()
+
+print("stopped")
