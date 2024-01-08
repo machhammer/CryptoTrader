@@ -43,4 +43,3 @@ print(len(looser))
 winner = df[df["percentage"] > 0]
 print(len(winner))
 
-print("hallo")

@@ -147,7 +147,7 @@ def set_sell_alert(df):
     ].count(True) >= 4
 
 
-def live_trading_model(dataset, logger, has_position=False, position=None):
+def live_trading_model(dataset, logger, highest_price, has_position=False, position=None):
     dataset = generate_buy_sell_signals(dataset)
 
     buy_sell_decision = 0
@@ -167,12 +167,12 @@ def live_trading_model(dataset, logger, has_position=False, position=None):
 
     if has_position:
         if dataset.iloc[i, 4] <= (
-            dataset.iloc[i - 1, 4] * (1 - params["urgency_sell"] / 100)
+            highest_price * (1 - params["urgency_sell"] / 100)
         ):
             logger.info(
-                "URGENCY SELL - Current Price: {}, Position Price: {}".format(
+                "URGENCY SELL - Current Price: {}, Highest Price minus urgency sell rate: {}".format(
                     dataset.iloc[i, 4],
-                    (dataset.iloc[i - 1, 4] * (1 - params["urgency_sell"] / 100)),
+                    (highest_price * (1 - params["urgency_sell"] / 100)),
                 )
             )
             buy_sell_decision = -1
@@ -201,14 +201,14 @@ def live_trading_model(dataset, logger, has_position=False, position=None):
             else:
                 logger.info("Sell Condition 1 not met!")
                 logger.info(
-                    "Condition 2: Sell if Current Price: {} <= Price: {}".format(
+                    "Condition 2: Sell if Current Price: {} <= Highest Price minus threshold sell: {}".format(
                         dataset.iloc[i, 4],
-                        (1 - params["profit_threshold"] / 100) * position["price"],
+                        (1 - params["profit_threshold"] / 100) * highest_price,
                     )
                 )
                 if (
                     dataset.iloc[i, 4]
-                    <= (1 - params["profit_threshold"] / 100) * position["price"]
+                    <= (1 - params["profit_threshold"] / 100) * highest_price
                 ):
                     logger.info("Sell condition 2 met!")
                     dataset.iloc[i - 1, -1] = -1
