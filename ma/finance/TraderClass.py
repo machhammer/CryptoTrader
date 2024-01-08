@@ -13,10 +13,8 @@ import exchanges
 
 
 class TraderClass:
-    
     commission = 0.075 / 100
     base_currency = "USDT"
-
 
     def __init__(self, trading_mode, coin, coin_distribution, frequency, exchange):
         self.trading_mode = trading_mode
@@ -40,11 +38,9 @@ class TraderClass:
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
 
-
     def set_stop_running(self):
         self.logger.info("Stop processing.")
         self.stop_running = True
-
 
     def set_position(self, price, size, total, timestamp):
         self.position["price"] = price
@@ -56,23 +52,24 @@ class TraderClass:
         else:
             self.has_position = False
 
-
     def set_stop_running(self):
         self.logger.info("Stop processing.")
         self.stop_running = True
 
-
     def get_highest_price(self, data):
         bars = self.exchange.fetch_ohlcv(
-            self.coin + "/" + self.base_currency, timeframe=self.frequency, limit=300, since=self.position["timestamp"]
+            self.coin + "/" + self.base_currency,
+            timeframe=self.frequency,
+            limit=300,
+            since=self.position["timestamp"],
         )
         if len(bars) > 0:
             data = pd.DataFrame(
-                bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
+                bars[:-1],
+                columns=["timestamp", "open", "high", "low", "close", "volume"],
             )
 
         return data["close"].max()
-
 
     def fetch_data(self):
         bars = self.exchange.fetch_ohlcv(
@@ -84,9 +81,7 @@ class TraderClass:
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
         return data
 
-
     def get_initial_position(self):
-
         try:
             current_balance = self.exchange.fetch_balance()[self.coin]["free"]
         except:
@@ -95,7 +90,7 @@ class TraderClass:
         trades = self.exchange.fetch_my_trades(self.coin + "/" + self.base_currency)
         current_price = 0
         ts_position = None
-        
+
         if len(trades) > 0:
             if trades[-1]["side"] == "buy":
                 current_price = trades[-1]["price"]
@@ -107,11 +102,13 @@ class TraderClass:
 
         if current_balance * current_price > 1:
             self.set_position(
-                current_price, current_balance, current_balance * current_price, ts_position
+                current_price,
+                current_balance,
+                current_balance * current_price,
+                ts_position,
             )
         else:
             self.set_position(0, 0, 0, None)
-
 
     def get_funding(self):
         total = 0
@@ -210,7 +207,9 @@ class TraderClass:
             price = self.get_trade_price(order["id"])
             self.set_position(price, size, price * size, ts)
             self.logger.info(
-                "Trading BUY: {}, order id: {}, price: {}".format(ts, order["id"], price)
+                "Trading BUY: {}, order id: {}, price: {}".format(
+                    ts, order["id"], price
+                )
             )
         except Exception as e:
             self.logger.error(e)
@@ -232,7 +231,7 @@ class TraderClass:
             )
             self.set_position(0, 0, 0, None)
 
-            price = self.get_trade_price(self.coin, order["id"])
+            price = self.get_trade_price(order["id"])
             pnl = pnl + price - self.position["price"]
 
             has_position = False
@@ -244,7 +243,7 @@ class TraderClass:
             )
         except Exception as e:
             self.logger.error(e)
-    
+
     # Data Processing
 
     def data_processing(self):
@@ -281,7 +280,7 @@ class TraderClass:
                     self.logger,
                     self.get_highest_price(data),
                     self.has_position,
-                    self.position
+                    self.position,
                 )
                 if buy_sell_decision == 1:
                     if not self.has_position:

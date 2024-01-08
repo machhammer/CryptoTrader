@@ -27,12 +27,14 @@ exchange = ccxt.cryptocom(
 )
 
 tickers = exchange.fetch_tickers()
+print(tickers["SOL/USDT"])
 
+
+exit()
 
 df = pd.DataFrame(tickers)
 
 df = df.T
-
 df = df[df["symbol"].str.contains("USDT")]
 
 
