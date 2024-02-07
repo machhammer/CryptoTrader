@@ -66,7 +66,7 @@ class TraderClass(Thread):
     def fetch_data(self):
         time.sleep(random.randint(1, 3))
         bars = self.exchange.fetch_ohlcv(
-            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=30
+            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=35
         )
         data = pd.DataFrame(
             bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
@@ -165,7 +165,7 @@ class TraderClass(Thread):
         )
         try:
             order = self.exchange.create_order(
-                self.coin + "/" + self.base_currency,
+                self.coin + "/q" + self.base_currency,
                 "market",
                 "buy",
                 size,
@@ -191,7 +191,7 @@ class TraderClass(Thread):
         )
         try:
             order = self.exchange.create_order(
-                self.coin + "/" + self.base_currency,
+                self.coin + "/q" + self.base_currency,
                 "market",
                 "sell",
                 size,
@@ -298,10 +298,15 @@ class TraderClass(Thread):
         while not self.event.is_set():
             self.data_processing()
             
-            m = 60
+            m1 = 30
+            m2 = 60
             wait_time = datetime.datetime.now().minute
-            if wait_time < m:
-                wait_time = (m - wait_time) * 60
+            if wait_time < m1:
+                wait_time = (m1 - wait_time + 0.2) * 60
+            else:
+                if wait_time < m2:
+                    wait_time = (m2 - wait_time + 0.2) * 60
+                
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
 
             time.sleep(wait_time)

@@ -78,8 +78,21 @@ def live_trading_model(
 
     if not has_position:
         if mood > 0.2:
+            logger.info("{}, Up: {:.4f}, Down: {:.4f}, Price: {:.4f}".format(dataset.iloc[i-3, 0],
+                dataset.iloc[i-3, 7],
+                dataset.iloc[i-3, 8], dataset.iloc[i-3, 4]))
+            logger.info("{}, Up: {:.4f}, Down: {:.4f}, Price: {:.4f}".format(dataset.iloc[i-2, 0],
+                dataset.iloc[i-2, 7],
+                dataset.iloc[i-2, 8], dataset.iloc[i-2, 4]))
+            logger.info("{}, Up: {:.4f}, Down: {:.4f}, Price: {:.4f}".format(dataset.iloc[i-1, 0],
+                dataset.iloc[i-1, 7],
+                dataset.iloc[i-1, 8], dataset.iloc[i-1, 4]))
+            logger.info("{}, Up: {:.4f}, Down: {:.4f}, Price: {:.4f}".format(dataset.iloc[i, 0],
+                dataset.iloc[i, 7],
+                dataset.iloc[i, 8], dataset.iloc[i, 4]))
+            
             if (
-                (dataset.iloc[i - 3, 8] > dataset.iloc[i - 3, 7])
+                (dataset.iloc[i - 2, 8] > dataset.iloc[i - 2, 7])
                 and (dataset.iloc[i, 7] > dataset.iloc[i, 8])
                 and dataset.iloc[i, 7] == 100
             ):

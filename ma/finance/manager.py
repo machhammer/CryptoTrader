@@ -22,7 +22,7 @@ exchange = exchanges.cryptocom()
 coins_amount = 4
 
 fix_coins = ["SOL", "ETH"]
-ignore_coins = ["USDT", "USD", "CRO", "AKT", "STX"]
+ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
 
 logger = logging.getLogger("manager")
@@ -271,10 +271,15 @@ def run():
 
         traders = traders_copy.copy()
 
-        m = 60
+        m1 = 30
+        m2 = 60
         wait_time = datetime.now().minute
-        if wait_time < m:
-            wait_time = (m - wait_time) * 60
+        if wait_time < m1:
+            wait_time = (m1 - wait_time + 0.2) * 60
+        else:
+            if wait_time < m2:
+                wait_time = (m2 - wait_time + 0.2) * 60
+            
         logger.info("Waiting Time in Seconds: {}".format(wait_time))
         time.sleep(wait_time)
 
