@@ -165,7 +165,7 @@ class TraderClass(Thread):
         )
         try:
             order = self.exchange.create_order(
-                self.coin + "/q" + self.base_currency,
+                self.coin + "/" + self.base_currency,
                 "market",
                 "buy",
                 size,
@@ -191,7 +191,7 @@ class TraderClass(Thread):
         )
         try:
             order = self.exchange.create_order(
-                self.coin + "/q" + self.base_currency,
+                self.coin + "/" + self.base_currency,
                 "market",
                 "sell",
                 size,
