@@ -14,8 +14,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 commission = 0.075 / 100
-frequency = 3600
-timeframe = "1h"
+frequency = 1800
+timeframe = "30m"
 base_currency = "USDT"
 exchange = exchanges.cryptocom()
 
