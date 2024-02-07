@@ -127,6 +127,7 @@ venv.bak/
 dmypy.json
 
 credentials.py
+finance/
 *.secret
 
 
