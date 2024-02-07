@@ -313,7 +313,6 @@ class TraderClass(Thread):
         )
 
         self.logger = None
-        logging.shutdown()
 
     # Helper Functions
 
