@@ -125,24 +125,27 @@ def identify_candidate(all_coins, selected_coins):
             data = pd.DataFrame(yf.download(found_coin, period="5d", interval="1h", progress=False))
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
             data = V2.apply_indicators(data)
-            buy_sell_decision = V2.live_trading_model(data, None, 0, 2, 0)
-            if buy_sell_decision == 1:
-                found_coin = found_coin.replace("-USD", "")
-                logger.info(
-                    "found_coin {} in selected_coins {}: {}".format(
-                        found_coin, selected_coins.keys(), found_coin in selected_coins
+            if len(data) > 0:
+                buy_sell_decision = V2.live_trading_model(data, None, 0, 2, 0, -1)
+                if buy_sell_decision == 1:
+                    found_coin = found_coin.replace("-USD", "")
+                    logger.info(
+                        "found_coin {} in selected_coins {}: {}".format(
+                            found_coin, selected_coins.keys(), found_coin in selected_coins
+                        )
                     )
-                )
-                if not (found_coin in selected_coins) and not (
-                    found_coin in ignore_coins
-                ):
-                    break
+                    if not (found_coin in selected_coins) and not (
+                        found_coin in ignore_coins
+                    ):
+                        break
         except Exception as e:
-            pass
+            print(e)
     if not found_coin:
         logger.info("No coin found! Select random coin.")
-        found_coin = all_coins.sample(n=1).iloc[i, 0].replace("-USD", "")
-
+        found_coin = all_coins.sample(n=1).iloc[i, 0]
+        logger.info(found_coin)
+    else:
+        found_coin = found_coin.replace("-USD", "")
     logger.info("Candidate found: {}".format(found_coin))
 
     return found_coin
