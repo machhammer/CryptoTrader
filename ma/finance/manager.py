@@ -141,7 +141,7 @@ def identify_candidate(all_coins, selected_coins):
             pass
     if not found_coin:
         logger.info("No coin found! Select random coin.")
-        found_coin = all_coins.sample(n=1).iloc[i, 0].replace("/USDT", "")
+        found_coin = all_coins.sample(n=1).iloc[i, 0].replace("-USD", "")
 
     logger.info("Candidate found: {}".format(found_coin))
 
