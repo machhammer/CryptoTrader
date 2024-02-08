@@ -11,6 +11,7 @@ from models import V2
 
 import warnings
 
+yf.pdr_override()
 warnings.filterwarnings("ignore")
 
 commission = 0.075 / 100
