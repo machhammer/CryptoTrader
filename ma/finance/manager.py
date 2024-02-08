@@ -121,7 +121,7 @@ def identify_candidate(all_coins, selected_coins):
     for i in range(len(all_coins)):
         try:
             found_coin = all_coins.iloc[i, 0].replace("/USDT", "-USD")
-            data = pd.DataFrame(yf.download(found_coin, period="5d", interval="60m"))
+            data = pd.DataFrame(yf.download(found_coin, period="5d", interval="60m", progress=False))
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
             data = V2.apply_indicators(data)
             buy_sell_decision = V2.live_trading_model(data, None, 0, 2, 0)
