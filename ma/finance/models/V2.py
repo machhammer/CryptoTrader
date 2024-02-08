@@ -99,20 +99,28 @@ def live_trading_model(
                 buy_sell_decision = 1
 
     if has_position:
+        down_price = (1 - params["sell_threshold"] / 100) * highest_price
+        up_price = (1 + params["profit_threshold"] / 100) * position["price"] 
         if logger:
             logger.info(
-                "{}, C: {}, High: {}, 2%: {}".format(
+                "{}, C: {}, High: {}, Sell Down < {}%: {} , Sell Up > {}%: {}".format(
                     dataset.iloc[i, 0],
                     dataset.iloc[i, 4],
                     highest_price,
-                    (1 - params["profit_threshold"] / 100) * highest_price,
+                    params["sell_threshold"],
+                    down_price,
+                    params["profit_threshold"],
+                    up_price,
                 )
             )
         if (
-            dataset.iloc[i, 4] <= (1 - params["sell_threshold"] / 100) * highest_price
-        ) or (
+            dataset.iloc[i, 4] <= down_price
+        ) :
+            buy_sell_decision = -1
+        
+        if (
             dataset.iloc[i, 4]
-            >= (1 + params["profit_threshold"] / 100) * position["price"]
+            >= up_price
         ):
             if dataset.iloc[i, 6] > dataset.iloc[i, 4]:
                 buy_sell_decision = -1

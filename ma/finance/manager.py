@@ -122,7 +122,7 @@ def identify_candidate(all_coins, selected_coins):
     for i in range(len(all_coins)):
         try:
             found_coin = all_coins.iloc[i, 0].replace("/USDT", "-USD")
-            data = pd.DataFrame(yf.download(found_coin, period="5d", interval="60m", progress=False))
+            data = pd.DataFrame(yf.download(found_coin, period="5d", interval="1h", progress=False))
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
             data = V2.apply_indicators(data)
             buy_sell_decision = V2.live_trading_model(data, None, 0, 2, 0)
@@ -139,15 +139,16 @@ def identify_candidate(all_coins, selected_coins):
                     logger.info("not existing")
                     break
                 else:
-                    logger.info("No coin found!")
+                    logger.info("Coin found but not buy decision!")
                     found_coin = None
             else:
                 logger.info("No coin found!")
                 found_coin = None
         except Exception as e:
-            logger.error(e)
-    if found_coin:
-        found_coin = found_coin.replace("-USD", "")
+            pass
+    if not found_coin:
+        logger.info("No coin found!")
+        found_coin = None
 
     logger.info("Candidate found: {}".format(found_coin))
 
