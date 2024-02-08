@@ -139,8 +139,10 @@ def identify_candidate(all_coins, selected_coins):
                     logger.info("not existing")
                     break
                 else:
+                    logger.info("No coin found!")
                     found_coin = None
             else:
+                logger.info("No coin found!")
                 found_coin = None
         except Exception as e:
             logger.error(e)
