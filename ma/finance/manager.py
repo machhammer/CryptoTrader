@@ -38,7 +38,7 @@ logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 
-def get_my_coins():
+def get_my_coins(all_coins):
     counter = 0
     current_coins = exchange.fetch_balance()["free"]
     my_coins = []
@@ -60,10 +60,6 @@ def get_my_coins():
                 temp_coins[flex] = 1 / coins_amount
                 counter = counter + 1
 
-    all_coins = None
-    if len(temp_coins) < coins_amount:
-        all_coins = fetch_coins()
-
     for i in range(0, coins_amount - len(temp_coins)):
         if counter < coins_amount:
             new_coin = identify_candidate(all_coins, temp_coins)
@@ -84,7 +80,7 @@ def fetch_coins():
     return df
 
 
-def fetch_data():
+def fetch_data(df):
     global coins
     amount_looser = 50
     amount_winner = 50
@@ -189,7 +185,8 @@ def run():
     traders = {}
     logger.info("")
     logger.info("Start Crypto Trader!")
-    coins = get_my_coins()
+    all_coins = fetch_coins()
+    coins = get_my_coins(all_coins)
     logger.info("Trade with coins: {}".format(coins))
     for coin in coins:
         logger.info(" *** {}".format(coin))
@@ -197,9 +194,14 @@ def run():
     print("Crypto Trader Running!")
     logger.info("Crypto Trader Running!")
 
+
+    first_run = True
     while True:
-        params = fetch_data()
-        all_coins = fetch_coins()
+        if not first_run:
+            all_coins = fetch_coins()
+        else:
+            first_run = False
+        params = fetch_data(all_coins)
         traders_copy = traders.copy()
         for trader in traders:
             is_alive = traders[trader][0].is_alive()
