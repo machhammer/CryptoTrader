@@ -63,7 +63,7 @@ def live_trading_model(
 
     if logger:
         logger.info(
-            "{}, Has Pos: {}, O-Price: {:.4f}, C-Price: {:.4f}, H-Price: {:.4f}, A-Up: {:.0f}, A-Down: {:.0f}, SMA: {:.0f}, Mood: {:.2f}, Buy/Sell {}".format(
+            "{}, Has Pos: {}, O-Price: {:.4f}, C-Price: {:.4f}, H-Price: {:.4f}, A-Up: {:.0f}, A-Down: {:.0f}, SMA: {:.4f}, Mood: {:.2f}, Buy/Sell {}".format(
                 dataset.iloc[i, 0],
                 has_position,
                 position["price"],
