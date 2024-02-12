@@ -18,7 +18,7 @@ params = {
     "macd_fast": 12,
     "macd_sign": 9,
     "adx": 6,
-    "aroon": 26,
+    "aroon": 14,
     "bb": 20,
     "bb_dev": 2.5,
     "rsi_buy_threshold": 33,
