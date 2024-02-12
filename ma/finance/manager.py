@@ -16,6 +16,7 @@ warnings.filterwarnings("ignore")
 
 commission = 0.075 / 100
 frequency = 1800
+mood_treshold = 0.2
 timeframe = "30m"
 base_currency = "USDT"
 exchange = exchanges.cryptocom()
@@ -122,7 +123,7 @@ def identify_candidate(all_coins, selected_coins):
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
             data = V2.apply_indicators(data)
             if len(data) > 0:
-                buy_sell_decision = V2.live_trading_model(data, None, 0, 2, 0, -1)
+                buy_sell_decision = V2.live_trading_model(data, None, 0, 0.2, mood_treshold, 0, -1)
                 if buy_sell_decision == 1:
                     found_coin = found_coin.replace("-USD", "")
                     logger.info(
@@ -136,11 +137,7 @@ def identify_candidate(all_coins, selected_coins):
                         break
         except Exception as e:
             print(e)
-    if not found_coin:
-        logger.info("No coin found! Select random coin.")
-        found_coin = all_coins.sample(n=1).iloc[i, 0]
-        logger.info(found_coin)
-    else:
+    if found_coin:
         found_coin = found_coin.replace("-USD", "")
     logger.info("Candidate found: {}".format(found_coin))
 
@@ -155,7 +152,7 @@ def check_candidate():
 
     print(data)
 
-    buy_sell_decision = V2.live_trading_model(data, None, 0, 2, 0)
+    buy_sell_decision = V2.live_trading_model(data, None, 0, 0.2, mood_treshold, 0)
 
     print(buy_sell_decision)
 
@@ -173,6 +170,7 @@ def add_trader(coin):
         frequency=frequency,
         timeframe=timeframe,
         exchange=exchange,
+        mood_threshold=mood_treshold
     )
 
     trader.start()
@@ -229,7 +227,7 @@ def run():
                     )
                 if (
                     values[1] == False
-                    and params["mood"] > 0.2
+                    and params["mood"] > mood_treshold
                     and trader not in fix_coins
                 ):
                     new_trader = identify_candidate(all_coins, coins)

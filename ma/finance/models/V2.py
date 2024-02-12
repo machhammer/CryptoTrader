@@ -52,6 +52,7 @@ def live_trading_model(
     logger,
     highest_price,
     mood,
+    mood_threshold,
     pos_neg,
     index=-1,
     has_position=False,
@@ -78,7 +79,7 @@ def live_trading_model(
         )
 
     if not has_position:
-        if mood > 0.2:
+        if mood > mood_threshold:
             if logger:
                 logger.info("{}, Up: {:.4f}, Down: {:.4f}, Price: {:.4f}".format(dataset.iloc[i-3, 0],
                     dataset.iloc[i-3, 7],
