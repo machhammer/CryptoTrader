@@ -21,9 +21,9 @@ timeframe = "30m"
 base_currency = "USDT"
 exchange = exchanges.cryptocom()
 
-coins_amount = 4
+coins_amount = 3
 
-fix_coins = ["SOL", "MATIC"]
+fix_coins = ["MATIC"]
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
 
