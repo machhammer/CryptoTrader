@@ -23,7 +23,7 @@ exchange = exchanges.cryptocom()
 
 coins_amount = 4
 
-fix_coins = ["SOL", "ETH"]
+fix_coins = ["SOL", "MATIC"]
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
 
