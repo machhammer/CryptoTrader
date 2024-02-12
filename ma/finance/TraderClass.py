@@ -122,15 +122,27 @@ class TraderClass(Thread):
         for key in coin_keys:
             try:
                 current_balance = self.exchange.fetch_balance()[key]["free"]
+                self.logger.info("Coin: {}, Current Balance: {}".format(key, current_balance))
             except:
                 current_balance = 0
             current_price = self.exchange.fetch_ticker(key + "/" + self.base_currency)[
                 "last"
             ]
-            if current_balance * current_price < 1:
+            self.logger.info("Coin: {}, Current Price: {}".format(key, current_price))
+            if current_balance * current_price < 5:
                 total = total + float(self.coin_distribution[key]) * 10
+                self.logger.info("Total: {}".format(total))
+            
         ratio = (self.coin_distribution[self.coin] * 10) / total
-        return (self.exchange.fetch_balance()[self.base_currency]["free"] * ratio) - 3
+        self.logger.info("Ratio: {}".format(ratio))
+
+        balance_base_currency = self.exchange.fetch_balance()[self.base_currency]["free"]
+        self.logger.info("Balance USDT: {}".format(balance_base_currency))
+
+        funding = (balance_base_currency * ratio) - 3
+        self.logger.info("Funding: {}".format(funding))
+        
+        return funding
 
     def get_trade_price(self, order_id):
         time.sleep(random.randint(2, 4))
