@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 params = {
-    "sma": 14,
+    "sma": 9,
     "rsi": 14,
     "macd_slow": 26,
     "macd_fast": 12,
