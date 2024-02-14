@@ -71,7 +71,7 @@ class TraderClass(Thread):
             self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=35
         )
         data = pd.DataFrame(
-            bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
+            bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
         )
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
         return data
@@ -79,7 +79,7 @@ class TraderClass(Thread):
     def get_highest_price(self, data):
         if len(data) > 0:
             data = pd.DataFrame(
-                data[:-1],
+                data[:],
                 columns=["timestamp", "open", "high", "low", "close", "volume"],
             )
 

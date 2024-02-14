@@ -28,12 +28,18 @@ exchange = ccxt.cryptocom(
 
 
 bars = exchange.fetch_ohlcv(
-    coin + "/USDT", "1h", limit=30
+    "MATIC/USDT", timeframe="30m", limit=35
 )
 data = pd.DataFrame(
-    bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
+    bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
 )
 data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
 
-print (data)
+print(data)
 
+data = pd.DataFrame(
+    data[:],
+    columns=["timestamp", "open", "high", "low", "close", "volume"],
+)
+
+print(data["high"].max())
