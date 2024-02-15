@@ -123,6 +123,7 @@ def identify_candidate(all_coins, selected_coins):
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
             data = V2.apply_indicators(data)
             if len(data) > 0:
+                data.to_csv("ver-" + found_coin + ".csv", sep='\t')
                 buy_sell_decision = V2.live_trading_model(data, None, 0, 0.2, mood_treshold, 0, -1)
                 if buy_sell_decision == 1:
                     found_coin = found_coin.replace("-USD", "")
