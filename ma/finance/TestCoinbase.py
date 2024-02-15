@@ -3,8 +3,20 @@ import json
 import ccxt
 import pandas as pd
 from models import V2
+import yfinance as yf
+from yahoo_fin import stock_info as sf
 
 coin = "ETH"
+
+
+#data = pd.DataFrame( sf.get_data("LPT-USD", interval='30m'))
+data = pd.DataFrame(yf.download(f"INJ-USD", period="1d", interval="30m", progress=False))
+data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
+data = V2.apply_indicators(data)
+
+print(data)
+
+exit()
 
 coins = {
     "XRP": {"product": "XRP/USDT", "last_executed_buy_price": 0, "dist_ratio": 0.2},
@@ -26,7 +38,6 @@ exchange = ccxt.cryptocom(
         #'verbose': True
     }
 )
-
 
 bars = exchange.fetch_ohlcv(
     "SOL/USDT", timeframe="30m", limit=50

@@ -115,6 +115,7 @@ def fetch_data(df):
 def identify_candidate(all_coins, selected_coins):
     all_coins = all_coins.sample(frac=1)
     found_coin = None
+    random = True
     logger.info("selected coins: {}".format(selected_coins.keys()))
     for i in range(len(all_coins)):
         try:
@@ -134,13 +135,13 @@ def identify_candidate(all_coins, selected_coins):
                     if not (found_coin in selected_coins) and not (
                         found_coin in ignore_coins
                     ):
-                        data.to_csv("ver-" + found_coin + ".csv", sep='\t')
+                        random = False
                         break
         except Exception as e:
             print(e)
     if found_coin:
         found_coin = found_coin.replace("-USD", "")
-    logger.info("Candidate found: {}".format(found_coin))
+    logger.info("Candidate found: {} - random: {}".format(found_coin, random))
 
     return found_coin
 

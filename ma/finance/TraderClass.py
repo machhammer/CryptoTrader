@@ -245,7 +245,8 @@ class TraderClass(Thread):
 
             new_data_available = True
 
-            if not self.previous_dataset is None:
+            """
+             if not self.previous_dataset is None:
                 data = pd.concat([self.previous_dataset, data])
                 data = data.drop_duplicates()
                 new_data = data.merge(
@@ -258,12 +259,13 @@ class TraderClass(Thread):
                 new_data = new_data.dropna(axis=1, how="all")
                 if new_data.empty:
                     new_data_available = False
-
+            data.to_csv("data2-" + self.coin + ".csv", sep='\t') 
+            """
+            
             self.previous_dataset = data.copy(deep=True)
 
             if new_data_available:
                 data = V2.apply_indicators(data)
-                data.to_csv("data-" + self.coin + ".csv", sep='\t')
                 buy_sell_decision = V2.live_trading_model(
                     data,
                     self.logger,
