@@ -29,7 +29,7 @@ exchange = ccxt.cryptocom(
 
 
 bars = exchange.fetch_ohlcv(
-    "MATIC/USDT", timeframe="30m", limit=50
+    "SOL/USDT", timeframe="30m", limit=50
 )
 data = pd.DataFrame(
     bars, columns=["timestamp", "open", "high", "low", "close", "volume"]

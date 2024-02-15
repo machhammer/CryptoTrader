@@ -263,7 +263,7 @@ class TraderClass(Thread):
 
             if new_data_available:
                 data = V2.apply_indicators(data)
-                data.to_csv(self.coin + ".csv", sep='\t')
+                data.to_csv("data-" + self.coin + ".csv", sep='\t')
                 buy_sell_decision = V2.live_trading_model(
                     data,
                     self.logger,
