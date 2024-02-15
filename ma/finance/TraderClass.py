@@ -74,6 +74,7 @@ class TraderClass(Thread):
             bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
         )
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+        data.to_csv(self.coin + ".csv")
         return data
 
     def get_highest_price(self, data):

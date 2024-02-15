@@ -2,6 +2,7 @@ import credentials
 import json
 import ccxt
 import pandas as pd
+from models import V2
 
 coin = "ETH"
 
@@ -28,18 +29,18 @@ exchange = ccxt.cryptocom(
 
 
 bars = exchange.fetch_ohlcv(
-    "MATIC/USDT", timeframe="30m", limit=35
+    "MATIC/USDT", timeframe="30m", limit=50
 )
 data = pd.DataFrame(
-    bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
+    bars, columns=["timestamp", "open", "high", "low", "close", "volume"]
 )
 data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
 
-print(data)
-
 data = pd.DataFrame(
-    data[:],
+    data,
     columns=["timestamp", "open", "high", "low", "close", "volume"],
 )
 
-print(data["high"].max())
+data = V2.apply_indicators(data)
+
+print(data)
