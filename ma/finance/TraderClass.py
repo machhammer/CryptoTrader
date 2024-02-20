@@ -317,7 +317,7 @@ class TraderClass(Thread):
         while not self.event.is_set():
             self.data_processing()
             
-            m1 = 30
+            m1 = 0
             m2 = 60
             wait_time = datetime.datetime.now().minute
             if wait_time < m1:

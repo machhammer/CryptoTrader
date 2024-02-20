@@ -276,7 +276,7 @@ def run():
 
         traders = traders_copy.copy()
 
-        m1 = 30
+        m1 = 0
         m2 = 60
         wait_time = datetime.now().minute
         if wait_time < m1:
@@ -284,7 +284,10 @@ def run():
         else:
             if wait_time < m2:
                 wait_time = (m2 - wait_time + 0.2) * 60
-            
+
+
+
+
         logger.info("Waiting Time in Seconds: {}".format(wait_time))
         time.sleep(wait_time)
 

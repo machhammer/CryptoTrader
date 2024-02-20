@@ -24,7 +24,7 @@ params = {
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
     "profit_threshold": 0.6,
-    "sell_threshold": 1.5,
+    "sell_threshold": 2,
     "urgency_sell": 3,
 }
 
@@ -97,7 +97,7 @@ def live_trading_model(
             if (
                 (dataset.iloc[i - 2, 8] > dataset.iloc[i - 2, 7])
                 and (dataset.iloc[i, 7] > dataset.iloc[i, 8])
-                and dataset.iloc[i, 7] == 100
+                and (dataset.iloc[i, 7] == 100 or dataset.iloc[i - 1, 7] == 100)
             ):
                 buy_sell_decision = 1
 
