@@ -276,7 +276,7 @@ def run():
 
         traders = traders_copy.copy()
 
-        m1 = 0
+        m1 = 30
         m2 = 60
         wait_time = datetime.now().minute
         if wait_time < m1:
