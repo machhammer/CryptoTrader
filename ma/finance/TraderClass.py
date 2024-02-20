@@ -78,13 +78,24 @@ class TraderClass(Thread):
         return data
 
     def get_highest_price(self, data):
+
+        timestamp = 0
+
+        if self.has_position:
+            timestamp = self.position["timestamp"]
+
         if len(data) > 0:
             data = pd.DataFrame(
                 data[:],
                 columns=["timestamp", "open", "high", "low", "close", "volume"],
             )
 
-        return data["high"].max()
+        if timestamp == 0:
+            return data.iloc[-1, 4]
+        else:
+            timestamp = datetime.utcfromtimestamp(timestamp / 1e3)
+            data = data[(data['timestamp'] >= timestamp)]
+            return data["high"].max()
 
     def get_initial_position(self):
         time.sleep(random.randint(1, 3))
@@ -187,7 +198,7 @@ class TraderClass(Thread):
                 price,
             )
             price = self.get_trade_price(order["id"])[0]
-            self.set_position(price, size, price * size, ts)
+            self.set_position(price, size, price * size, int(ts.timestamp() * 1e3))
             self.logger.info(
                 "Trading BUY: {}, order id: {}, price: {}".format(
                     ts, order["id"], price

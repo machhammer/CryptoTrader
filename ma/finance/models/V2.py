@@ -24,7 +24,7 @@ params = {
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
     "profit_threshold": 0.6,
-    "sell_threshold": 2,
+    "sell_threshold": 1.5,
     "urgency_sell": 3,
 }
 
