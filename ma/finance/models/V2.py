@@ -18,13 +18,13 @@ params = {
     "macd_fast": 12,
     "macd_sign": 9,
     "adx": 6,
-    "aroon": 21,
+    "aroon": 4,
     "bb": 20,
     "bb_dev": 2.5,
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
     "profit_threshold": 0.6,
-    "sell_threshold": 1.5,
+    "sell_threshold": 1,
     "urgency_sell": 3,
 }
 
