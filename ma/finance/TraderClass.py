@@ -4,6 +4,7 @@ import logging
 import argparse
 import random
 from random import randint
+import datetime
 from models import V2
 from threading import Thread
 import datetime
@@ -93,7 +94,7 @@ class TraderClass(Thread):
         if timestamp == 0:
             return data.iloc[-1, 4]
         else:
-            timestamp = datetime.utcfromtimestamp(timestamp / 1e3)
+            timestamp = datetime.datetime.utcfromtimestamp(timestamp / 1e3)
             data = data[(data['timestamp'] >= timestamp)]
             return data["high"].max()
 

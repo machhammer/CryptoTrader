@@ -46,8 +46,6 @@ def get_highest_price(data, timestamp):
 if __name__ == "__main__":
     data = fetch_data()
     print(data)
-    timestamp = data.iloc[-1, 0]
-    print(timestamp)
-    timestamp = int(timestamp.timestamp() * 1e3)
+    timestamp = 1708477271654
     print(timestamp)
     print(get_highest_price(data, timestamp))
