@@ -10,7 +10,7 @@ import yfinance as yf
 from yahoo_fin import stock_info as sf
 from datetime import datetime, timedelta
 
-coin = "ETH"
+coin = "SOL"
 
 exchange = exchanges.cryptocom()
 
@@ -46,6 +46,7 @@ def get_highest_price(data, timestamp):
 if __name__ == "__main__":
     data = fetch_data()
     print(data)
-    timestamp = 1708477271654
-    print(timestamp)
-    print(get_highest_price(data, timestamp))
+    #timestamp = 1708477271654
+    
+    #print(timestamp)
+    #print(get_highest_price(data, timestamp))
