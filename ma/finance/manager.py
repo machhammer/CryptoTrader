@@ -16,7 +16,7 @@ warnings.filterwarnings("ignore")
 
 commission = 0.075 / 100
 frequency = 1800
-mood_treshold = 0.4
+mood_treshold = 0.2
 timeframe = "30m"
 base_currency = "USDT"
 exchange = exchanges.cryptocom()
