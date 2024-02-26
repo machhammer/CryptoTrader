@@ -128,6 +128,9 @@ def live_trading_model(
         if (
             dataset.iloc[i, 4] <= down_price
         ) :
+            logger.info("{}, Sell Decision: Price close: {:.4f} <= Down Price: {:.4f}".format(dataset.iloc[i, 0],
+                dataset.iloc[i, 4], down_price))
+                
             buy_sell_decision = -1
         
         if (
