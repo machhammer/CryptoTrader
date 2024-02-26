@@ -81,18 +81,21 @@ def live_trading_model(
     if not has_position:
         if mood > mood_threshold:
             if logger:
-                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price: {:.4f}".format(dataset.iloc[i-3, 0],
+                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price close: {:.4f}".format(dataset.iloc[i-3, 0],
+                    dataset.iloc[i-4, 7],
+                    dataset.iloc[i-4, 8], dataset.iloc[i-4, 6], dataset.iloc[i-4, 1], dataset.iloc[i-4, 4]))
+                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price close: {:.4f}".format(dataset.iloc[i-3, 0],
                     dataset.iloc[i-3, 7],
-                    dataset.iloc[i-3, 8], dataset.iloc[i-3, 6], dataset.iloc[i-3, 4]))
-                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price: {:.4f}".format(dataset.iloc[i-2, 0],
+                    dataset.iloc[i-3, 8], dataset.iloc[i-3, 6], dataset.iloc[i-3, 1], dataset.iloc[i-3, 4]))
+                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i-2, 0],
                     dataset.iloc[i-2, 7],
-                    dataset.iloc[i-2, 8], dataset.iloc[i-2, 6], dataset.iloc[i-2, 4]))
-                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price: {:.4f}".format(dataset.iloc[i-1, 0],
+                    dataset.iloc[i-2, 8], dataset.iloc[i-2, 6], dataset.iloc[i-2, 1], dataset.iloc[i-2, 4]))
+                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i-1, 0],
                     dataset.iloc[i-1, 7],
-                    dataset.iloc[i-1, 8], dataset.iloc[i-1, 6], dataset.iloc[i-1, 4]))
-                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price: {:.4f}".format(dataset.iloc[i, 0],
+                    dataset.iloc[i-1, 8], dataset.iloc[i-1, 6], dataset.iloc[i-1, 1], dataset.iloc[i-1, 4]))
+                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
                     dataset.iloc[i, 7],
-                    dataset.iloc[i, 8], dataset.iloc[i, 6], dataset.iloc[i, 4]))
+                    dataset.iloc[i, 8], dataset.iloc[i, 6], dataset.iloc[i, 1], dataset.iloc[i, 4]))
             
             if (
                 (dataset.iloc[i - 4, 8] > dataset.iloc[i - 4, 7] or dataset.iloc[i - 3, 8] > dataset.iloc[i - 3, 7])
@@ -101,6 +104,8 @@ def live_trading_model(
                 and (dataset.iloc[i, 7] == 100 or dataset.iloc[i - 1, 7] == 100)
             ):
                 buy_sell_decision = 1
+            else:
+                logger.info("Buy condition not met")               
 
     if has_position:
         down_price = (1 - params["sell_threshold"] / 100) * highest_price
