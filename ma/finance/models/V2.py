@@ -82,6 +82,9 @@ def live_trading_model(
         if mood > mood_threshold:
             if logger:
                 logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price close: {:.4f}".format(dataset.iloc[i-3, 0],
+                    dataset.iloc[i-5, 7],
+                    dataset.iloc[i-5, 8], dataset.iloc[i-5, 6], dataset.iloc[i-5, 1], dataset.iloc[i-5, 4]))
+                logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price close: {:.4f}".format(dataset.iloc[i-3, 0],
                     dataset.iloc[i-4, 7],
                     dataset.iloc[i-4, 8], dataset.iloc[i-4, 6], dataset.iloc[i-4, 1], dataset.iloc[i-4, 4]))
                 logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price close: {:.4f}".format(dataset.iloc[i-3, 0],
