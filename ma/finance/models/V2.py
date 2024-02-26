@@ -143,8 +143,8 @@ def live_trading_model(
                 
                 buy_sell_decision = -1
 
-            if dataset.iloc[i, 7] <= dataset.iloc[i, 8]:
-                logger.info("{}, Sell Decision: Up: {:.4f} <= Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
+            if dataset.iloc[i, 7] < dataset.iloc[i, 8]:
+                logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
                     dataset.iloc[i, 7],
                     dataset.iloc[i, 8], dataset.iloc[i, 4]))
             
