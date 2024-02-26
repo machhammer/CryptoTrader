@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 params = {
-    "sma": 9,
+    "sma": 14,
     "rsi": 14,
     "macd_slow": 26,
     "macd_fast": 12,
@@ -97,6 +97,7 @@ def live_trading_model(
             if (
                 (dataset.iloc[i - 2, 8] > dataset.iloc[i - 2, 7])
                 and (dataset.iloc[i, 7] > dataset.iloc[i, 8])
+                and (dataset.iloc[i, 6] < dataset.iloc[i, 4]) and (dataset.iloc[i, 6] < dataset.iloc[i, 1])
                 and (dataset.iloc[i, 7] == 100 or dataset.iloc[i - 1, 7] == 100)
             ):
                 buy_sell_decision = 1
