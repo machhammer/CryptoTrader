@@ -49,7 +49,7 @@ class ModelTester:
     def fetch_data(self):
         time.sleep(random.randint(1, 3))
         bars = self.exchange.fetch_ohlcv(
-            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=500
+            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=50
         )
         data = pd.DataFrame(
             bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
@@ -72,7 +72,7 @@ class ModelTester:
             if i > 1:
                 buy_sell_decision = V2.live_trading_model(
                     data,
-                    self.logger,
+                    None,
                     highest_price,
                     1.5,
                     0,

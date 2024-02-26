@@ -98,7 +98,7 @@ def live_trading_model(
                     dataset.iloc[i, 8], dataset.iloc[i, 6], dataset.iloc[i, 1], dataset.iloc[i, 4]))
             
             if (
-                (dataset.iloc[i - 4, 8] > dataset.iloc[i - 4, 7] or dataset.iloc[i - 3, 8] > dataset.iloc[i - 3, 7])
+                (dataset.iloc[i - 3, 8] > dataset.iloc[i - 3, 7])
                 and (dataset.iloc[i, 7] > dataset.iloc[i, 8])
                 and (dataset.iloc[i, 6] < dataset.iloc[i, 4]) and (dataset.iloc[i, 6] < dataset.iloc[i, 1])
                 and (dataset.iloc[i, 7] == 100 or dataset.iloc[i - 1, 7] == 100)
