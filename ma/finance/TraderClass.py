@@ -284,7 +284,8 @@ class TraderClass(Thread):
                             self.live_sell(data.iloc[-1, 4])
 
             else:
-                self.live_sell("automated")
+                if self.has_position:
+                    self.live_sell("automated")
 
             success = True
 
