@@ -28,6 +28,9 @@ fix_coins = ["SOL", "ICX", "STX", "AAVE"]
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
 
+DAILY_STARTING_BALANCE = 0
+CURRENT_BALANCE = 0
+
 logger = logging.getLogger("manager")
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 handler = logging.FileHandler(
@@ -111,6 +114,18 @@ def fetch_data(df):
         "mood": market_mood,
         "coins": coins,
     }
+
+def get_current_balance():
+    current_assets = exchange.fetch_balance()["free"]
+
+    balance = 0
+    for asset in current_assets:
+        if not asset =="USD":
+            price = exchange.fetch_ticker(asset + "/USD")["last"] * current_assets[asset]
+        else:
+            price = current_assets['USD']        
+        balance = balance + price
+    return balance
 
 
 def identify_candidate(all_coins, selected_coins):
@@ -199,9 +214,12 @@ def run():
     first_run = True
     while True:
         if not first_run:
+            CURRENT_BALANCE = get_current_balance()
             all_coins = fetch_coins()
         else:
+            DAILY_STARTING_BALANCE = get_current_balance()
             first_run = False
+        daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
         params = fetch_data(all_coins)
         traders_copy = traders.copy()
         for trader in traders:

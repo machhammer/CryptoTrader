@@ -14,39 +14,16 @@ coin = "SOL"
 
 exchange = exchanges.cryptocom()
 
-#data = pd.DataFrame( sf.get_data("LPT-USD", interval='30m'))
-data = pd.DataFrame(yf.download(f"INJ-USD", period="1d", interval="30m", progress=False))
-data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
-data = V2.apply_indicators(data)
+current_assets = exchange.fetch_balance()["free"]
+print(current_assets)
 
+balance = 0
+for asset in current_assets:
+    if not asset =="USD":
+        price = exchange.fetch_ticker(asset + "/USD")["last"] * current_assets[asset]
+    else:
+        price = current_assets['USD']        
+    balance = balance + price
 
-def fetch_data():
-    bars = exchange.fetch_ohlcv(
-        "SOL/USDT", timeframe="30m", limit=35
-    )
-    data = pd.DataFrame(
-        bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
-    )
-    data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
-    
-    return data
+print(balance)
 
-def get_highest_price(data, timestamp):
-    if len(data) > 0:
-        data = pd.DataFrame(
-            data[:],
-            columns=["timestamp", "open", "high", "low", "close", "volume"],
-        )
-    timestamp = datetime.utcfromtimestamp(timestamp / 1e3)
-    print(timestamp)
-    data = data[(data['timestamp'] >= timestamp)]
-
-    return data["high"].max()
-
-if __name__ == "__main__":
-    data = fetch_data()
-    print(data)
-    #timestamp = 1708477271654
-    
-    #print(timestamp)
-    #print(get_highest_price(data, timestamp))
