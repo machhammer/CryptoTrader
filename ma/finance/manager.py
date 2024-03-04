@@ -28,8 +28,6 @@ fix_coins = ["SOL", "ICX", "STX", "AAVE"]
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
 
-DAILY_STARTING_BALANCE = 0
-CURRENT_BALANCE = 0
 
 logger = logging.getLogger("manager")
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -198,6 +196,10 @@ def add_trader(coin):
 
 def run():
     global coins
+    DAILY_STARTING_BALANCE = 0
+    CURRENT_BALANCE = 0
+    STOP_TRADING_FOR_TODAY = False
+
     traders = {}
     logger.info("")
     logger.info("Start Crypto Trader!")
@@ -214,13 +216,23 @@ def run():
     first_run = True
     while True:
         if not first_run:
-            CURRENT_BALANCE = get_current_balance()
             all_coins = fetch_coins()
         else:
-            DAILY_STARTING_BALANCE = get_current_balance()
             first_run = False
+        
+        CURRENT_BALANCE = get_current_balance()
+        if DAILY_STARTING_BALANCE == 0 or (datetime.now().minute == 0 and datetime.now().hour == 1):
+            DAILY_STARTING_BALANCE = CURRENT_BALANCE
         daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
+        if daily_return > 1:
+            STOP_TRADING_FOR_TODAY = True
+        else:
+            STOP_TRADING_FOR_TODAY = False
+        logger.info("Daily Result: {}, Stop Trading: {}".format(daily_return, STOP_TRADING_FOR_TODAY))
+
         params = fetch_data(all_coins)
+        params['STOP_TRADING_FOR_TODAY'] = STOP_TRADING_FOR_TODAY
+
         traders_copy = traders.copy()
         for trader in traders:
             is_alive = traders[trader][0].is_alive()

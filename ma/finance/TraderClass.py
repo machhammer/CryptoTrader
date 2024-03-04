@@ -44,6 +44,7 @@ class TraderClass(Thread):
         self.mood = 0
         self.pos_neg = 0
         self.highest_price = 0
+        self.STOP_TRADING_FOR_TODAY = False
 
         self.logger = logging.getLogger(self.coin)
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -251,50 +252,39 @@ class TraderClass(Thread):
             self.coin_distribution = value["coins"]
             self.mood = value["mood"]
             self.pos_neg = value["pos_neg"]
+            self.STOP_TRADING_FOR_TODAY = value["STOP_TRADING_FOR_TODAY"]
 
-            data = self.fetch_data()
-            self.highest_price = self.get_highest_price(data)
+            if not (self.STOP_TRADING_FOR_TODAY):
 
-            new_data_available = True
+                data = self.fetch_data()
+                self.highest_price = self.get_highest_price(data)
 
-            """
-             if not self.previous_dataset is None:
-                data = pd.concat([self.previous_dataset, data])
-                data = data.drop_duplicates()
-                new_data = data.merge(
-                    self.previous_dataset, on=["timestamp"], how="left", indicator=True
-                )
-                new_data = new_data[new_data["_merge"] == "left_only"]
-                new_data.drop(
-                    new_data.columns[len(new_data.columns) - 1], axis=1, inplace=True
-                )
-                new_data = new_data.dropna(axis=1, how="all")
-                if new_data.empty:
-                    new_data_available = False
-            data.to_csv("data2-" + self.coin + ".csv", sep='\t') 
-            """
-            
-            self.previous_dataset = data.copy(deep=True)
+                new_data_available = True
+                
+                self.previous_dataset = data.copy(deep=True)
 
-            if new_data_available:
-                data = V2.apply_indicators(data)
-                buy_sell_decision = V2.live_trading_model(
-                    data,
-                    self.logger,
-                    self.highest_price,
-                    self.mood,
-                    self.mood_threshold,
-                    self.pos_neg,
-                    -1,
-                    self.has_position,
-                    self.position,
-                )
-                if buy_sell_decision == 1:
-                    if not self.has_position:
-                        self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
-                if buy_sell_decision == -1:
-                    if self.has_position:
-                        self.live_sell(data.iloc[-1, 4])
+                if new_data_available:
+                    data = V2.apply_indicators(data)
+                    buy_sell_decision = V2.live_trading_model(
+                        data,
+                        self.logger,
+                        self.highest_price,
+                        self.mood,
+                        self.mood_threshold,
+                        self.pos_neg,
+                        -1,
+                        self.has_position,
+                        self.position,
+                    )
+                    if buy_sell_decision == 1:
+                        if not self.has_position:
+                            self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
+                    if buy_sell_decision == -1:
+                        if self.has_position:
+                            self.live_sell(data.iloc[-1, 4])
+
+            else:
+                self.live_sell("automated")
 
             success = True
 
