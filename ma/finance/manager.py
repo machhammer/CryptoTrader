@@ -220,20 +220,22 @@ def run():
         else:
             first_run = False
         
-        CURRENT_BALANCE = get_current_balance()
-        if DAILY_STARTING_BALANCE == 0 or (datetime.now().minute >= 0 and datetime.now().minute <= 30 and datetime.now().hour == 1):
-            STOP_TRADING_FOR_TODAY = False
-            DAILY_STARTING_BALANCE = CURRENT_BALANCE
-        
-        daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
-        
+        if (datetime.now().minute >= 0 and datetime.now().minute <= 30 and datetime.now().hour == 1):
+            STOP_TRADING_FOR_TODAY = False        
+
         if not STOP_TRADING_FOR_TODAY:
+            CURRENT_BALANCE = get_current_balance()
+            if DAILY_STARTING_BALANCE == 0:
+                DAILY_STARTING_BALANCE = CURRENT_BALANCE
+            daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
+
             if daily_return > 1:
                 STOP_TRADING_FOR_TODAY = True
             else:
                 STOP_TRADING_FOR_TODAY = False
             logger.info("Daily Result: {}, Stop Trading: {}".format(daily_return, STOP_TRADING_FOR_TODAY))
 
+        
         params = fetch_data(all_coins)
         params['STOP_TRADING_FOR_TODAY'] = STOP_TRADING_FOR_TODAY
 
