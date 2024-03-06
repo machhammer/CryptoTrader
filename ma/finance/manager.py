@@ -14,6 +14,8 @@ import warnings
 yf.pdr_override()
 warnings.filterwarnings("ignore")
 
+STOP_TRADING_THRESHOLD = 5.0
+
 commission = 0.075 / 100
 frequency = 1800
 mood_treshold = 0.0
@@ -23,7 +25,7 @@ exchange = exchanges.cryptocom()
 
 coins_amount = 4
 
-fix_coins = ["DERC", "XLM", "WIF", "AAVE"]
+fix_coins = ["DERC", "STX", "WIF", "AAVE"]
 
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
@@ -229,7 +231,7 @@ def run():
                 DAILY_STARTING_BALANCE = CURRENT_BALANCE
             daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
 
-            if daily_return > 1:
+            if daily_return >= STOP_TRADING_THRESHOLD:
                 STOP_TRADING_FOR_TODAY = True
             else:
                 STOP_TRADING_FOR_TODAY = False
