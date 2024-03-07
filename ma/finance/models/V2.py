@@ -23,7 +23,7 @@ params = {
     "bb_dev": 2.5,
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
-    "profit_threshold": 5,
+    "profit_threshold": 10,
     "sell_threshold": 5,
     "urgency_sell": 3,
 }
