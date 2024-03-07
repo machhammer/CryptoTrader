@@ -14,7 +14,7 @@ import warnings
 yf.pdr_override()
 warnings.filterwarnings("ignore")
 
-STOP_TRADING_THRESHOLD = 5.0
+STOP_TRADING_THRESHOLD = 10.0
 
 commission = 0.075 / 100
 frequency = 1800
