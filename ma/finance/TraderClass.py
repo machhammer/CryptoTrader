@@ -49,8 +49,8 @@ class TraderClass(Thread):
         self.logger = logging.getLogger(self.coin)
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
         handler = logging.FileHandler(
-            filename="trading-" + coin + "-v3-" + str(time.time()) + ".log",
-            mode="w",
+            filename="trading-" + coin + "-v4.log",
+            mode="a",
             encoding="utf-8",
         )
         handler.setFormatter(formatter)

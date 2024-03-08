@@ -21,21 +21,21 @@ frequency = 1800
 mood_treshold = 0.0
 timeframe = "30m"
 base_currency = "USDT"
-exchange = exchanges.cryptocom()
+number_of_attempts_for_random_coins_wo_position = 2
 
 coins_amount = 4
-
-fix_coins = ["STX", "SOL", "AAVE", "COTI"]
+fix_coins = ["SOL", "AAVE", "COTI"]
 
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
 
+exchange = exchanges.cryptocom()
 
 logger = logging.getLogger("manager")
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 handler = logging.FileHandler(
-    filename="trading-manager-v3-" + str(time.time()) + ".log",
-    mode="w",
+    filename="trading-manager-v4.log",
+    mode="a",
     encoding="utf-8",
 )
 handler.setFormatter(formatter)
@@ -216,6 +216,8 @@ def run():
 
 
     first_run = True
+    has_random_coins_wo_position = False
+    number_of_current_attempts_for_random_coins = 1
     while True:
         if not first_run:
             all_coins = fetch_coins()
@@ -271,46 +273,59 @@ def run():
                     and params["mood"] > mood_treshold
                     and trader not in fix_coins
                 ):
-                    new_trader = identify_candidate(all_coins, coins)
-                    if new_trader:
-                        traders[trader][1].set()
-                        logger.info(
-                            "{} - No Position for {} - Deactivating and try a different Coin! ".format(
-                                now.strftime("%Y-%m-%d %H:%M:%S"), trader
+                    if number_of_current_attempts_for_random_coins >= number_of_attempts_for_random_coins_wo_position:
+                        new_trader = identify_candidate(all_coins, coins)
+                        if new_trader:
+                            traders[trader][1].set()
+                            logger.info(
+                                "{} - No Position for {} - Deactivating and try a different Coin! ".format(
+                                    now.strftime("%Y-%m-%d %H:%M:%S"), trader
+                                )
                             )
-                        )
-                        time.sleep(5)
-                        traders[trader][0] = None
-                        traders[trader][1] = None
-                        traders[trader][2] = None
-
-                        del coins[trader]
-                        del traders_copy[trader]
-                        traders_copy[new_trader] = add_trader(new_trader)
-                        coins[new_trader] = 1 / coins_amount
-                        params["coins"] = coins
-                        time.sleep(5)
-                        is_alive = traders_copy[new_trader][0].is_alive()
-                        if is_alive:
-                            traders_copy[new_trader][2].put(params)
                             time.sleep(5)
-                            logger.info(
-                                "{} --- New coin {} started successfull: {}".format(
-                                    now.strftime("%Y-%m-%d %H:%M:%S"),
-                                    new_trader,
-                                    is_alive,
+                            traders[trader][0] = None
+                            traders[trader][1] = None
+                            traders[trader][2] = None
+
+                            del coins[trader]
+                            del traders_copy[trader]
+                            traders_copy[new_trader] = add_trader(new_trader)
+                            coins[new_trader] = 1 / coins_amount
+                            params["coins"] = coins
+                            time.sleep(5)
+                            is_alive = traders_copy[new_trader][0].is_alive()
+                            if is_alive:
+                                traders_copy[new_trader][2].put(params)
+                                time.sleep(5)
+                                logger.info(
+                                    "{} --- New coin {} started successfull: {}".format(
+                                        now.strftime("%Y-%m-%d %H:%M:%S"),
+                                        new_trader,
+                                        is_alive,
+                                    )
                                 )
-                            )
-                            values = traders_copy[new_trader][3].get()
-                            logger.info(
-                                "{} --- Status: {}, Has Position: {}".format(
-                                    now.strftime("%Y-%m-%d %H:%M:%S"),
-                                    values[0],
-                                    values[1],
+                                values = traders_copy[new_trader][3].get()
+                                logger.info(
+                                    "{} --- Status: {}, Has Position: {}".format(
+                                        now.strftime("%Y-%m-%d %H:%M:%S"),
+                                        values[0],
+                                        values[1],
+                                    )
                                 )
-                            )
+                                if values[1] == False:
+                                    has_random_coins_wo_position = True
+                    else:
+                        has_random_coins_wo_position = True
+
             else:
                 logger.error("--- Error. Trader not alive!")
+
+        if number_of_current_attempts_for_random_coins >= number_of_attempts_for_random_coins_wo_position:
+            number_of_current_attempts_for_random_coins = 1
+
+        if has_random_coins_wo_position:
+            number_of_current_attempts_for_random_coins = number_of_current_attempts_for_random_coins + 1
+            has_random_coins_wo_position = False
 
         traders = traders_copy.copy()
 
