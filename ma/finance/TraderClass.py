@@ -92,12 +92,15 @@ class TraderClass(Thread):
                 columns=["timestamp", "open", "high", "low", "close", "volume"],
             )
 
-        if timestamp == 0 or timestamp is None:
-            return data.iloc[0, 4]
+        if timestamp == 0:
+            return data.iloc[-1, 4]
         else:
-            timestamp = datetime.datetime.utcfromtimestamp(timestamp / 1e3)
-            data = data[(data['timestamp'] >= timestamp)]
-            return data["high"].max()
+            if timestamp is None:
+                return data["high"].max()
+            else:
+                timestamp = datetime.datetime.utcfromtimestamp(timestamp / 1e3)
+                data = data[(data['timestamp'] >= timestamp)]
+                return data["high"].max()
 
     def get_initial_position(self):
         time.sleep(random.randint(1, 3))
