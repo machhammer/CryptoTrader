@@ -24,7 +24,7 @@ base_currency = "USDT"
 number_of_attempts_for_random_coins_wo_position = 2
 
 coins_amount = 4
-fix_coins = ["SOL", "AAVE", "COTI"]
+fix_coins = ["SOL", "AAVE", "NEO"]
 
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
@@ -229,19 +229,19 @@ def run():
             STOP_TRADING_FOR_TODAY = False  
             DAILY_STARTING_BALANCE == 0
 
-        if not STOP_TRADING_FOR_TODAY:
-            CURRENT_BALANCE = get_current_balance()
-            if DAILY_STARTING_BALANCE == 0:
-                DAILY_STARTING_BALANCE = CURRENT_BALANCE
-            daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
+        CURRENT_BALANCE = get_current_balance()
+        if DAILY_STARTING_BALANCE == 0:
+            DAILY_STARTING_BALANCE = CURRENT_BALANCE
+        daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
 
+        if not STOP_TRADING_FOR_TODAY:
             if daily_return >= STOP_TRADING_THRESHOLD:
                 STOP_TRADING_FOR_TODAY = True
             else:
                 STOP_TRADING_FOR_TODAY = False
-            logger.info("Daily Result: {}, Stop Trading: {}".format(daily_return, STOP_TRADING_FOR_TODAY))
-
         
+        logger.info("Starting Balance: {}, Current Balance: {}".format(DAILY_STARTING_BALANCE, CURRENT_BALANCE))
+        logger.info("Daily Result: {}, Stop Trading: {}".format(daily_return, STOP_TRADING_FOR_TODAY))        
         
         params = fetch_data(all_coins)
         params['STOP_TRADING_FOR_TODAY'] = STOP_TRADING_FOR_TODAY
