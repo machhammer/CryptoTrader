@@ -139,25 +139,25 @@ class TraderClass(Thread):
         for key in coin_keys:
             try:
                 current_balance = self.exchange.fetch_balance()[key]["free"]
-                self.logger.info("Coin: {}, Current Balance: {}".format(key, current_balance))
+                self.logger.info("Coin: {}, Current Balance: {:.4f}".format(key, current_balance))
             except:
                 current_balance = 0
             current_price = self.exchange.fetch_ticker(key + "/" + self.base_currency)[
                 "last"
             ]
-            self.logger.info("Coin: {}, Current Price: {}".format(key, current_price))
+            self.logger.info("Coin: {}, Current Price: {:.4f}".format(key, current_price))
             if current_balance * current_price < 5:
                 total = total + float(self.coin_distribution[key]) * 10
                 self.logger.info("Total: {}".format(total))
             
         ratio = (self.coin_distribution[self.coin] * 10) / total
-        self.logger.info("Ratio: {}".format(ratio))
+        self.logger.info("Ratio: {:.4f}".format(ratio))
 
         balance_base_currency = self.exchange.fetch_balance()[self.base_currency]["free"]
-        self.logger.info("Balance USDT: {}".format(balance_base_currency))
+        self.logger.info("Balance USDT: {:.4f}".format(balance_base_currency))
 
         funding = (balance_base_currency * ratio) - 3
-        self.logger.info("Funding: {}".format(funding))
+        self.logger.info("Funding: {:.4f}".format(funding))
         
         return funding
 
@@ -190,7 +190,7 @@ class TraderClass(Thread):
 
         size = funding / price
         self.logger.info(
-            "Prepare BUY: Funding {}, Price: {}, Size: {}, Coin: {}".format(
+            "Prepare BUY: Funding {:.4f}, Price: {:.4f}, Size: {:.4f}, Coin: {}".format(
                 funding, price, size, self.coin
             )
         )
@@ -205,7 +205,7 @@ class TraderClass(Thread):
             price = self.get_trade_price(order["id"])[0]
             self.set_position(price, size, price * size, int(ts.timestamp() * 1e3))
             self.logger.info(
-                "Trading BUY: {}, order id: {}, price: {}".format(
+                "Trading BUY: {}, order id: {}, price: {:.4f}".format(
                     ts, order["id"], price
                 )
             )
@@ -216,7 +216,7 @@ class TraderClass(Thread):
     def live_sell(self, ts):
         size = self.exchange.fetch_balance()[self.coin]["free"]
         self.logger.info(
-            "Prepare SELL: Size: {}, Coin: {}, Size: {}".format(
+            "Prepare SELL: Size: {:.4f}, Coin: {}, Size: {:.4f}".format(
                 self.position["size"], self.coin, size
             )
         )
@@ -233,7 +233,7 @@ class TraderClass(Thread):
             self.pnl = self.pnl + price - self.position["price"]
 
             self.logger.info(
-                "Trading SELL: {}, order id: {}, price: {}, PnL: {}".format(
+                "Trading SELL: {}, order id: {}, price: {:.4f}, PnL: {:.4f}".format(
                     ts, order["id"], price, self.pnl
                 )
             )
@@ -311,7 +311,7 @@ class TraderClass(Thread):
 
         self.get_initial_position()
         self.logger.info(
-            "Has Position: {}, Initial Position: Size: {}, Price: {}, Total: {}, TS: {}".format(
+            "Has Position: {}, Initial Position: Size: {:.4f}, Price: {:.4f}, Total: {:.4f}, TS: {}".format(
                 self.has_position,
                 self.position["size"],
                 self.position["price"],

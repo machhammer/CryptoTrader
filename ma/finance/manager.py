@@ -110,8 +110,8 @@ def fetch_data(df):
     return {
         "looser": amount_looser,
         "winner": amount_winner,
-        "pos_neg": pos_neg,
-        "mood": market_mood,
+        "pos_neg": round(pos_neg, 2),
+        "mood": round(market_mood, 2),
         "coins": coins,
     }
 
@@ -240,8 +240,8 @@ def run():
             else:
                 STOP_TRADING_FOR_TODAY = False
         
-        logger.info("Starting Balance: {}, Current Balance: {}".format(DAILY_STARTING_BALANCE, CURRENT_BALANCE))
-        logger.info("Daily Result: {}, Stop Trading: {}".format(daily_return, STOP_TRADING_FOR_TODAY))        
+        logger.info("Starting Balance: {:.2f}, Current Balance: {:.2f}".format(DAILY_STARTING_BALANCE, CURRENT_BALANCE))
+        logger.info("Daily Result: {:.2f}, Stop Trading: {:.2f}".format(daily_return, STOP_TRADING_FOR_TODAY))        
         
         params = fetch_data(all_coins)
         params['STOP_TRADING_FOR_TODAY'] = STOP_TRADING_FOR_TODAY
