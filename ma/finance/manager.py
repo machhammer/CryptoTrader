@@ -21,10 +21,10 @@ frequency = 1800
 mood_treshold = 0.0
 timeframe = "30m"
 base_currency = "USDT"
-number_of_attempts_for_random_coins_wo_position = 2
+number_of_attempts_for_random_coins_wo_position = 12
 
 coins_amount = 4
-fix_coins = ["SOL", "AAVE", "NEO"]
+fix_coins = ["SOL", "AAVE"]
 
 ignore_coins = ["USDT", "USD", "CRO"]
 coins = {}
