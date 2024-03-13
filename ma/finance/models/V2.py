@@ -24,7 +24,7 @@ params = {
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
     "profit_threshold": 10,
-    "sell_threshold": 5,
+    "sell_threshold": 3,
     "urgency_sell": 3,
 }
 
@@ -127,9 +127,10 @@ def live_trading_model(
             )
         if (
             dataset.iloc[i, 4] <= down_price
-        ) :
-            logger.info("{}, Sell Decision: Price close: {:.4f} <= Down Price: {:.4f}".format(dataset.iloc[i, 0],
-                dataset.iloc[i, 4], down_price))
+            and (dataset.iloc[i, 6] > dataset.iloc[i, 4]) and (dataset.iloc[i, 6] > dataset.iloc[i, 1])
+        ):
+            logger.info("{}, Sell Decision: Price close: {:.4f} <= Down Price: {:.4f} and SMA: {:.4f}, Proce open: {:.4f}".format(dataset.iloc[i, 0],
+                dataset.iloc[i, 4], down_price, dataset.iloc[i, 6], dataset.iloc[i, 1]))
                 
             buy_sell_decision = -1
         
