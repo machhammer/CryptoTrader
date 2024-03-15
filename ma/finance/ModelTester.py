@@ -9,6 +9,7 @@ from random import randint
 from models import V2
 from threading import Thread
 import exchanges
+import pandas_ta  as ta
 
 
 class ModelTester:
@@ -64,7 +65,7 @@ class ModelTester:
     def backtrading(self, data):
         data = V2.apply_indicators(data)
 
-        highest_price = 0
+        """ highest_price = 0
 
         for i in range(len(data)):
             if data.iloc[i, 4] > highest_price:
@@ -87,7 +88,7 @@ class ModelTester:
                 if buy_sell_decision == 1:
                     self.offline_buy(data.iloc[i, 4], data.iloc[i, 0])
                     data.iloc[i, -1] = 1
-                    highest_price = data.iloc[i, 4]
+                    highest_price = data.iloc[i, 4] """
         # if self.has_position:
         #    self.offline_sell(data.iloc[i, 4], data.iloc[i, 0])
         #    data.iloc[i, -1] = -1
@@ -136,5 +137,5 @@ class ModelTester:
 if __name__ == "__main__":
     exchange = exchanges.cryptocom()
     exchange.set_sandbox_mode(False)
-    m = ModelTester(coin="SOL", frequency=1800, timeframe="1h", exchange=exchange)
+    m = ModelTester(coin="SOL", frequency=1800, timeframe="30m", exchange=exchange)
     m.data_processing()

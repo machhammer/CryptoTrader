@@ -35,7 +35,6 @@ class TraderClass(Thread):
         self.exchange = exchange
         self.mood_threshold = mood_threshold
         self.coin_distribution = {}
-        self.previous_dataset = None
         self.has_position = False
         self.position = {}
         self.pnl = 0
@@ -262,29 +261,26 @@ class TraderClass(Thread):
                 data = self.fetch_data()
                 self.highest_price = self.get_highest_price(data)
 
-                new_data_available = True
-                
-                self.previous_dataset = data.copy(deep=True)
+                data = V2.apply_indicators(data)
+                data.to_csv(self.coin + "-data.csv", "w")
 
-                if new_data_available:
-                    data = V2.apply_indicators(data)
-                    buy_sell_decision = V2.live_trading_model(
-                        data,
-                        self.logger,
-                        self.highest_price,
-                        self.mood,
-                        self.mood_threshold,
-                        self.pos_neg,
-                        -1,
-                        self.has_position,
-                        self.position,
-                    )
-                    if buy_sell_decision == 1:
-                        if not self.has_position:
-                            self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
-                    if buy_sell_decision == -1:
-                        if self.has_position:
-                            self.live_sell(data.iloc[-1, 4])
+                buy_sell_decision = V2.live_trading_model(
+                    data,
+                    self.logger,
+                    self.highest_price,
+                    self.mood,
+                    self.mood_threshold,
+                    self.pos_neg,
+                    -1,
+                    self.has_position,
+                    self.position,
+                )
+                if buy_sell_decision == 1:
+                    if not self.has_position:
+                        self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
+                if buy_sell_decision == -1:
+                    if self.has_position:
+                        self.live_sell(data.iloc[-1, 4])
 
             else:
                 if self.has_position:
