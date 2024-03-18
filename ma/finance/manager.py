@@ -113,7 +113,7 @@ def fetch_data(df):
         "looser": amount_looser,
         "winner": amount_winner,
         "pos_neg": round(pos_neg, 2),
-        "pos_neg_median": round(pos_neg_median, 2),
+        "pos_neg_median": round(pos_neg_median * 100, 2),
         "mood": round(market_mood, 2),
         "coins": coins,
     }
@@ -249,7 +249,7 @@ def run():
                 
         params = fetch_data(all_coins)
         logger.info("Parameters: {}".format(params))
-        
+
         params['STOP_TRADING_FOR_TODAY'] = STOP_TRADING_FOR_TODAY
 
         traders_copy = traders.copy()
