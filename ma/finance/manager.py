@@ -101,6 +101,7 @@ def fetch_data(df):
         amount_winner = len(winner)
 
         pos_neg = df["percentage"].sum()
+        pos_neg_median = df["percentage"].median()
         market_mood = amount_winner / amount_looser
 
     except Exception as e:
@@ -111,6 +112,7 @@ def fetch_data(df):
         "looser": amount_looser,
         "winner": amount_winner,
         "pos_neg": round(pos_neg, 2),
+        "pos_neg_median": pos_neg_median,
         "mood": round(market_mood, 2),
         "coins": coins,
     }

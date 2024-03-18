@@ -24,7 +24,7 @@ params = {
     "rsi_buy_threshold": 33,
     "rsi_sell_threshold": 73,
     "profit_threshold": 10,
-    "sell_threshold": 3,
+    "sell_threshold": 4,
     "urgency_sell": 3,
 }
 
@@ -79,7 +79,7 @@ def live_trading_model(
         )
 
     if not has_position:
-        if pos_neg > 0.0:
+        if pos_neg > -7.0:
             if logger:
                 logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price close: {:.4f}".format(dataset.iloc[i-5, 0],
                     dataset.iloc[i-5, 7],
