@@ -2,6 +2,7 @@ import exchanges
 import threading
 import pandas as pd
 import logging
+import requests
 import queue
 import time
 from datetime import datetime
@@ -85,6 +86,12 @@ def fetch_coins():
 
     return df
 
+def fetch_fear_and_greed():
+    url = "https://api.alternative.me/fng/"
+    response = requests.get(url)
+    data = response.json()
+    fear_greed_index = data['data'][0]['value']
+    return fear_greed_index
 
 def fetch_data(df):
     global coins
@@ -95,6 +102,7 @@ def fetch_data(df):
 
     try:
         df = fetch_coins()
+        fear_and_greed = fetch_fear_and_greed()
 
         looser = df[df["percentage"] <= 0]
         amount_looser = len(looser)
@@ -114,6 +122,7 @@ def fetch_data(df):
         "winner": amount_winner,
         "pos_neg": round(pos_neg, 2),
         "pos_neg_median": round(pos_neg_median * 100, 2),
+        "fear_and_greed": fear_and_greed,
         "mood": round(market_mood, 2),
         "coins": coins,
     }
