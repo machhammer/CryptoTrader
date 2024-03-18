@@ -23,7 +23,8 @@ class TraderClass(Thread):
         frequency,
         timeframe,
         exchange,
-        mood_threshold
+        mood_threshold,
+        pos_neg_threshold
     ):
         Thread.__init__(self)
         self.event = event
@@ -34,6 +35,7 @@ class TraderClass(Thread):
         self.timeframe = timeframe
         self.exchange = exchange
         self.mood_threshold = mood_threshold
+        self.pos_neg_threshold = pos_neg_threshold
         self.coin_distribution = {}
         self.has_position = False
         self.position = {}
@@ -271,6 +273,7 @@ class TraderClass(Thread):
                     self.mood,
                     self.mood_threshold,
                     self.pos_neg,
+                    self.pos_neg_threshold,
                     -1,
                     self.has_position,
                     self.position,

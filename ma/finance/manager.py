@@ -19,6 +19,7 @@ STOP_TRADING_EMERGENCY_THRESHOLD = -5
 commission = 0.075 / 100
 frequency = 1800
 mood_treshold = 0.0
+pos_neg_threshold = -7.0
 timeframe = "30m"
 base_currency = "USDT"
 number_of_attempts_for_random_coins_wo_position = 24
@@ -112,7 +113,7 @@ def fetch_data(df):
         "looser": amount_looser,
         "winner": amount_winner,
         "pos_neg": round(pos_neg, 2),
-        "pos_neg_median": pos_neg_median,
+        "pos_neg_median": round(pos_neg_median, 2),
         "mood": round(market_mood, 2),
         "coins": coins,
     }
@@ -190,7 +191,8 @@ def add_trader(coin):
         frequency=frequency,
         timeframe=timeframe,
         exchange=exchange,
-        mood_threshold=mood_treshold
+        mood_threshold=mood_treshold,
+        pos_neg_threshold=pos_neg_threshold
     )
 
     trader.start()
