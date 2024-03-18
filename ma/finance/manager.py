@@ -14,7 +14,7 @@ import warnings
 yf.pdr_override()
 warnings.filterwarnings("ignore")
 
-STOP_TRADING_THRESHOLD = 10.0
+STOP_TRADING_EMERGENCY_THRESHOLD = -5
 
 commission = 0.075 / 100
 frequency = 1800
@@ -237,7 +237,7 @@ def run():
         daily_return = (CURRENT_BALANCE - DAILY_STARTING_BALANCE) * 100 / DAILY_STARTING_BALANCE
 
         if not STOP_TRADING_FOR_TODAY:
-            if daily_return >= STOP_TRADING_THRESHOLD:
+            if daily_return < STOP_TRADING_EMERGENCY_THRESHOLD:
                 STOP_TRADING_FOR_TODAY = True
             else:
                 STOP_TRADING_FOR_TODAY = False
