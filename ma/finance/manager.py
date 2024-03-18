@@ -245,7 +245,8 @@ def run():
                 STOP_TRADING_FOR_TODAY = False
         
         logger.info("Starting Balance: {:.2f}, Current Balance: {:.2f}".format(DAILY_STARTING_BALANCE, CURRENT_BALANCE))
-        logger.info("Daily Result: {:.2f}, Stop Trading: {:.2f}".format(daily_return, STOP_TRADING_FOR_TODAY))        
+        logger.info("Daily Result: {:.2f}, Stop Trading: {:.2f}".format(daily_return, STOP_TRADING_FOR_TODAY))   
+        logger.info("Parameters: {}".format(params))     
         
         params = fetch_data(all_coins)
         params['STOP_TRADING_FOR_TODAY'] = STOP_TRADING_FOR_TODAY
@@ -256,12 +257,8 @@ def run():
             logger.info("Working with Trader: {}".format(trader))
             if is_alive:
                 logger.info("--- Trader: {} is alive".format(trader))
-                logger.info("--- Putting parameters: {}".format(params))
-
                 traders[trader][2].put(params)
-                logger.info("--- Waiting for feedback from Trader")
                 values = traders[trader][3].get()
-                logger.info("--- Feedback: {}".format(values))
                 now = datetime.now()
                 logger.info(
                     "--- {}, Coin: {}, Success: {}, has Position: {}".format(
