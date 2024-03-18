@@ -181,6 +181,10 @@ class TraderClass(Thread):
                     total_sum = total_sum + (trade["price"] * trade["amount"])
                     amount_sum = amount_sum + trade["amount"]
                     ts = trade["timestamp"]
+            if not found:
+                total_sum = 1
+                amount_sum=1
+                found = True
         final_price = total_sum / amount_sum
         return [final_price, ts]
 
