@@ -279,7 +279,7 @@ class TraderClass(Thread):
                 self.highest_price = self.get_highest_price(data)
 
                 data = V2.apply_indicators(data)
-                data.to_csv("data-" + self.coin + ".csv")
+                #data.to_csv("data-" + self.coin + ".csv")
 
                 buy_sell_decision = V2.live_trading_model(
                     data,
