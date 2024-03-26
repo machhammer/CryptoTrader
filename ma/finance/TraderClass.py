@@ -46,6 +46,7 @@ class TraderClass(Thread):
         self.pos_neg = 0
         self.highest_price = 0
         self.STOP_TRADING_FOR_TODAY = False
+        self.tradeable_today = True
 
         self.logger = logging.getLogger(self.coin)
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -242,6 +243,7 @@ class TraderClass(Thread):
                     ts, order["id"], price, self.pnl
                 )
             )
+            self.tradeable_today = False
             self.highest_price = 0
         except Exception as e:
             self.logger.error(e)
@@ -262,7 +264,11 @@ class TraderClass(Thread):
             self.pos_neg = value["pos_neg"]
             self.STOP_TRADING_FOR_TODAY = value["STOP_TRADING_FOR_TODAY"]
 
-            if not (self.STOP_TRADING_FOR_TODAY):
+            if (datetime.datetime.now().minute >= 0 and datetime.datetime.now().minute < 30 and datetime.datetime.now().hour == 1):
+                self.logger.info("New day. Set tradeable_today Flag.")
+                self.tradeable_today = True
+
+            if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
                 data = self.fetch_data()
                 self.highest_price = self.get_highest_price(data)

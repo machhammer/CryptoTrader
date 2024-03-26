@@ -237,7 +237,7 @@ def run():
         else:
             first_run = False
     
-        if (datetime.now().minute >= 0 and datetime.now().minute <= 30 and datetime.now().hour == 1):
+        if (datetime.now().minute >= 0 and datetime.now().minute < 30 and datetime.now().hour == 1):
             logger.info("Reset Daily Balance.")
             STOP_TRADING_FOR_TODAY = False  
             DAILY_STARTING_BALANCE = 0
