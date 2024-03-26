@@ -182,7 +182,7 @@ def check_candidate():
 
     print(data)
 
-    buy_sell_decision = V2.live_trading_model(data, None, 0, 0.2, mood_treshold, 0)
+    buy_sell_decision = V2.live_trading_model(datetime=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
 
     print(buy_sell_decision)
 
