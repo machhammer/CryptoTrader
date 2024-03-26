@@ -110,7 +110,8 @@ def live_trading_model(
             ):
                 buy_sell_decision = 1
             else:
-                logger.info("Buy condition not met")               
+                if logger:
+                    logger.info("Buy condition not met")               
 
     if has_position:
         down_price = (1 - params["sell_threshold"] / 100) * highest_price
