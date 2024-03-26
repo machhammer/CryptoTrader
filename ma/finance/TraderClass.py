@@ -44,6 +44,7 @@ class TraderClass(Thread):
         self.set_position(0, 0, 0, None)
         self.mood = 0
         self.pos_neg = 0
+        self.pos_neg_median = 0
         self.highest_price = 0
         self.STOP_TRADING_FOR_TODAY = False
         self.tradeable_today = True
@@ -251,7 +252,7 @@ class TraderClass(Thread):
     # Data Processing
 
     def data_processing(self):
-        self.logger.info("Data Processing start.")
+        self.logger.info("********** Data Processing start.")
 
         success = True
 
@@ -262,7 +263,11 @@ class TraderClass(Thread):
             self.coin_distribution = value["coins"]
             self.mood = value["mood"]
             self.pos_neg = value["pos_neg"]
+            self.pos_neg_median = value["pos_neg_median"]
             self.STOP_TRADING_FOR_TODAY = value["STOP_TRADING_FOR_TODAY"]
+
+            self.logger.info("STOP_TRADING_FOR_TODAY: {} --- tradeable_today: {}".format(self.STOP_TRADING_FOR_TODAY, self.tradeable_today))
+            self.logger.info("Pos Neg Median: {}".format(self.pos_neg_median))
 
             if (datetime.datetime.now().minute >= 0 and datetime.datetime.now().minute < 30 and datetime.datetime.now().hour == 1):
                 self.logger.info("New day. Set tradeable_today Flag.")
@@ -283,6 +288,7 @@ class TraderClass(Thread):
                     self.mood,
                     self.mood_threshold,
                     self.pos_neg,
+                    self.pos_neg_median,
                     self.pos_neg_threshold,
                     -1,
                     self.has_position,
@@ -308,7 +314,7 @@ class TraderClass(Thread):
         self.logger.info("Putting Feedback: {}".format([success, self.has_position]))
         self.output.put([success, self.has_position])
 
-        self.logger.info("Data Processing finished.")
+        self.logger.info("********** Data Processing finished.")
 
 
     def run(self):
