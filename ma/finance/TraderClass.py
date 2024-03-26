@@ -7,7 +7,6 @@ from random import randint
 import datetime
 from models import V2
 from threading import Thread
-import datetime
 
 
 class TraderClass(Thread):
