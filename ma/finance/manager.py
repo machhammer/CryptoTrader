@@ -152,7 +152,7 @@ def identify_candidate(all_coins, selected_coins):
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
             data = V2.apply_indicators(data)
             if len(data) > 0:
-                buy_sell_decision = V2.live_trading_model(data, None, 0, 0.2, mood_treshold, 0, -1)
+                buy_sell_decision = V2.live_trading_model(datetime=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
                 if buy_sell_decision == 1:
                     found_coin = found_coin.replace("-USD", "")
                     logger.info(
