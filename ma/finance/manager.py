@@ -26,7 +26,7 @@ base_currency = "USDT"
 number_of_attempts_for_random_coins_wo_position = 24
 
 coins_amount = 4
-fix_coins = ["SOL", "AAVE"]
+fix_coins = ["SOL"]
 
 ignore_coins = ["USDT", "USD", "CRO", "PAXG"]
 coins = {}
