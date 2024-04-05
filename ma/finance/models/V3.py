@@ -22,8 +22,8 @@ params = {
     "base_currency": "USDT",
     "number_of_attempts_for_random_coins_wo_position": 24,
     "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
-    "coins_amount": 2,
-    "fix_coins": ["GRT", "AGLD"],
+    "coins_amount": 3,
+    "fix_coins": ["STX", "GRT", "AGLD"],
     "commission": 0.075 / 100
 }
 
