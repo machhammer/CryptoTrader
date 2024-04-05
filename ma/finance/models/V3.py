@@ -32,7 +32,7 @@ def get_strategy_name():
 
 def get_wait_time():
     minute = datetime.now().minute
-    wait_time = 5 - (minute % 5) * 60
+    wait_time = (5 - (minute % 5)) * 60
     return wait_time
 
 def apply_indicators(df):
