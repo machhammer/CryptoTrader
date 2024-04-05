@@ -5,7 +5,6 @@ import argparse
 import random
 from random import randint
 import datetime
-from models import V2
 from threading import Thread
 
 
@@ -23,7 +22,8 @@ class TraderClass(Thread):
         timeframe,
         exchange,
         mood_threshold,
-        pos_neg_threshold
+        pos_neg_threshold,
+        strategy
     ):
         Thread.__init__(self)
         self.event = event
@@ -35,6 +35,7 @@ class TraderClass(Thread):
         self.exchange = exchange
         self.mood_threshold = mood_threshold
         self.pos_neg_threshold = pos_neg_threshold
+        self.strategy = strategy
         self.coin_distribution = {}
         self.has_position = False
         self.position = {}
@@ -339,14 +340,7 @@ class TraderClass(Thread):
         while not self.event.is_set():
             self.data_processing()
             
-            m1 = 30
-            m2 = 60
-            wait_time = datetime.datetime.now().minute
-            if wait_time < m1:
-                wait_time = (m1 - wait_time + 0.2) * 60
-            else:
-                if wait_time < m2:
-                    wait_time = (m2 - wait_time + 0.2) * 60
+            wait_time = self.strategy.getget_wait_time()
                 
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
 

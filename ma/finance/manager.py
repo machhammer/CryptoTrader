@@ -201,7 +201,8 @@ def add_trader(coin):
         timeframe=timeframe,
         exchange=exchange,
         mood_threshold=mood_treshold,
-        pos_neg_threshold=pos_neg_threshold
+        pos_neg_threshold=pos_neg_threshold,
+        strategy = strategy
     )
 
     trader.start()
