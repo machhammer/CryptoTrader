@@ -47,6 +47,7 @@ class TraderClass(Thread):
         self.highest_price = 0
         self.STOP_TRADING_FOR_TODAY = False
         self.tradeable_today = True
+        self.sold_hour = 0
 
         self.logger = logging.getLogger(self.coin)
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -244,6 +245,7 @@ class TraderClass(Thread):
                 )
             )
             self.tradeable_today = False
+            self.sold_hour = datetime.datetime.now().hour
             self.highest_price = 0
         except Exception as e:
             self.logger.error(e)

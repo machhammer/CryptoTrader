@@ -10,23 +10,40 @@ from ta.volatility import BollingerBands
 
 import matplotlib.pyplot as plt
 
+from datetime import datetime
 
 params = {
     "sma": 14,
-    "rsi": 14,
-    "macd_slow": 26,
-    "macd_fast": 12,
-    "macd_sign": 9,
-    "adx": 6,
     "aroon": 3,
-    "bb": 20,
-    "bb_dev": 2.5,
-    "rsi_buy_threshold": 33,
-    "rsi_sell_threshold": 73,
-    "profit_threshold": 10,
+    "profit_threshold": 100,
     "sell_threshold": 4,
     "urgency_sell": 3,
+    "STOP_TRADING_EMERGENCY_THRESHOLD": -5,
+    "frequency": 1800,
+    "mood_treshold": 0.0,
+    "pos_neg_threshold": -4,
+    "timeframe": "30m",
+    "base_currency": "USDT",
+    "number_of_attempts_for_random_coins_wo_position": 24,
+    "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
+    "coins_amount": 2,
+    "fix_coins": ["SOL", "STX"],
+    "commission": 0.075 / 100
 }
+
+def get_strategy_name():
+    return "Version 2.0"
+
+def get_wait_time():
+    m1 = 30
+    m2 = 60
+    wait_time = datetime.now().minute
+    if wait_time < m1:
+        wait_time = (m1 - wait_time + 0.2) * 60
+    else:
+        if wait_time < m2:
+            wait_time = (m2 - wait_time + 0.2) * 60
+    return wait_time
 
 
 def apply_indicators(df):

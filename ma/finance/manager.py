@@ -8,27 +8,27 @@ import time
 from datetime import datetime
 from TraderClass import TraderClass
 import yfinance as yf
-from models import V2
+import models
 
 import warnings
 
 yf.pdr_override()
 warnings.filterwarnings("ignore")
 
-STOP_TRADING_EMERGENCY_THRESHOLD = -5
+strategy = models.V2
 
-commission = 0.075 / 100
-frequency = 1800
-mood_treshold = 0.0
-pos_neg_threshold = -4
-timeframe = "30m"
-base_currency = "USDT"
-number_of_attempts_for_random_coins_wo_position = 24
+STOP_TRADING_EMERGENCY_THRESHOLD = strategy.params["STOP_TRADING_EMERGENCY_THRESHOLD"]
+commission = strategy.params["commission"]
+frequency = strategy.params["frequency"]
+mood_treshold = strategy.params["mood_treshold"]
+pos_neg_threshold = strategy.params["pos_neg_threshold"]
+timeframe = strategy.params["timeframe"]
+base_currency = strategy.params["base_currency"]
+number_of_attempts_for_random_coins_wo_position = strategy.params["frequency"]
+coins_amount = strategy.params["coins_amount"]
+fix_coins = strategy.params["fix_coins"]
+ignore_coins = strategy.params["ignore_coins"]
 
-coins_amount = 4
-fix_coins = ["SOL"]
-
-ignore_coins = ["USDT", "USD", "CRO", "PAXG"]
 coins = {}
 
 exchange = exchanges.cryptocom()
@@ -150,9 +150,9 @@ def identify_candidate(all_coins, selected_coins):
             found_coin = all_coins.iloc[i, 0].replace("/USDT", "-USD")
             data = pd.DataFrame(yf.download(found_coin, period="5d", interval="1h", progress=False))
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
-            data = V2.apply_indicators(data)
+            data = strategy.apply_indicators(data)
             if len(data) > 0:
-                buy_sell_decision = V2.live_trading_model(dataset=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
+                buy_sell_decision = strategy.live_trading_model(dataset=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
                 if buy_sell_decision == 1:
                     found_coin = found_coin.replace("-USD", "")
                     logger.info(
@@ -178,11 +178,11 @@ def check_candidate():
 
     data = pd.DataFrame(yf.download("NEO-USD", period="5d", interval="60m"))
     data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
-    data = V2.apply_indicators(data)
+    data = strategy.apply_indicators(data)
 
     print(data)
 
-    buy_sell_decision = V2.live_trading_model(datetime=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
+    buy_sell_decision = strategy.live_trading_model(datetime=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
 
     print(buy_sell_decision)
 
@@ -218,14 +218,17 @@ def run():
     traders = {}
     logger.info("")
     logger.info("Start Crypto Trader!")
+    logger.info("Strategy Version: {}".format(strategy.get_strategy_name()))
     all_coins = fetch_coins()
     coins = get_my_coins(all_coins)
     logger.info("Trade with coins: {}".format(coins))
     for coin in coins:
         logger.info(" *** {}".format(coin))
         traders[coin] = add_trader(coin)
-    print("Crypto Trader Running!")
     logger.info("Crypto Trader Running!")
+
+    print("Crypto Trader Running!")
+    print("Strategy Version: {}".format(strategy.get_strategy_name()))
 
 
     first_run = True
@@ -345,17 +348,7 @@ def run():
 
         traders = traders_copy.copy()
 
-        m1 = 30
-        m2 = 60
-        wait_time = datetime.now().minute
-        if wait_time < m1:
-            wait_time = (m1 - wait_time + 0.2) * 60
-        else:
-            if wait_time < m2:
-                wait_time = (m2 - wait_time + 0.2) * 60
-
-
-
+        wait_time = strategy.get_wait_time()
 
         logger.info("Waiting Time in Seconds: {}".format(wait_time))
         time.sleep(wait_time)
