@@ -270,7 +270,7 @@ def run():
             is_alive = traders[trader][0].is_alive()
             logger.info("Working with Trader: {}".format(trader))
             if is_alive:
-                logger.info("--- Trader: {} is alive".format(trader))
+                #logger.info("--- Trader: {} is alive".format(trader))
                 traders[trader][2].put(params)
                 values = traders[trader][3].get()
                 now = datetime.now()
