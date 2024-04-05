@@ -280,10 +280,9 @@ class TraderClass(Thread):
                 data = self.fetch_data()
                 self.highest_price = self.get_highest_price(data)
 
-                data = V2.apply_indicators(data)
-                #data.to_csv("data-" + self.coin + ".csv")
+                data = self.strategy.apply_indicators(data)
 
-                buy_sell_decision = V2.live_trading_model(
+                buy_sell_decision = self.strategy.live_trading_model(
                     data,
                     self.logger,
                     self.highest_price,
