@@ -340,7 +340,7 @@ class TraderClass(Thread):
         while not self.event.is_set():
             self.data_processing()
             
-            wait_time = self.strategy.getget_wait_time()
+            wait_time = self.strategy.get_wait_time()
                 
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
 
