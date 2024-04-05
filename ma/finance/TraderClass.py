@@ -313,8 +313,6 @@ class TraderClass(Thread):
 
         self.output.put([success, self.has_position])
 
-        self.logger.info("")
-
 
     def run(self):
         self.logger.info(
@@ -340,6 +338,7 @@ class TraderClass(Thread):
             wait_time = self.strategy.get_wait_time()
                 
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
+            self.logger.info("")
 
             time.sleep(wait_time)
 

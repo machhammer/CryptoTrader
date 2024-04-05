@@ -257,6 +257,7 @@ def run():
             else:
                 STOP_TRADING_FOR_TODAY = False
         
+        logger.info("")
         logger.info("Starting Balance: {:.2f}, Current Balance: {:.2f}".format(DAILY_STARTING_BALANCE, CURRENT_BALANCE))
         logger.info("Daily Result: {:.2f}, Stop Trading: {:.2f}".format(daily_return, STOP_TRADING_FOR_TODAY))   
                 
