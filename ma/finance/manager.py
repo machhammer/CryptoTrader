@@ -8,14 +8,14 @@ import time
 from datetime import datetime
 from TraderClass import TraderClass
 import yfinance as yf
-import models
+from models import V3
 
 import warnings
 
 yf.pdr_override()
 warnings.filterwarnings("ignore")
 
-strategy = models.V3
+strategy = V3
 
 STOP_TRADING_EMERGENCY_THRESHOLD = strategy.params["STOP_TRADING_EMERGENCY_THRESHOLD"]
 commission = strategy.params["commission"]
