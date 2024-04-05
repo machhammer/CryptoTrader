@@ -23,7 +23,7 @@ params = {
     "number_of_attempts_for_random_coins_wo_position": 24,
     "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
     "coins_amount": 2,
-    "fix_coins": ["SOL", "STX"],
+    "fix_coins": ["GRT", "STX"],
     "commission": 0.075 / 100
 }
 
