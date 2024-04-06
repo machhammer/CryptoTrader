@@ -74,7 +74,7 @@ class TraderClass(Thread):
     def fetch_data(self):
         time.sleep(random.randint(1, 3))
         bars = self.exchange.fetch_ohlcv(
-            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=37
+            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=38
         )
         data = pd.DataFrame(
             bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
