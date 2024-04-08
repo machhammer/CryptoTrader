@@ -148,17 +148,15 @@ def live_trading_model(
             >= up_price
         ):
             if dataset.iloc[i, 6] > dataset.iloc[i, 4]:
-                logger.info("{}, Sell Decision: SMA: {:.4f} > Price close: {:.4f}".format(dataset.iloc[i, 0],
-                    dataset.iloc[i, 6], dataset.iloc[i, 4]))
-                
-                buy_sell_decision = -1
-
-            if dataset.iloc[i, 7] < dataset.iloc[i, 8]:
-                logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
-                    dataset.iloc[i, 7],
-                    dataset.iloc[i, 8], dataset.iloc[i, 4]))
+                if dataset.iloc[i, 7] < dataset.iloc[i, 8]:
+                    logger.info("{}, Sell Decision: SMA: {:.4f} > Price close: {:.4f}".format(dataset.iloc[i, 0],
+                        dataset.iloc[i, 6], dataset.iloc[i, 4]))
             
-                buy_sell_decision = -1
+                    logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
+                        dataset.iloc[i, 7],
+                        dataset.iloc[i, 8], dataset.iloc[i, 4]))
+                
+                    buy_sell_decision = -1
 
     return buy_sell_decision
 
