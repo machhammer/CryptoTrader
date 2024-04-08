@@ -148,7 +148,7 @@ def live_trading_model(
             >= up_price
         ):
             if dataset.iloc[i, 6] > dataset.iloc[i, 4]:
-                if dataset.iloc[i, 7] < dataset.iloc[i, 8]:
+                if (dataset.iloc[i, 7] < dataset.iloc[i, 8]) and (dataset.iloc[i, 8] == 100 or dataset.iloc[i - 1, 8] == 100):
                     logger.info("{}, Sell Decision: SMA: {:.4f} > Price close: {:.4f}".format(dataset.iloc[i, 0],
                         dataset.iloc[i, 6], dataset.iloc[i, 4]))
             
