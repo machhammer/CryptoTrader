@@ -5,6 +5,7 @@ import argparse
 import random
 from random import randint
 import datetime
+from datetime import timedelta
 from threading import Thread
 
 
@@ -48,7 +49,7 @@ class TraderClass(Thread):
         self.highest_price = 0
         self.STOP_TRADING_FOR_TODAY = False
         self.tradeable_today = True
-        self.sold_hour = 0
+        self.not_tradeable_until_hour = 99
 
         self.logger = logging.getLogger(self.coin)
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -245,8 +246,8 @@ class TraderClass(Thread):
                     ts, order["id"], price, self.pnl
                 )
             )
-            self.tradeable_today = False
-            self.sold_hour = datetime.datetime.now().hour
+            self.tradeable_today = True
+            self.not_tradeable_until_hour = (datetime.datetime.now() + timedelta(hours=6)).hour
             self.highest_price = 0
         except Exception as e:
             self.logger.error(e)
@@ -273,6 +274,11 @@ class TraderClass(Thread):
             if (datetime.datetime.now().minute >= 0 and datetime.datetime.now().minute < 30 and datetime.datetime.now().hour == 1):
                 self.logger.info("New day. Set tradeable_today Flag.")
                 self.tradeable_today = True
+
+            if not self.tradeable_today:
+                if self.not_tradeable_until_hour == datetime.datetime.now().hour:
+                    self.logger.info("6 hours passed. Set tradeable_today Flag.")
+                    self.tradeable_today = True
 
             if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
