@@ -74,7 +74,7 @@ class TraderClass(Thread):
     def fetch_data(self):
         time.sleep(random.randint(1, 3))
         bars = self.exchange.fetch_ohlcv(
-            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=35
+            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=38
         )
         data = pd.DataFrame(
             bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
@@ -280,7 +280,7 @@ class TraderClass(Thread):
                 self.highest_price = self.get_highest_price(data)
 
                 data = self.strategy.apply_indicators(data)
-
+                #data.to_csv("data_" + self.coin + ".csv")
                 buy_sell_decision = self.strategy.live_trading_model(
                     data,
                     self.logger,
