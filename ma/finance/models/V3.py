@@ -11,7 +11,7 @@ from datetime import datetime
 params = {
     "sma": 14,
     "aroon": 32,
-    "profit_threshold": 100,
+    "profit_threshold": 4,
     "sell_threshold": 4,
     "urgency_sell": 10,
     "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
