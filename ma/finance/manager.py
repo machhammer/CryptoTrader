@@ -78,8 +78,14 @@ def get_my_coins(all_coins):
 
 
 def fetch_coins():
-
-    tickers = exchange.fetch_tickers()
+    
+    try:
+        tickers = exchange.fetch_tickers()
+    except Exception as e:
+        logger.error(e)
+        exchange = exchanges.cryptocom()
+        tickers = exchange.fetch_tickers()
+    
     df = pd.DataFrame(tickers)
     df = df.T
     df = df[df["symbol"].str.contains("/USDT")]
