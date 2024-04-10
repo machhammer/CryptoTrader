@@ -87,6 +87,7 @@ def fetch_coins():
         traceback.print_exc() 
         exchange = exchanges.cryptocom()
         tickers = exchange.fetch_tickers()
+        logger.info("Connection refreshed!")
     tickers = exchange.fetch_tickers()
     df = pd.DataFrame(tickers)
     df = df.T
