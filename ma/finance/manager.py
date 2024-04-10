@@ -79,14 +79,14 @@ def get_my_coins(all_coins):
 
 
 def fetch_coins():
-    """ tickers = None
+    global exchange
     try:
         tickers = exchange.fetch_tickers()
     except Exception as e:
         logger.error(e)
         traceback.print_exc() 
         exchange = exchanges.cryptocom()
-        tickers = exchange.fetch_tickers() """
+        tickers = exchange.fetch_tickers()
     tickers = exchange.fetch_tickers()
     df = pd.DataFrame(tickers)
     df = df.T
