@@ -78,14 +78,13 @@ def get_my_coins(all_coins):
 
 
 def fetch_coins():
-    
+    tickers = None
     try:
         tickers = exchange.fetch_tickers()
     except Exception as e:
         logger.error(e)
         exchange = exchanges.cryptocom()
         tickers = exchange.fetch_tickers()
-    
     df = pd.DataFrame(tickers)
     df = df.T
     df = df[df["symbol"].str.contains("/USDT")]
@@ -234,6 +233,7 @@ def run():
         traders[coin] = add_trader(coin)
     logger.info("Crypto Trader Running!")
 
+    print("")
     print("Crypto Trader Running!")
     print("Strategy Version: {}".format(strategy.get_strategy_name()))
 
