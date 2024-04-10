@@ -9,6 +9,7 @@ from datetime import datetime
 from TraderClass import TraderClass
 import yfinance as yf
 from models import V3
+import traceback
 
 import warnings
 
@@ -83,6 +84,7 @@ def fetch_coins():
         tickers = exchange.fetch_tickers()
     except Exception as e:
         logger.error(e)
+        traceback.print_exc() 
         exchange = exchanges.cryptocom()
         tickers = exchange.fetch_tickers()
     df = pd.DataFrame(tickers)
