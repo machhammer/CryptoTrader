@@ -11,8 +11,8 @@ from datetime import datetime
 params = {
     "sma": 14,
     "aroon": 28,
-    "profit_threshold": 5,
-    "sell_threshold": 3,
+    "profit_threshold": 0,
+    "sell_threshold": 0,
     "urgency_sell": 10,
     "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
     "frequency": 300,
@@ -28,7 +28,7 @@ params = {
 }
 
 def get_strategy_name():
-    return "Version 3.0"
+    return "Version 4.0"
 
 def get_wait_time():
     minute = datetime.now().minute
@@ -134,29 +134,13 @@ def live_trading_model(
                     up_price,
                 )
             )
-        if (
-            dataset.iloc[i, 4] <= down_price
-            and (dataset.iloc[i, 6] > dataset.iloc[i, 4]) and (dataset.iloc[i, 6] > dataset.iloc[i, 1])
-        ):
-            logger.info("{}, Sell Decision: Price close: {:.4f} <= Down Price: {:.4f} and SMA: {:.4f}, Proce open: {:.4f}".format(dataset.iloc[i, 0],
-                dataset.iloc[i, 4], down_price, dataset.iloc[i, 6], dataset.iloc[i, 1]))
-                
-            buy_sell_decision = -1
         
-        if (
-            dataset.iloc[i, 4]
-            >= up_price
-        ):
-            if dataset.iloc[i, 6] > dataset.iloc[i, 4]:
-                if (dataset.iloc[i, 7] < dataset.iloc[i, 8]) and (dataset.iloc[i, 8] == 100 or dataset.iloc[i - 1, 8] == 100):
-                    logger.info("{}, Sell Decision: SMA: {:.4f} > Price close: {:.4f}".format(dataset.iloc[i, 0],
-                        dataset.iloc[i, 6], dataset.iloc[i, 4]))
+            if (dataset.iloc[i, 7] < dataset.iloc[i, 8]) and (dataset.iloc[i, 8] == 100):
+                logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
+                    dataset.iloc[i, 7],
+                    dataset.iloc[i, 8], dataset.iloc[i, 4]))
             
-                    logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
-                        dataset.iloc[i, 7],
-                        dataset.iloc[i, 8], dataset.iloc[i, 4]))
-                
-                    buy_sell_decision = -1
+                buy_sell_decision = -1
 
     return buy_sell_decision
 
