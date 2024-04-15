@@ -161,7 +161,7 @@ class TraderClass(Thread):
         balance_base_currency = self.exchange.fetch_balance()[self.base_currency]["free"]
         self.logger.info("Balance USDT: {:.4f}".format(balance_base_currency))
 
-        funding = (balance_base_currency * ratio) - 3
+        funding = (balance_base_currency * ratio) - 1
         self.logger.info("Funding: {:.4f}".format(funding))
         
         return funding
