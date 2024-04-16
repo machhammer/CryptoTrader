@@ -11,8 +11,8 @@ from datetime import datetime
 params = {
     "sma": 14,
     "aroon": 14,
-    "profit_threshold": 5,
-    "sell_threshold": 3,
+    "profit_threshold": 0,
+    "sell_threshold": 2,
     "urgency_sell": 10,
     "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
     "frequency": 300,
@@ -22,8 +22,8 @@ params = {
     "base_currency": "USDT",
     "number_of_attempts_for_random_coins_wo_position": 24,
     "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
-    "coins_amount": 3,
-    "fix_coins": ["STX", "GRT", "AGLD"],
+    "coins_amount": 1,
+    "fix_coins": ["GRT"],
     "commission": 0.075 / 100
 }
 
