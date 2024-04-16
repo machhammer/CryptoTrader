@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 from TraderClass import TraderClass
 import yfinance as yf
-from models import V4
+from models import V3, V4
 import traceback
 
 import warnings
