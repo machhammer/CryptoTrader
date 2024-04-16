@@ -16,7 +16,7 @@ import warnings
 yf.pdr_override()
 warnings.filterwarnings("ignore")
 
-strategy = V3
+strategy = V4
 
 STOP_TRADING_EMERGENCY_THRESHOLD = strategy.params["STOP_TRADING_EMERGENCY_THRESHOLD"]
 commission = strategy.params["commission"]
