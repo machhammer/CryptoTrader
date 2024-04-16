@@ -12,7 +12,7 @@ params = {
     "sma": 14,
     "aroon": 14,
     "profit_threshold": 0,
-    "sell_threshold": 2,
+    "sell_threshold": 0,
     "urgency_sell": 10,
     "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
     "frequency": 300,
