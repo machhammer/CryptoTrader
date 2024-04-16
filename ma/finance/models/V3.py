@@ -10,7 +10,7 @@ from datetime import datetime
 
 params = {
     "sma": 14,
-    "aroon": 28,
+    "aroon": 14,
     "profit_threshold": 5,
     "sell_threshold": 3,
     "urgency_sell": 10,
