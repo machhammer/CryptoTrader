@@ -6,11 +6,11 @@ import threading
 import queue
 import random
 from random import randint
-from models import V2
+from models import V4
 from threading import Thread
 import exchanges
-import pandas_ta  as ta
 
+strategy = V4
 
 class ModelTester:
     commission = 0.075 / 100
@@ -32,7 +32,11 @@ class ModelTester:
         self.pnl = 0
         self.logger = logging.getLogger(self.coin)
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
-        handler = logging.StreamHandler()
+        handler = logging.FileHandler(
+            filename="trading-" + coin + "-v4.log",
+            mode="a",
+            encoding="utf-8",
+        )
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.ERROR)
@@ -50,7 +54,7 @@ class ModelTester:
     def fetch_data(self):
         time.sleep(random.randint(1, 3))
         bars = self.exchange.fetch_ohlcv(
-            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=50
+            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=600
         )
         data = pd.DataFrame(
             bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
@@ -63,19 +67,22 @@ class ModelTester:
     # Backtrading
 
     def backtrading(self, data):
-        data = V2.apply_indicators(data)
+        data = strategy.apply_indicators(data)
 
-        """ highest_price = 0
+        highest_price = 0
 
         for i in range(len(data)):
             if data.iloc[i, 4] > highest_price:
                 highest_price = data.iloc[i, 4]
             if i > 1:
-                buy_sell_decision = V2.live_trading_model(
+                buy_sell_decision = strategy.live_trading_model(
                     data,
-                    None,
+                    self.logger,
                     highest_price,
                     1.5,
+                    0,
+                    0,
+                    0,
                     0,
                     i,
                     self.has_position,
@@ -88,7 +95,7 @@ class ModelTester:
                 if buy_sell_decision == 1:
                     self.offline_buy(data.iloc[i, 4], data.iloc[i, 0])
                     data.iloc[i, -1] = 1
-                    highest_price = data.iloc[i, 4] """
+                    highest_price = data.iloc[i, 4]
         # if self.has_position:
         #    self.offline_sell(data.iloc[i, 4], data.iloc[i, 0])
         #    data.iloc[i, -1] = -1
@@ -127,7 +134,7 @@ class ModelTester:
         data = self.fetch_data()
         data = self.backtrading(data)
         print("PnL: ", self.pnl)
-        V2.show_plot(data)
+        strategy.show_plot(data)
         print(data["close"].pct_change().mean() * 100)
 
     def run(self):
@@ -137,5 +144,5 @@ class ModelTester:
 if __name__ == "__main__":
     exchange = exchanges.cryptocom()
     exchange.set_sandbox_mode(False)
-    m = ModelTester(coin="SOL", frequency=1800, timeframe="30m", exchange=exchange)
+    m = ModelTester(coin="GRT", frequency=1800, timeframe="30m", exchange=exchange)
     m.data_processing()
