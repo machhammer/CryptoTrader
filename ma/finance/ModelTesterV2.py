@@ -147,12 +147,12 @@ if __name__ == "__main__":
 
     #(3, 28, 3, 0)
 
-    params = {
-        "sma": [3],
-        "aroon": [28],
-        "profit_threshold": [3],
-        "sell_threshold": [0]
-    }
+    #params = {
+    #    "sma": [3],
+    #    "aroon": [28],
+    #    "profit_threshold": [3],
+    #    "sell_threshold": [0]
+    #}
 
 
-    data_processing("SOL-USD", V3, params)
+    data_processing("SOL-USD", V4, params)
