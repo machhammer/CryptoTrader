@@ -10,7 +10,7 @@ from datetime import datetime
 
 params = {
     "sma": 14,
-    "aroon": 21,
+    "aroon": 28,
     "profit_threshold": 0,
     "sell_threshold": 2,
     "urgency_sell": 10,
@@ -85,7 +85,7 @@ def live_trading_model(
                 buy_sell_decision,
             )
         )
-
+    
     if not has_position:
         if pos_neg_median > pos_neg_threshold:
             if logger:
@@ -138,12 +138,13 @@ def live_trading_model(
                 )
             )
         
-            if (dataset.iloc[i, 7] < dataset.iloc[i, 8]) and (dataset.iloc[i, 8] == 100):
+        if (dataset.iloc[i, 7] < dataset.iloc[i, 8]) and (dataset.iloc[i, 8] == 100):
+            if logger:
                 logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
                     dataset.iloc[i, 7],
                     dataset.iloc[i, 8], dataset.iloc[i, 4]))
-            
-                buy_sell_decision = -1
+        
+            buy_sell_decision = -1
 
     return buy_sell_decision
 

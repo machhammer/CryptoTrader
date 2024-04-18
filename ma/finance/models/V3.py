@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 params = {
-    "sma": 14,
-    "aroon": 14,
-    "profit_threshold": 0,
+    "sma": 3,
+    "aroon": 28,
+    "profit_threshold": 3,
     "sell_threshold": 0,
     "urgency_sell": 10,
     "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
@@ -138,8 +138,9 @@ def live_trading_model(
             dataset.iloc[i, 4] <= down_price
             and (dataset.iloc[i, 6] > dataset.iloc[i, 4]) and (dataset.iloc[i, 6] > dataset.iloc[i, 1])
         ):
-            logger.info("{}, Sell Decision: Price close: {:.4f} <= Down Price: {:.4f} and SMA: {:.4f}, Proce open: {:.4f}".format(dataset.iloc[i, 0],
-                dataset.iloc[i, 4], down_price, dataset.iloc[i, 6], dataset.iloc[i, 1]))
+            if logger:
+                logger.info("{}, Sell Decision: Price close: {:.4f} <= Down Price: {:.4f} and SMA: {:.4f}, Proce open: {:.4f}".format(dataset.iloc[i, 0],
+                    dataset.iloc[i, 4], down_price, dataset.iloc[i, 6], dataset.iloc[i, 1]))
                 
             buy_sell_decision = -1
         
@@ -149,12 +150,13 @@ def live_trading_model(
         ):
             if dataset.iloc[i, 6] > dataset.iloc[i, 4]:
                 if (dataset.iloc[i, 7] < dataset.iloc[i, 8]) and (dataset.iloc[i, 8] == 100 or dataset.iloc[i - 1, 8] == 100):
-                    logger.info("{}, Sell Decision: SMA: {:.4f} > Price close: {:.4f}".format(dataset.iloc[i, 0],
-                        dataset.iloc[i, 6], dataset.iloc[i, 4]))
-            
-                    logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
-                        dataset.iloc[i, 7],
-                        dataset.iloc[i, 8], dataset.iloc[i, 4]))
+                    if logger:
+                        logger.info("{}, Sell Decision: SMA: {:.4f} > Price close: {:.4f}".format(dataset.iloc[i, 0],
+                            dataset.iloc[i, 6], dataset.iloc[i, 4]))
+                
+                        logger.info("{}, Sell Decision: Up: {:.4f} < Down: {:.4f}, Price Close: {:.4f}".format(dataset.iloc[i, 0],
+                            dataset.iloc[i, 7],
+                            dataset.iloc[i, 8], dataset.iloc[i, 4]))
                 
                     buy_sell_decision = -1
 
