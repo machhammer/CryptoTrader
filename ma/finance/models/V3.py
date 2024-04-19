@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 params = {
-    "sma": 3,
+    "sma": 7,
     "aroon": 28,
-    "profit_threshold": 3,
-    "sell_threshold": 0,
+    "profit_threshold": 0,
+    "sell_threshold": 1,
     "urgency_sell": 10,
     "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
     "frequency": 300,

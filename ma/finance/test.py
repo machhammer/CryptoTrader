@@ -1,13 +1,19 @@
-import yfinance as yf
-import pandas as pd
+import time
+from tqdm import tqdm
 
-yf.pdr_override()
+def tester():
+    a = [1, 2]
+    b = [3, 4]
+
+    iterations = len(a) * len(b)
+    print(iterations)
+
+    progress_bar = iter(tqdm(range(iterations-1)))
+    
+    for i in a:
+        for j in b:
+            next(progress_bar)
 
 
-data = pd.DataFrame(yf.download("SOL-USD", period="5d", interval="1h", progress=False))
-
-
-print(data)
-
-
-print("Dies ist ein Test")
+if __name__ == "__main__":
+    tester()
