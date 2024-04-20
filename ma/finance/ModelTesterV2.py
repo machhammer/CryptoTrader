@@ -17,8 +17,8 @@ has_position = False
 position = {}
 
 test_params = {
-        "sma": [3, 5, 7, 14, 21, 28, 32],
-        "aroon": [3, 5, 7, 14, 21, 28, 32],
+        "sma": [3, 5, 7, 9, 12, 14, 21, 28, 32],
+        "aroon": [3, 5, 7, 9, 12, 14, 21, 28, 32],
         "profit_threshold": [0, 1, 2, 3, 4, 5, 8, 10],
         "sell_threshold": [0, 1, 2, 3, 4, 5, 8, 10]
     }
@@ -94,7 +94,7 @@ def backtrading(coin, strategy, data, logger):
     global highest_price
     global has_position
     commission = 0.075 / 100
-    original_budget = 20
+    original_budget = 100
     budget = original_budget
     pnl = 0
     set_position(0, 0, 0, None)
@@ -162,5 +162,6 @@ def optimal_parameters(coin, strategy):
 if __name__ == "__main__":
 
     par = optimal_parameters("SOL-USD", V3)
+    print("SOL")
     print(par)
-
+    

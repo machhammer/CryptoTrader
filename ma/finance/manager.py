@@ -108,6 +108,7 @@ def fetch_data(df):
     amount_winner = 50
     pos_neg = 0
     market_mood = 1
+    pos_neg_median = 0
 
     try:
         df = fetch_coins()
