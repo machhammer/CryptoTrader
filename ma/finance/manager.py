@@ -109,6 +109,7 @@ def fetch_data(df):
     pos_neg = 0
     market_mood = 1
     pos_neg_median = 0
+    fear_and_greed = 0
 
     try:
         df = fetch_coins()
