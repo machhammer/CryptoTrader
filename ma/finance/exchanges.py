@@ -106,7 +106,7 @@ class Exchange():
             self.log_error("fetch_my_trades")
         return result
 
-    def create_buy_order(self, asset, market, type, size, price):
+    def create_buy_order(self, asset, size, price):
         return self.exchange.create_order(
             asset,
             "market",
