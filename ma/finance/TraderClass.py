@@ -19,24 +19,20 @@ class TraderClass(Thread):
         input,
         output,
         coin,
-        frequency,
-        timeframe,
         exchange,
-        mood_threshold,
-        pos_neg_threshold,
-        strategy
+        model,
+        scenario
     ):
         Thread.__init__(self)
         self.event = event
         self.input = input
         self.output = output
         self.coin = coin
-        self.frequency = frequency
-        self.timeframe = timeframe
+        self.frequency = scenario.params["frequency"]
+        self.timeframe = scenario.params["timeframe"]
         self.exchange = exchange
-        self.mood_threshold = mood_threshold
-        self.pos_neg_threshold = pos_neg_threshold
-        self.strategy = strategy
+        self.model = model
+        self.scenario = scenario
         self.coin_distribution = {}
         self.has_position = False
         self.position = {}
@@ -81,7 +77,6 @@ class TraderClass(Thread):
             bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
         )
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
-        
         return data
 
     def get_highest_price(self, data):
@@ -204,10 +199,8 @@ class TraderClass(Thread):
             )
         )
         try:
-            order = self.exchange.create_order(
+            order = self.exchange.create_buy_order(
                 self.coin + "/" + self.base_currency,
-                "market",
-                "buy",
                 size,
                 price,
             )
@@ -230,11 +223,9 @@ class TraderClass(Thread):
             )
         )
         try:
-            order = self.exchange.create_order(
+            order = self.exchange.create_sell_order(
                 self.coin + "/" + self.base_currency,
-                "market",
-                "sell",
-                size,
+                size
             )
             self.set_position(0, 0, 0, None)
 
@@ -260,9 +251,7 @@ class TraderClass(Thread):
         success = True
 
         try:
-            #self.logger.info("Waiting for Parameters.")
             value = self.input.get()
-            #self.logger.info("Parameters: {}".format(value))
             self.coin_distribution = value["coins"]
             self.mood = value["mood"]
             self.pos_neg = value["pos_neg"]
@@ -285,17 +274,15 @@ class TraderClass(Thread):
                 data = self.fetch_data()
                 self.highest_price = self.get_highest_price(data)
 
-                data = self.strategy.apply_indicators(data)
+                data = self.model.apply_indicators(data)
                 #data.to_csv("data_" + self.coin + ".csv")
-                buy_sell_decision = self.strategy.live_trading_model(
+                buy_sell_decision = self.model.live_trading_model(
                     data,
                     self.logger,
                     self.highest_price,
                     self.mood,
-                    self.mood_threshold,
                     self.pos_neg,
                     self.pos_neg_median,
-                    self.pos_neg_threshold,
                     -1,
                     self.has_position,
                     self.position,
@@ -327,6 +314,8 @@ class TraderClass(Thread):
             )
         )
 
+        self.logger.info("Parameters: {}".format(self.model.params))
+        
         self.get_initial_position()
         self.logger.info(
             "Has Position: {}, Initial Position: Size: {:.4f}, Price: {:.4f}, Total: {:.4f}, TS: {}".format(
@@ -341,7 +330,7 @@ class TraderClass(Thread):
         while not self.event.is_set():
             self.data_processing()
             
-            wait_time = self.strategy.get_wait_time()
+            wait_time = self.scenario.get_wait_time()
                 
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
             self.logger.info("")

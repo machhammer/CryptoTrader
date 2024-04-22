@@ -4,6 +4,7 @@ from tqdm import tqdm
 from pandas_datareader import data as pdr
 import yfinance as yf
 from models import V4, V3
+from scenarios import S1
 import pprint
 import time
 from datetime import datetime, timedelta
@@ -16,14 +17,13 @@ highest_price = 0
 has_position = False
 position = {}
 
+
 test_params = {
-        "sma": [3, 5, 7, 9, 12, 14, 21, 28, 32],
-        "aroon": [3, 5, 7, 9, 12, 14, 21, 28, 32],
-        "profit_threshold": [0, 1, 2, 3, 4, 5, 8, 10],
-        "sell_threshold": [0, 1, 2, 3, 4, 5, 8, 10]
-    }
-
-
+    "sma": [3, 5, 7, 9, 14, 21, 28, 32],
+    "aroon": [3, 5, 7, 9, 14, 21, 28, 32],
+    "profit_threshold": [0, 1, 2, 3, 4, 5, 8, 10],
+    "sell_threshold": [0, 1, 2, 3, 4, 5, 8, 10]
+}
 
 def setLogger(coin):
     logger = logging.getLogger("test-" + coin)
@@ -90,7 +90,7 @@ def offline_sell(price, ts, commission, logger):
     return sell_total
 
 
-def backtrading(coin, strategy, data, logger):
+def backtrading(coin, model, data, logger):
     global highest_price
     global has_position
     commission = 0.075 / 100
@@ -102,15 +102,13 @@ def backtrading(coin, strategy, data, logger):
         if data.iloc[i, 2] > highest_price:
             highest_price = data.iloc[i, 2]
         if i > 1:
-            buy_sell_decision = strategy.live_trading_model(
+            buy_sell_decision = model.live_trading_model(
                 data,
                 None,
                 highest_price,
                 1.5,
-                strategy.params["mood_treshold"],
                 0,
                 0,
-                strategy.params["pos_neg_threshold"],
                 i,
                 has_position,
                 position,
@@ -129,7 +127,7 @@ def backtrading(coin, strategy, data, logger):
     return [pnl, data]
 
 
-def optimal_parameters(coin, strategy):
+def optimal_parameters(coin, model):
     logger = setLogger(coin)
     original = fetch_data(coin)
     data = original.copy()
@@ -141,12 +139,12 @@ def optimal_parameters(coin, strategy):
         for aroon in test_params["aroon"]:
             for profit_threshold in test_params["profit_threshold"]:
                 for sell_threshold in test_params["sell_threshold"]:
-                    strategy.params["sma"] = sma
-                    strategy.params["aroon"] = aroon
-                    strategy.params["profit_threshold"] = profit_threshold
-                    strategy.params["sell_threshold"] = sell_threshold
-                    data = strategy.apply_indicators(data)
-                    [pnl, data] = backtrading(coin, strategy, data, logger)
+                    model.params["sma"] = sma
+                    model.params["aroon"] = aroon
+                    model.params["profit_threshold"] = profit_threshold
+                    model.params["sell_threshold"] = sell_threshold
+                    data = model.apply_indicators(data)
+                    [pnl, data] = backtrading(coin, model, data, logger)
                     results[sma, aroon, profit_threshold, sell_threshold] = pnl
                     try:
                         next(progress_bar)
@@ -161,7 +159,26 @@ def optimal_parameters(coin, strategy):
 
 if __name__ == "__main__":
 
-    par = optimal_parameters("SOL-USD", V3)
+    scenario = S1({
+        "exchange": "cryptocom",
+        "commission": 0.075 / 100,
+        "base_currency": "USDT",
+        "number_of_attempts_for_random_coins_wo_position": 24,
+        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
+        "coins_amount": 1,
+        "fix_coins": ["SOL"],
+        "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
+        "frequency": 300,
+        "timeframe": "5m",
+        "mood_treshold": 0.0,
+        "pos_neg_threshold": -100,
+    })
+
+
+
+    model = V3(scenario=scenario)
+
+    par = optimal_parameters("SOL-USD", model)
     print("SOL")
-    print(par)
+    print(par[0])
     

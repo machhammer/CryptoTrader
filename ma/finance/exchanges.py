@@ -87,11 +87,11 @@ class Exchange():
     def fetch_ohlcv(self, asset, timeframe, limit):
         result = None
         try:
-            result = self.exchange.fetch_ohlcv(asset, timeframe, limit)
+            result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
         except Exception as e:
             self.log_error(e)
             self.connect()
-            result = self.exchange.fetch_ohlcv(asset, timeframe, limit)
+            result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
             self.log_error("fetch_ohlcv")
         return result
 
@@ -106,13 +106,21 @@ class Exchange():
             self.log_error("fetch_my_trades")
         return result
 
-    def create_order(self, asset, market, type, size, price):
+    def create_buy_order(self, asset, market, type, size, price):
         return self.exchange.create_order(
-            self.coin + "/" + self.base_currency,
+            asset,
             "market",
             "buy",
             size,
             price,
+        )
+    
+    def create_sell_order(self, asset, size):
+        return self.exchange.create_order(
+            asset,
+            "market",
+            "sell",
+            size,
         )
 
     

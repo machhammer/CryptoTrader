@@ -1,19 +1,28 @@
-import time
-from tqdm import tqdm
+from scenarios import S1
+from models import V3
 
-def tester():
-    a = [1, 2]
-    b = [3, 4]
-
-    iterations = len(a) * len(b)
-    print(iterations)
-
-    progress_bar = iter(tqdm(range(iterations-1)))
-    
-    for i in a:
-        for j in b:
-            next(progress_bar)
+class A:
+    params = {
+        "exchange": "cryptocom",
+        "commission": 0.075 / 100,
+        "base_currency": "USDT",
+        "number_of_attempts_for_random_coins_wo_position": 24,
+        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
+        "coins_amount": 1,
+        "fix_coins": ["SOL"],
+    }
 
 
 if __name__ == "__main__":
-    tester()
+    scenario = V3(params = {
+        "exchange": "cryptocom",
+        "commission": 0.075 / 100,
+        "base_currency": "USDT",
+        "number_of_attempts_for_random_coins_wo_position": 24,
+        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
+        "coins_amount": 1,
+        "fix_coins": ["SOL"],
+    }, none)
+
+
+    scenario.params["exchange"] = "hallo"

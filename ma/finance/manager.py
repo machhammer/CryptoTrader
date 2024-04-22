@@ -9,30 +9,46 @@ from datetime import datetime
 from TraderClass import TraderClass
 import yfinance as yf
 from models import V3, V4
-import traceback
+from scenarios import S1
+import ParameterOptimizer as optimizer
 
 import warnings
 
 yf.pdr_override()
 warnings.filterwarnings("ignore")
 
-strategy = V3
+model = V3
+scenario = S1(params = {
+        "exchange": "cryptocom",
+        "commission": 0.075 / 100,
+        "base_currency": "USDT",
+        "number_of_attempts_for_random_coins_wo_position": 24,
+        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
+        "coins_amount": 1,
+        "fix_coins": ["SOL"],
+        "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
+        "frequency": 300,
+        "timeframe": "5m",
+        "mood_threshold": 0.0,
+        "pos_neg_threshold": -100,
 
-STOP_TRADING_EMERGENCY_THRESHOLD = strategy.params["STOP_TRADING_EMERGENCY_THRESHOLD"]
-commission = strategy.params["commission"]
-frequency = strategy.params["frequency"]
-mood_treshold = strategy.params["mood_treshold"]
-pos_neg_threshold = strategy.params["pos_neg_threshold"]
-timeframe = strategy.params["timeframe"]
-base_currency = strategy.params["base_currency"]
-number_of_attempts_for_random_coins_wo_position = strategy.params["frequency"]
-coins_amount = strategy.params["coins_amount"]
-fix_coins = strategy.params["fix_coins"]
-ignore_coins = strategy.params["ignore_coins"]
+    }
+)
+
+commission = scenario.params["commission"]
+exchange_name = scenario.params["exchange"]
+base_currency = scenario.params["base_currency"]
+number_of_attempts_for_random_coins_wo_position = scenario.params["number_of_attempts_for_random_coins_wo_position"]
+ignore_coins = scenario.params["ignore_coins"]
+coins_amount = scenario.params["coins_amount"]
+fix_coins = scenario.params["fix_coins"]
+mood_threshold = scenario.params["mood_threshold"]
+pos_neg_threshold = scenario.params["pos_neg_threshold"]
+STOP_TRADING_EMERGENCY_THRESHOLD = scenario.params["STOP_TRADING_EMERGENCY_THRESHOLD"]
+
+exchange = Exchange(exchange_name)
 
 coins = {}
-
-exchange = Exchange("cryptocom")
 
 logger = logging.getLogger("manager")
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
@@ -153,9 +169,9 @@ def identify_candidate(all_coins, selected_coins):
             found_coin = all_coins.iloc[i, 0].replace("/USDT", "-USD")
             data = pd.DataFrame(yf.download(found_coin, period="5d", interval="1h", progress=False))
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
-            data = strategy.apply_indicators(data)
+            data = model.apply_indicators(data)
             if len(data) > 0:
-                buy_sell_decision = strategy.live_trading_model(dataset=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
+                buy_sell_decision = model.live_trading_model(dataset=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_threshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
                 if buy_sell_decision == 1:
                     found_coin = found_coin.replace("-USD", "")
                     logger.info(
@@ -181,11 +197,11 @@ def check_candidate():
 
     data = pd.DataFrame(yf.download("NEO-USD", period="5d", interval="60m"))
     data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
-    data = strategy.apply_indicators(data)
+    data = model.apply_indicators(data)
 
     print(data)
 
-    buy_sell_decision = strategy.live_trading_model(datetime=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_treshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
+    buy_sell_decision = model.live_trading_model(datetime=data, logger=None, highest_price=0, mood=0.2, mood_threshold=mood_threshold, pos_neg=0, pos_neg_median=0, pos_neg_threshold=-1)
 
     print(buy_sell_decision)
 
@@ -195,17 +211,28 @@ def add_trader(coin):
     output_t = queue.Queue()
     input_t = queue.Queue()
 
+    params = {
+        "sma": 5,
+        "aroon": 28,
+        "profit_threshold": 0,
+        "sell_threshold": 1,
+        "urgency_sell": 10,
+    }
+
+    opt = optimizer.optimal_parameters("SOL-USD", model(scenario))
+    params["sma"] = opt[0][0]
+    params["aroon"] = opt[0][1]
+    params["profit_threshold"] = opt[0][2]
+    params["urgency_sell"] = opt[0][3]
+
     trader = TraderClass(
         event=event_t,
         input=output_t,
         output=input_t,
         coin=coin,
-        frequency=frequency,
-        timeframe=timeframe,
         exchange=exchange,
-        mood_threshold=mood_treshold,
-        pos_neg_threshold=pos_neg_threshold,
-        strategy = strategy
+        model = model(scenario, params),
+        scenario=scenario
     )
 
     trader.start()
@@ -222,7 +249,9 @@ def run():
     traders = {}
     logger.info("")
     logger.info("Start Crypto Trader!")
-    logger.info("Strategy Version: {}".format(strategy.get_strategy_name()))
+    logger.info("Model Version: {}".format(model.name))
+    logger.info("Scenario Version: {}".format(scenario.name))
+    
     all_coins = fetch_coins()
     coins = get_my_coins(all_coins)
     logger.info("Trade with coins: {}".format(coins))
@@ -233,7 +262,8 @@ def run():
 
     print("")
     print("Crypto Trader Running!")
-    print("Strategy Version: {}".format(strategy.get_strategy_name()))
+    print("Model Version: {}".format(model.name))
+    print("Scenario Version: {}".format(scenario.name))
 
 
     first_run = True
@@ -293,7 +323,7 @@ def run():
                     )
                 if (
                     values[1] == False
-                    and params["mood"] > mood_treshold
+                    and params["mood"] > mood_threshold
                     and trader not in fix_coins
                 ):
                     if number_of_current_attempts_for_random_coins >= number_of_attempts_for_random_coins_wo_position:
@@ -354,7 +384,7 @@ def run():
 
         traders = traders_copy.copy()
 
-        wait_time = strategy.get_wait_time()
+        wait_time = scenario.get_wait_time()
 
         logger.info("Waiting Time in Seconds: {}".format(wait_time))
         time.sleep(wait_time)

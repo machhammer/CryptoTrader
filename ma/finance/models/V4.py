@@ -27,6 +27,8 @@ params = {
     "commission": 0.075 / 100
 }
 
+name = "Version 4.0"
+
 def get_strategy_name():
     return "Version 4.0"
 
