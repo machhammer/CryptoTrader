@@ -41,7 +41,6 @@ def setLogger(coin):
 def fetch_data(coin):    
     end_date = datetime.now() + timedelta(days=1)
     start_date = end_date - timedelta(days=20)
-    print(start_date, end_date)
     data = pdr.get_data_yahoo(coin, start=start_date, end=end_date, interval="5m")
     data.reset_index(inplace=True)
     data.rename(columns={'Datetime': 'timestamp','Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close'}, inplace=True)
