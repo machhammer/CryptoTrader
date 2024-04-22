@@ -1,4 +1,4 @@
-import exchanges
+from exchanges import Exchange
 import threading
 import pandas as pd
 import logging
@@ -32,12 +32,12 @@ ignore_coins = strategy.params["ignore_coins"]
 
 coins = {}
 
-exchange = exchanges.cryptocom()
+exchange = Exchange("cryptocom")
 
 logger = logging.getLogger("manager")
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 handler = logging.FileHandler(
-    filename="trading-manager-v4.log",
+    filename="trading-manager.log",
     mode="a",
     encoding="utf-8",
 )
@@ -80,14 +80,6 @@ def get_my_coins(all_coins):
 
 def fetch_coins():
     global exchange
-    try:
-        tickers = exchange.fetch_tickers()
-    except Exception as e:
-        logger.error(e)
-        traceback.print_exc() 
-        exchange = exchanges.cryptocom()
-        tickers = exchange.fetch_tickers()
-        logger.info("Connection refreshed!")
     tickers = exchange.fetch_tickers()
     df = pd.DataFrame(tickers)
     df = df.T

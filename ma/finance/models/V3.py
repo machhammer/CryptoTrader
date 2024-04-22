@@ -124,7 +124,7 @@ def live_trading_model(
         up_price = (1 + params["profit_threshold"] / 100) * position["price"] 
         if logger:
             logger.info(
-                "{}, C: {:.4f}, High: {:.4f}, Sell Down < {:.4f}%: {:.4f} , Sell Up > {:.4f}%: {:.4f}".format(
+                "{}, C: {:.4f}, High: {:.4f}, Sell Down <= {:.4f}%: {:.4f} , Sell Up >= {:.4f}%: {:.4f}".format(
                     dataset.iloc[i, 0],
                     dataset.iloc[i, 4],
                     highest_price,
