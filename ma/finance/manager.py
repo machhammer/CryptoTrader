@@ -216,14 +216,14 @@ def add_trader(coin):
         "aroon": 28,
         "profit_threshold": 0,
         "sell_threshold": 1,
-        "urgency_sell": 10,
+        "urgency_sell": 0,
     }
 
-    opt = optimizer.optimal_parameters("SOL-USD", model(scenario))
+    """ opt = optimizer.optimal_parameters("SOL-USD", model(scenario))
     params["sma"] = opt[0][0]
     params["aroon"] = opt[0][1]
     params["profit_threshold"] = opt[0][2]
-    params["urgency_sell"] = opt[0][3]
+    params["urgency_sell"] = opt[0][3] """
 
     trader = TraderClass(
         event=event_t,

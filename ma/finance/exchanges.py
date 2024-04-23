@@ -98,7 +98,7 @@ class Exchange():
     def fetch_my_trades(self, asset):
         result = None
         try:
-            result = self.exchange.fetch_my_trades(asset)
+            result = self.exchange.fetch_my_trades(symbol=asset)
         except Exception as e:
             self.log_error(e)
             self.connect()

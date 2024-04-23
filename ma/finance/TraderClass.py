@@ -134,7 +134,7 @@ class TraderClass(Thread):
 
     def get_funding(self):
         time.sleep(random.randint(1, 3))
-        total = 0
+        
         coin_keys = self.coin_distribution.keys()
         for key in coin_keys:
             try:
@@ -149,7 +149,8 @@ class TraderClass(Thread):
             if current_balance * current_price < 5:
                 total = total + float(self.coin_distribution[key]) * 10
                 self.logger.info("Total: {}".format(total))
-            
+
+        if total == 0: total = 1    
         ratio = (self.coin_distribution[self.coin] * 10) / total
         self.logger.info("Ratio: {:.4f}".format(ratio))
 
