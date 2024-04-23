@@ -134,7 +134,7 @@ class TraderClass(Thread):
 
     def get_funding(self):
         time.sleep(random.randint(1, 3))
-        
+        total = 0
         coin_keys = self.coin_distribution.keys()
         for key in coin_keys:
             try:
@@ -236,7 +236,7 @@ class TraderClass(Thread):
                 price = self.get_trade_price(order["id"])[0]
             except:
                 self.logger.error("Error getting transaction price from exchange. taking close prize.")
-                
+
             self.pnl = self.pnl + price - self.position["price"]
 
             self.logger.info(
