@@ -150,7 +150,6 @@ class TraderClass(Thread):
                 total = total + float(self.coin_distribution[key]) * 10
                 self.logger.info("Total: {}".format(total))
 
-        if total == 0: total = 1    
         ratio = (self.coin_distribution[self.coin] * 10) / total
         self.logger.info("Ratio: {:.4f}".format(ratio))
 
@@ -205,7 +204,11 @@ class TraderClass(Thread):
                 size,
                 price,
             )
-            price = self.get_trade_price(order["id"])[0]
+            try:
+                price = self.get_trade_price(order["id"])[0]
+            except:
+                self.logger.error("Error getting transaction price from exchange. taking close prize.")
+            
             self.set_position(price, size, price * size, int(ts.timestamp() * 1e3))
             self.logger.info(
                 "Trading BUY: {}, order id: {}, price: {:.4f}".format(
@@ -229,8 +232,11 @@ class TraderClass(Thread):
                 size
             )
             self.set_position(0, 0, 0, None)
-
-            price = self.get_trade_price(order["id"])[0]
+            try:
+                price = self.get_trade_price(order["id"])[0]
+            except:
+                self.logger.error("Error getting transaction price from exchange. taking close prize.")
+                
             self.pnl = self.pnl + price - self.position["price"]
 
             self.logger.info(

@@ -102,7 +102,7 @@ class Exchange():
         except Exception as e:
             self.log_error(e)
             self.connect()
-            result = self.exchange.fetch_my_trades(asset)
+            result = self.exchange.fetch_my_trades(symbol=asset)
             self.log_error("fetch_my_trades")
         return result
 
