@@ -336,7 +336,7 @@ class TraderClass(Thread):
 
         while not self.event.is_set():
         
-            if firstRun or (datetime.datetime.now().min < 5):
+            if firstRun or (datetime.datetime.now().minute < 5):
                 firstRun = False
                 opt = optimizer.optimize_parameters("SOL-USD", self.model)
 
