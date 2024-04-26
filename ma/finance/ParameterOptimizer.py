@@ -177,7 +177,6 @@ def optimize_parameters(coin, model):
 
     data = pd.DataFrame.from_dict(results, orient='index')
     max_row = data[data['pnl']==data['pnl'].max()]
-    print(max_row)
     return (max_row.iloc[0,0]), (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3]), (max_row.iloc[0,4])
     
 
