@@ -25,12 +25,7 @@ test_params = {
     "sell_threshold": [0, 1, 2, 3, 5, 8, 10],
 }
 
-test_params = {
-    "sma": [3, 5],
-    "aroon": [3, 5],
-    "profit_threshold": [0, 2],
-    "sell_threshold": [0, 2],
-}
+
 
 def setLogger(coin):
     logger = logging.getLogger("test-" + coin)
@@ -42,7 +37,7 @@ def setLogger(coin):
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.ERROR)
     return logger
 
 def fetch_data(coin):    
@@ -54,7 +49,7 @@ def fetch_data(coin):
     data = pd.DataFrame(
         data[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
     )
-    data.to_csv('data_' + coin + '.csv')
+    #data.to_csv('data_' + coin + '.csv')
     return data
 
 def set_position(price, size, total, timestamp):
@@ -136,11 +131,11 @@ def backtrading(coin, model, data, logger):
 
 def analyze_paramters():
     data = pd.read_csv("parameters.csv").reset_index()
-    data = data.loc[data['pnl'].idxmax()]
-    print(data)
+    max_row = data[data['pnl']==data['pnl'].max()]
+    return (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3]), (max_row.iloc[0,4])
 
 
-def optimize_parameters(coin, model, output_file):
+def optimize_parameters(coin, model):
     logger = setLogger(coin)
     original = fetch_data(coin)
     data = original.copy()
@@ -175,12 +170,10 @@ def optimize_parameters(coin, model, output_file):
                     except:
                         pass
 
-    df = pd.DataFrame.from_dict(results, orient='index')
-    df.to_csv(output_file)    
-    print(df)
-
-    #max_key = (max(results, key=results.get))
-    #return max_key, results[max_key], results
+    data = pd.DataFrame.from_dict(results, orient='index')
+    max_row = data[data['pnl']==data['pnl'].max()]
+    return (max_row.iloc[0,0]), (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3])
+    
 
 
 def test_parameter(coin, model, params):
@@ -223,9 +216,9 @@ if __name__ == "__main__":
 
     model = V3(scenario=scenario)
 
-    par = optimize_parameters("SOL-USD", model, "parameters.csv")
-
-    #pnl = test_parameter("SOL-USD", model, params={'sma': 9, 'aroon': 3, 'profit_threshold': 0, 'sell_threshold': 8})
-    #print(pnl)
+    par = optimize_parameters("SOL-USD", model)
+    print(par)
+    pnl = test_parameter("SOL-USD", model, params={'sma': par[0], 'aroon': par[1], 'profit_threshold': par[2], 'sell_threshold': par[3]})
+    print(pnl)
     
-    analyze_paramters()
+    #analyze_paramters()

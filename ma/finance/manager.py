@@ -212,18 +212,12 @@ def add_trader(coin):
     input_t = queue.Queue()
 
     params = {
-        "sma": 7,
-        "aroon": 28,
+        "sma": 0,
+        "aroon": 0,
         "profit_threshold": 0,
-        "sell_threshold": 1,
+        "sell_threshold": 0,
         "urgency_sell": 0,
     }
-
-    """ opt = optimizer.optimal_parameters("SOL-USD", model(scenario))
-    params["sma"] = opt[0][0]
-    params["aroon"] = opt[0][1]
-    params["profit_threshold"] = opt[0][2]
-    params["urgency_sell"] = opt[0][3] """
 
     trader = TraderClass(
         event=event_t,

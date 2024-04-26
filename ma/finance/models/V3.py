@@ -10,16 +10,6 @@ from datetime import datetime
 
 class V3:
 
-    '''
-    params = {
-        "sma": 5,
-        "aroon": 28,
-        "profit_threshold": 0,
-        "sell_threshold": 1,
-        "urgency_sell": 10,
-    }
-    '''
-    
     name = "Version 3.0"
 
     def __init__(

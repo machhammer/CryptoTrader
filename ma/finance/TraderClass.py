@@ -7,7 +7,7 @@ from random import randint
 import datetime
 from datetime import timedelta
 from threading import Thread
-
+import ParameterOptimizer as optimizer
 
 class TraderClass(Thread):
     commission = 0.075 / 100
@@ -321,8 +321,6 @@ class TraderClass(Thread):
             )
         )
 
-        self.logger.info("Parameters: {}".format(self.model.params))
-        
         self.get_initial_position()
         self.logger.info(
             "Has Position: {}, Initial Position: Size: {:.4f}, Price: {:.4f}, Total: {:.4f}, TS: {}".format(
@@ -334,9 +332,28 @@ class TraderClass(Thread):
             )
         )
 
+        firstRun = True
+
         while not self.event.is_set():
-            self.data_processing()
+        
+            if firstRun or (datetime.datetime.now().min < 5):
+                firstRun = False
+                opt = optimizer.optimize_parameters("SOL-USD", self.model)
+
+                params = {
+                    "sma": opt[0],
+                    "aroon": opt[1],
+                    "profit_threshold": opt[2],
+                    "sell_threshold": opt[3],
+                    "urgency_sell": 0,
+                }
+                self.model.params = params
+                self.logger.info("New Model Parameters: {}".format(self.model.params))
+
             
+            self.data_processing()
+
+
             wait_time = self.scenario.get_wait_time()
                 
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
