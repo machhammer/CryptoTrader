@@ -19,7 +19,7 @@ position = {}
 
 
 test_params = {
-    "sma": [7, 9, 14, 21, 28, 32],
+    "sma": [3, 5, 7, 9, 14, 21, 28, 32],
     "aroon": [3, 5, 7, 9, 14, 21, 28, 32],
     "profit_threshold": [0, 1, 2, 3, 4, 5, 8, 10],
     "sell_threshold": [0, 1, 2, 3, 4, 5, 8, 10]
@@ -126,7 +126,7 @@ def backtrading(coin, model, data, logger):
     return [pnl, data]
 
 
-def optimal_parameters(coin, model):
+def optimize_parameters(coin, model):
     logger = setLogger(coin)
     original = fetch_data(coin)
     data = original.copy()
@@ -142,6 +142,7 @@ def optimal_parameters(coin, model):
                     model.params["aroon"] = aroon
                     model.params["profit_threshold"] = profit_threshold
                     model.params["sell_threshold"] = sell_threshold
+                    
                     data = model.apply_indicators(data)
                     [pnl, data] = backtrading(coin, model, data, logger)
                     results[sma, aroon, profit_threshold, sell_threshold] = pnl
@@ -151,7 +152,23 @@ def optimal_parameters(coin, model):
                         pass
     
     max_key = (max(results, key=results.get))
-    return max_key, results[max_key]
+    return max_key, results[max_key], results
+
+
+def test_parameter(coin, model, params):
+    logger = setLogger(coin)
+    original = fetch_data(coin)
+    data = original.copy()
+    results = {}
+    model.params["sma"] = params["sma"]
+    model.params["aroon"] = params["aroon"]
+    model.params["profit_threshold"] = params["profit_threshold"]
+    model.params["sell_threshold"] = params["sell_threshold"]
+                    
+    data = model.apply_indicators(data)
+    [pnl, data] = backtrading(coin, model, data, logger)
+        
+    return pnl
 
 
 
@@ -177,7 +194,11 @@ if __name__ == "__main__":
 
     model = V3(scenario=scenario)
 
-    par = optimal_parameters("SOL-USD", model)
-    print("SOL")
-    print(par[0])
+    #par = optimize_parameters("SOL-USD", model)
+    #print("SOL")
+    #print(par[0])
+    #print(par[1])
+    #pprint.pprint(par[2])
+
+    print(test_parameter("SOL-USD", model, params={'sma': 3, 'aroon': 28, 'profit_threshold': 0, 'sell_threshold': 0}))
     

@@ -72,6 +72,7 @@ class Exchange():
             self.log_error("fetch_tickers")
         return result
     
+    
 
     def fetch_ticker(self, asset):
         result = None
