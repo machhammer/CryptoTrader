@@ -177,7 +177,8 @@ def optimize_parameters(coin, model):
 
     data = pd.DataFrame.from_dict(results, orient='index')
     max_row = data[data['pnl']==data['pnl'].max()]
-    return (max_row.iloc[0,0]), (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3])
+    print(max_row)
+    return (max_row.iloc[0,0]), (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3]), (max_row.iloc[0,4])
     
 
 
@@ -221,9 +222,9 @@ if __name__ == "__main__":
 
     model = V3(scenario=scenario)
 
-    #par = optimize_parameters("SOL-USD", model)
-    #print(par)
+    par = optimize_parameters("SOL-USD", model)
+    print(par)
     
-    pnl = test_parameter("SOL-USD", model, params={'sma': 5, 'aroon': 5, 'profit_threshold': 0, 'sell_threshold': 8})
+    pnl = test_parameter("SOL-USD", model, params={'sma': par[0], 'aroon': par[1], 'profit_threshold': par[2], 'sell_threshold': par[3]})
     print(pnl)
     

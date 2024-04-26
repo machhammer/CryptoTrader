@@ -346,6 +346,7 @@ class TraderClass(Thread):
                     "profit_threshold": opt[2],
                     "sell_threshold": opt[3],
                     "urgency_sell": 0,
+                    "pnl": opt[4]
                 }
                 self.model.params = params
                 self.logger.info("New Model Parameters: {}".format(self.model.params))
