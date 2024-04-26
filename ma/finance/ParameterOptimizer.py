@@ -42,7 +42,7 @@ def setLogger(coin):
 
 def fetch_data(coin):    
     end_date = datetime.now() + timedelta(days=1)
-    start_date = end_date - timedelta(days=3)
+    start_date = end_date - timedelta(days=2)
     data = pdr.get_data_yahoo(coin, start=start_date, end=end_date, interval="5m")
     data.reset_index(inplace=True)
     data.rename(columns={'Datetime': 'timestamp','Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close'}, inplace=True)
@@ -221,4 +221,3 @@ if __name__ == "__main__":
     pnl = test_parameter("SOL-USD", model, params={'sma': par[0], 'aroon': par[1], 'profit_threshold': par[2], 'sell_threshold': par[3]})
     print(pnl)
     
-    #analyze_paramters()
