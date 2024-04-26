@@ -212,10 +212,10 @@ def add_trader(coin):
     input_t = queue.Queue()
 
     params = {
-        "sma": 3,
+        "sma": 7,
         "aroon": 28,
         "profit_threshold": 0,
-        "sell_threshold": 0,
+        "sell_threshold": 1,
         "urgency_sell": 0,
     }
 
