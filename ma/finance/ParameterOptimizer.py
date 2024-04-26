@@ -126,6 +126,11 @@ def backtrading(coin, model, data, logger):
                 logger.info("\tBudget:\t{:.5f}".format(budget))
                 data.iloc[i, -1] = 1
                 highest_price = data.iloc[i, 4]
+    if has_position:
+        budget = budget + offline_sell(data.iloc[i, 4], data.iloc[i, 0], commission, logger)
+        pnl = budget - original_budget
+        logger.info("Budget:\t{:.5f}\tPnL:\t{:.5f}".format(budget, pnl))
+        data.iloc[i, -1] = -1
     return [pnl, data]
 
 
@@ -216,8 +221,9 @@ if __name__ == "__main__":
 
     model = V3(scenario=scenario)
 
-    par = optimize_parameters("SOL-USD", model)
-    print(par)
-    pnl = test_parameter("SOL-USD", model, params={'sma': par[0], 'aroon': par[1], 'profit_threshold': par[2], 'sell_threshold': par[3]})
+    #par = optimize_parameters("SOL-USD", model)
+    #print(par)
+    
+    pnl = test_parameter("SOL-USD", model, params={'sma': 5, 'aroon': 5, 'profit_threshold': 0, 'sell_threshold': 8})
     print(pnl)
     
