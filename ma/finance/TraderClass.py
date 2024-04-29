@@ -276,7 +276,7 @@ class TraderClass(Thread):
                     self.logger.info("6 hours passed. Set tradeable_today Flag.")
                     self.tradeable_today = True
 
-            if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
+            if (self.model.params["pnl"] > 0.5) and (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
                 data = self.fetch_data()
                 self.highest_price = self.get_highest_price(data)
