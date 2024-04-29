@@ -79,7 +79,7 @@ class V3:
             )
 
         if not has_position:
-            if pos_neg_median > self.scenario.params["pos_neg_threshold"] and self.model.params["pnl"] > 0.5:
+            if pos_neg_median > self.scenario.params["pos_neg_threshold"] and self.params["pnl"] > 0.5:
                 """ if logger:
                     logger.info("{}, Up: {:.4f}, Down: {:.4f}, SMA: {:.4f}, Price Open: {:.4f}, Price close: {:.4f}".format(dataset.iloc[i-5, 0],
                         dataset.iloc[i-5, 7],
