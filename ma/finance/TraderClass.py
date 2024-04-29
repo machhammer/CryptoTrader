@@ -278,28 +278,33 @@ class TraderClass(Thread):
 
             if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
-                data = self.fetch_data()
-                self.highest_price = self.get_highest_price(data)
+                if self.model.params["pnl"] > 0.5:
 
-                data = self.model.apply_indicators(data)
-                #data.to_csv("data_" + self.coin + ".csv")
-                buy_sell_decision = self.model.live_trading_model(
-                    data,
-                    self.logger,
-                    self.highest_price,
-                    self.mood,
-                    self.pos_neg,
-                    self.pos_neg_median,
-                    -1,
-                    self.has_position,
-                    self.position,
-                )
-                if buy_sell_decision == 1:
-                    if not self.has_position:
-                        self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
-                if buy_sell_decision == -1:
-                    if self.has_position:
-                        self.live_sell(data.iloc[-1, 4])
+                    data = self.fetch_data()
+                    self.highest_price = self.get_highest_price(data)
+
+                    data = self.model.apply_indicators(data)
+                    #data.to_csv("data_" + self.coin + ".csv")
+                    buy_sell_decision = self.model.live_trading_model(
+                        data,
+                        self.logger,
+                        self.highest_price,
+                        self.mood,
+                        self.pos_neg,
+                        self.pos_neg_median,
+                        -1,
+                        self.has_position,
+                        self.position,
+                    )
+                    if buy_sell_decision == 1:
+                        if not self.has_position:
+                            self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
+                    if buy_sell_decision == -1:
+                        if self.has_position:
+                            self.live_sell(data.iloc[-1, 4])
+                else:
+                    self.logger.info("Expected PnL lower threshold: {}".format(self.model.params["pnl"]))
+
 
             else:
                 if self.has_position:
