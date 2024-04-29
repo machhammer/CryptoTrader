@@ -217,6 +217,7 @@ def add_trader(coin):
         "profit_threshold": 0,
         "sell_threshold": 0,
         "urgency_sell": 0,
+        "pnl": 0
     }
 
     trader = TraderClass(
