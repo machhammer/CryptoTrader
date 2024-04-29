@@ -7,7 +7,7 @@ from random import randint
 import datetime
 from datetime import timedelta
 from threading import Thread
-import ParameterOptimizer as optimizer
+
 
 class TraderClass(Thread):
     commission = 0.075 / 100
@@ -276,31 +276,34 @@ class TraderClass(Thread):
                     self.logger.info("6 hours passed. Set tradeable_today Flag.")
                     self.tradeable_today = True
 
-            if (self.model.params["pnl"] > 0.5) and (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
+            if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
-                data = self.fetch_data()
-                self.highest_price = self.get_highest_price(data)
+                if self.model.params["pnl"] > 0.5:
 
-                data = self.model.apply_indicators(data)
-                #data.to_csv("data_" + self.coin + ".csv")
-                buy_sell_decision = self.model.live_trading_model(
-                    data,
-                    self.logger,
-                    self.highest_price,
-                    self.mood,
-                    self.pos_neg,
-                    self.pos_neg_median,
-                    -1,
-                    self.has_position,
-                    self.position,
-                )
-                if buy_sell_decision == 1:
-                    if not self.has_position:
-                        self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
-                if buy_sell_decision == -1:
-                    if self.has_position:
-                        self.live_sell(data.iloc[-1, 4])
+                    data = self.fetch_data()
+                    self.highest_price = self.get_highest_price(data)
 
+                    data = self.model.apply_indicators(data)
+                    #data.to_csv("data_" + self.coin + ".csv")
+                    buy_sell_decision = self.model.live_trading_model(
+                        data,
+                        self.logger,
+                        self.highest_price,
+                        self.mood,
+                        self.pos_neg,
+                        self.pos_neg_median,
+                        -1,
+                        self.has_position,
+                        self.position,
+                    )
+                    if buy_sell_decision == 1:
+                        if not self.has_position:
+                            self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
+                    if buy_sell_decision == -1:
+                        if self.has_position:
+                            self.live_sell(data.iloc[-1, 4])
+                else:
+                     self.logger.info("Expected PnL below threshold!")
             else:
                 if self.has_position:
                     self.live_sell("automated")
@@ -321,6 +324,8 @@ class TraderClass(Thread):
             )
         )
 
+        self.logger.info("Parameters: {}".format(self.model.params))
+        
         self.get_initial_position()
         self.logger.info(
             "Has Position: {}, Initial Position: Size: {:.4f}, Price: {:.4f}, Total: {:.4f}, TS: {}".format(
@@ -332,29 +337,9 @@ class TraderClass(Thread):
             )
         )
 
-        firstRun = True
-
         while not self.event.is_set():
-        
-            if firstRun or (datetime.datetime.now().minute < 5):
-                firstRun = False
-                opt = optimizer.optimize_parameters("SOL-USD", self.model)
-
-                params = {
-                    "sma": opt[0],
-                    "aroon": opt[1],
-                    "profit_threshold": opt[2],
-                    "sell_threshold": opt[3],
-                    "urgency_sell": 0,
-                    "pnl": opt[4]
-                }
-                self.model.params = params
-                self.logger.info("New Model Parameters: {}".format(self.model.params))
-
-            
             self.data_processing()
-
-
+            
             wait_time = self.scenario.get_wait_time()
                 
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
