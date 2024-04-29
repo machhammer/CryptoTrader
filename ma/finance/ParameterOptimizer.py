@@ -49,7 +49,7 @@ def fetch_data(coin):
     data = pd.DataFrame(
         data[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
     )
-    #data.to_csv('data_' + coin + '.csv')
+    data.to_csv('data_' + coin + '.csv')
     return data
 
 def set_position(price, size, total, timestamp):
