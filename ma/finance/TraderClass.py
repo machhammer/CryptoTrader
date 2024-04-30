@@ -278,7 +278,7 @@ class TraderClass(Thread):
 
             if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
-                if self.model.params["pnl"] > 0.5:
+                if self.model.params["pnl"] > -20:
 
                     data = self.fetch_data()
                     self.highest_price = self.get_highest_price(data)
