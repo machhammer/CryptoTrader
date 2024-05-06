@@ -110,7 +110,7 @@ def insert_trader(timestamp, chart_time, coin, sma, aroon, profit_threshold, sel
 
 def insert_transaction(timestamp, coin, type, amount, price):
     connection = connect()
-    insert_record = "INSERT INTO transaction " \
+    insert_record = "INSERT INTO transactions " \
         "(timestamp, coin, type, amount, price) "\
         "VALUES ('{}', '{}', '{}', {}, {})".format(timestamp, coin, type, amount, price)
     print(insert_record)

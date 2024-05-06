@@ -1,1 +1,1 @@
-select * from transactions
+SELECT * from manager
