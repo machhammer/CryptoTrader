@@ -192,7 +192,7 @@ class TraderClass(Thread):
         )
         try:
             self.exchange.create_buy_order(
-                self.coin + "q/" + self.base_currency,
+                self.coin + "/" + self.base_currency,
                 size,
                 price,
             )
@@ -211,7 +211,7 @@ class TraderClass(Thread):
         )
         try:
             self.exchange.create_sell_order(
-                self.coin + "q/" + self.base_currency,
+                self.coin + "/" + self.base_currency,
                 size
             )
             self.set_position(0, 0, 0, None)
@@ -314,8 +314,8 @@ class TraderClass(Thread):
 
             if firstRun or (datetime.datetime.now().minute < 5):
                 firstRun = False
-                #opt = optimizer.optimize_parameters("SOL-USD", self.model)
-                '''
+                opt = optimizer.optimize_parameters("SOL-USD", self.model)
+
                 params = {
                     "sma": opt[0],
                     "aroon": opt[1],
@@ -324,18 +324,8 @@ class TraderClass(Thread):
                     "urgency_sell": 0,
                     "pnl": opt[4]
                 }
-                '''
-                params = {
-                    "sma": 3,
-                    "aroon": 3,
-                    "profit_threshold": 3,
-                    "sell_threshold": 3,
-                    "urgency_sell": 0,
-                    "pnl": 3
-                }
 
                 self.model.params = params
-                self.logger.info("New Model Parameters: {}".format(self.model.params))
 
             self.data_processing()
             

@@ -80,7 +80,6 @@ def insert_manager(timestamp, starting_balance, current_balance, winner, looser,
     insert_record = "INSERT INTO manager " \
         "(timestamp, starting_balance, current_balance, winner, looser, pos_neg, pos_neg_median, fear_and_greed) "\
         "VALUES ('{}', {}, {}, {}, {}, {}, {}, {})".format(timestamp, starting_balance, current_balance, winner, looser, pos_neg, pos_neg_median, fear_and_greed)
-    print(insert_record)
     connection.cursor().execute(insert_record)
     connection.commit()
     connection.close()
