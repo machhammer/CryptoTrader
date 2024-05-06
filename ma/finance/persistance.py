@@ -86,10 +86,10 @@ def insert_manager(timestamp, starting_balance, current_balance, winner, looser,
     connection.close()
 
 
-def last_balance():
+def starting_balance():
     connection = connect()
     cursor = connection.cursor()
-    select_record = "SELECT current_balance FROM manager ORDER by timestamp DESC LIMIT 1"
+    select_record = "SELECT starting_balance FROM manager ORDER by timestamp DESC LIMIT 1"
     cursor.execute(select_record)
     current_balance = 0
     for element in cursor:

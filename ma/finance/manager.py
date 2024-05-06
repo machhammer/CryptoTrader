@@ -239,7 +239,7 @@ def add_trader(coin):
 
 def run():
     global coins
-    DAILY_STARTING_BALANCE = database.last_balance()
+    DAILY_STARTING_BALANCE = database.starting_balance()
     CURRENT_BALANCE = 0
     STOP_TRADING_FOR_TODAY = False
 
