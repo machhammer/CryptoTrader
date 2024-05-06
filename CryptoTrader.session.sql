@@ -1,3 +1,3 @@
 
-SELECT * FROM manager ORDER BY timestamp DESC
+SELECT * FROM trader ORDER BY timestamp DESC
 

@@ -99,7 +99,7 @@ class TraderClass(Thread):
             if timestamp is None:
                 return data["high"].max()
             else:
-                timestamp = datetime.datetime.utcfromtimestamp(timestamp / 1e3)
+                timestamp = datetime.utcfromtimestamp(timestamp / 1e3)
                 data = data[(data['timestamp'] >= timestamp)]
                 return data["high"].max()
 
