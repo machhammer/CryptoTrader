@@ -1,1 +1,3 @@
-SELECT timestamp, current_balance FROM manager ORDER by timestamp DESC LIMIT 1
+
+SELECT * FROM manager ORDER BY timestamp DESC
+

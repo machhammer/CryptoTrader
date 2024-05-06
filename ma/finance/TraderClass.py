@@ -237,12 +237,12 @@ class TraderClass(Thread):
 
             self.logger.info("STOP_TRADING_FOR_TODAY: {} --- tradeable_today: {}".format(self.STOP_TRADING_FOR_TODAY, self.tradeable_today))
 
-            if (datetime.datetime.now().minute >= 0 and datetime.datetime.now().minute < 30 and datetime.datetime.now().hour == 1):
+            if (datetime.now().minute >= 0 and datetime.now().minute < 30 and datetime.now().hour == 1):
                 self.logger.info("New day. Set tradeable_today Flag.")
                 self.tradeable_today = True
 
             if not self.tradeable_today:
-                if self.not_tradeable_until_hour == datetime.datetime.now().hour:
+                if self.not_tradeable_until_hour == datetime.now().hour:
                     self.logger.info("6 hours passed. Set tradeable_today Flag.")
                     self.tradeable_today = True
 
