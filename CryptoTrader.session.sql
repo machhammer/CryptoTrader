@@ -1,3 +1,1 @@
-
-SELECT * FROM trader ORDER BY timestamp DESC
-
+select * from trader

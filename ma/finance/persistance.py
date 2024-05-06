@@ -41,8 +41,7 @@ def initialize_manager_table():
                 "looser INT, "\
                 "pos_neg FLOAT, "\
                 "pos_neg_median FLOAT, "\
-                "fear_and_greed INT, "\
-                "coins VARCHAR(50) "\
+                "fear_and_greed INT "\
             ")"
     connection.cursor().execute(create_table)
 
@@ -56,7 +55,7 @@ def initialize_trader_table():
                 "sma INT, "\
                 "aroon INT, "\
                 "profit_threshold INT, "\
-                "sell_throeshold INT, "\
+                "sell_threshold INT, "\
                 "pnl FLOAT, "\
                 "c_price FLOAT "\
             ")"
@@ -70,8 +69,7 @@ def initialize_transaction_table():
                 "coin VARCHAR(10), "\
                 "type VARCHAR(5), "\
                 "amount FLOAT, "\
-                "price FLOAT, "\
-                "fee FLOAT "\
+                "price FLOAT "\
             ")"
     connection.cursor().execute(create_table)
 
@@ -98,18 +96,17 @@ def last_balance():
 def insert_trader(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price):
     connection = connect()
     insert_record = "INSERT INTO trader " \
-        "(timestamp, starting_balance, current_balance, winner, looser, pos_neg, pos_neg_median, fear_and_greed) "\
-        "VALUES ('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {})".format(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price)
-    print(insert_record)
+        "(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price) "\
+        "VALUES ('{}', '{}', '{}', {}, {}, {}, {}, {}, {})".format(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price)
     connection.cursor().execute(insert_record)
     connection.commit()
     connection.close()
 
-def insert_transaction(timestamp, coin, type, amount, price, fee):
+def insert_transaction(timestamp, coin, type, amount, price):
     connection = connect()
     insert_record = "INSERT INTO transaction " \
-        "(timestamp, coin, type, amount, price, fee) "\
-        "VALUES ('{}', '{}', '{}', {}, {}, {})".format(timestamp, coin, type, amount, price, fee)
+        "(timestamp, coin, type, amount, price) "\
+        "VALUES ('{}', '{}', '{}', {}, {}, {})".format(timestamp, coin, type, amount, price)
     print(insert_record)
     connection.cursor().execute(insert_record)
     connection.commit()
