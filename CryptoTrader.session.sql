@@ -1,1 +1,1 @@
-select * from trader
+select * from transactions

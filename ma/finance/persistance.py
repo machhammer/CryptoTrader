@@ -24,10 +24,10 @@ def connect():
     
     return conn
 
+
 def test_connection():
     connection = connect()
     connection.close()
-
 
 
 def initialize_manager_table():
@@ -45,6 +45,7 @@ def initialize_manager_table():
             ")"
     connection.cursor().execute(create_table)
 
+
 def initialize_trader_table():
     connection = connect()
     create_table ="CREATE or REPLACE TABLE trader " \
@@ -61,6 +62,7 @@ def initialize_trader_table():
             ")"
     connection.cursor().execute(create_table)
 
+
 def initialize_transaction_table():
     connection = connect()
     create_table ="CREATE or REPLACE TABLE transactions " \
@@ -73,6 +75,7 @@ def initialize_transaction_table():
             ")"
     connection.cursor().execute(create_table)
 
+
 def insert_manager(timestamp, starting_balance, current_balance, winner, looser, pos_neg, pos_neg_median, fear_and_greed):
     connection = connect()
     insert_record = "INSERT INTO manager " \
@@ -81,6 +84,7 @@ def insert_manager(timestamp, starting_balance, current_balance, winner, looser,
     connection.cursor().execute(insert_record)
     connection.commit()
     connection.close()
+
 
 def last_balance():
     connection = connect()
@@ -93,6 +97,7 @@ def last_balance():
     connection.close()
     return current_balance
 
+
 def insert_trader(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price):
     connection = connect()
     insert_record = "INSERT INTO trader " \
@@ -102,11 +107,12 @@ def insert_trader(timestamp, chart_time, coin, sma, aroon, profit_threshold, sel
     connection.commit()
     connection.close()
 
+
 def insert_transaction(timestamp, coin, type, amount, price):
     connection = connect()
     insert_record = "INSERT INTO transaction " \
         "(timestamp, coin, type, amount, price) "\
-        "VALUES ('{}', '{}', '{}', {}, {}, {})".format(timestamp, coin, type, amount, price)
+        "VALUES ('{}', '{}', '{}', {}, {})".format(timestamp, coin, type, amount, price)
     print(insert_record)
     connection.cursor().execute(insert_record)
     connection.commit()
