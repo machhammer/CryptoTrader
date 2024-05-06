@@ -4,8 +4,9 @@ import logging
 import argparse
 import random
 from random import randint
+import persistance as database
 import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from threading import Thread
 import ParameterOptimizer as optimizer
 
@@ -139,7 +140,6 @@ class TraderClass(Thread):
         for key in coin_keys:
             try:
                 current_balance = self.exchange.fetch_balance()[key]["free"]
-                self.logger.info("Coin: {}, Current Balance: {:.4f}".format(key, current_balance))
             except:
                 current_balance = 0
             current_price = self.exchange.fetch_ticker(key + "/" + self.base_currency)[
@@ -149,16 +149,9 @@ class TraderClass(Thread):
             if current_balance * current_price < 5:
                 total = total + float(self.coin_distribution[key]) * 10
                 self.logger.info("Total: {}".format(total))
-
         ratio = (self.coin_distribution[self.coin] * 10) / total
-        self.logger.info("Ratio: {:.4f}".format(ratio))
-
         balance_base_currency = self.exchange.fetch_balance()[self.base_currency]["free"]
-        self.logger.info("Balance USDT: {:.4f}".format(balance_base_currency))
-
         funding = (balance_base_currency * ratio) - 1
-        self.logger.info("Funding: {:.4f}".format(funding))
-        
         return funding
 
     def get_trade_price(self, order_id):
@@ -191,7 +184,6 @@ class TraderClass(Thread):
 
     def live_buy(self, price, ts):
         funding = self.get_funding()
-
         size = funding / price
         self.logger.info(
             "Prepare BUY: Funding {:.4f}, Price: {:.4f}, Size: {:.4f}, Coin: {}".format(
@@ -199,27 +191,18 @@ class TraderClass(Thread):
             )
         )
         try:
-            order = self.exchange.create_buy_order(
-                self.coin + "/" + self.base_currency,
+            self.exchange.create_buy_order(
+                self.coin + "q/" + self.base_currency,
                 size,
                 price,
             )
-            try:
-                price = self.get_trade_price(order["id"])[0]
-            except:
-                self.logger.error("Error getting transaction price from exchange. taking close prize.")
-            
             self.set_position(price, size, price * size, int(ts.timestamp() * 1e3))
-            self.logger.info(
-                "Trading BUY: {}, order id: {}, price: {:.4f}".format(
-                    ts, order["id"], price
-                )
-            )
+            database.insert_transaction(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self.coin, "buy", size, price)
             self.highest_price = self.position["price"]
         except Exception as e:
             self.logger.error(e)
 
-    def live_sell(self, ts):
+    def live_sell(self, price):
         size = self.exchange.fetch_balance()[self.coin]["free"]
         self.logger.info(
             "Prepare SELL: Size: {:.4f}, Coin: {}, Size: {:.4f}".format(
@@ -227,25 +210,12 @@ class TraderClass(Thread):
             )
         )
         try:
-            order = self.exchange.create_sell_order(
-                self.coin + "/" + self.base_currency,
+            self.exchange.create_sell_order(
+                self.coin + "q/" + self.base_currency,
                 size
             )
             self.set_position(0, 0, 0, None)
-            try:
-                price = self.get_trade_price(order["id"])[0]
-            except:
-                self.logger.error("Error getting transaction price from exchange. taking close prize.")
-
-            self.pnl = self.pnl + price - self.position["price"]
-
-            self.logger.info(
-                "Trading SELL: {}, order id: {}, price: {:.4f}, PnL: {:.4f}".format(
-                    ts, order["id"], price, self.pnl
-                )
-            )
-            self.tradeable_today = True
-            self.not_tradeable_until_hour = (datetime.datetime.now() + timedelta(hours=6)).hour
+            database.insert_transaction(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self.coin, "sell", self.position["size"], price)
             self.highest_price = 0
         except Exception as e:
             self.logger.error(e)
@@ -302,6 +272,9 @@ class TraderClass(Thread):
                     if buy_sell_decision == -1:
                         if self.has_position:
                             self.live_sell(data.iloc[-1, 4])
+
+                    database.insert_trader(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), data.iloc[-1, 0], self.coin, self.model.params["sma"], self.model.params["aroon"], self.model.params["profit_threshold"], self.model.params["sell_threshold"], self.model.params["pnl"], c_price)
+
                 else:
                      self.logger.info("Expected PnL below threshold!")
             else:
@@ -341,8 +314,8 @@ class TraderClass(Thread):
 
             if firstRun or (datetime.datetime.now().minute < 5):
                 firstRun = False
-                opt = optimizer.optimize_parameters("SOL-USD", self.model)
-
+                #opt = optimizer.optimize_parameters("SOL-USD", self.model)
+                '''
                 params = {
                     "sma": opt[0],
                     "aroon": opt[1],
@@ -351,6 +324,16 @@ class TraderClass(Thread):
                     "urgency_sell": 0,
                     "pnl": opt[4]
                 }
+                '''
+                params = {
+                    "sma": 3,
+                    "aroon": 3,
+                    "profit_threshold": 3,
+                    "sell_threshold": 3,
+                    "urgency_sell": 0,
+                    "pnl": 3
+                }
+
                 self.model.params = params
                 self.logger.info("New Model Parameters: {}".format(self.model.params))
 

@@ -1,6 +1,7 @@
 import ccxt
 import credentials
 from datetime import datetime
+import time
 import traceback
 
 class Exchange():
@@ -55,6 +56,7 @@ class Exchange():
             result = self.exchange.fetch_balance()
         except Exception as e:
             self.log_error(e)
+            time.sleep(10)
             self.connect()
             result = self.exchange.fetch_balance()
             self.log_error("fetch_balance")

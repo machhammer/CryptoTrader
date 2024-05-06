@@ -7,6 +7,7 @@ import queue
 import time
 from datetime import datetime
 from TraderClass import TraderClass
+import persistance as database
 import yfinance as yf
 from models import V3, V4
 from scenarios import S1
@@ -47,6 +48,7 @@ pos_neg_threshold = scenario.params["pos_neg_threshold"]
 STOP_TRADING_EMERGENCY_THRESHOLD = scenario.params["STOP_TRADING_EMERGENCY_THRESHOLD"]
 
 exchange = Exchange(exchange_name)
+database.test_connection()
 
 coins = {}
 
@@ -237,7 +239,7 @@ def add_trader(coin):
 
 def run():
     global coins
-    DAILY_STARTING_BALANCE = 0
+    DAILY_STARTING_BALANCE = database.last_balance()
     CURRENT_BALANCE = 0
     STOP_TRADING_FOR_TODAY = False
 
@@ -265,6 +267,7 @@ def run():
     has_random_coins_wo_position = False
     number_of_current_attempts_for_random_coins = 1
     while True:
+        db_record = {}
         if not first_run:
             all_coins = fetch_coins()
         else:
@@ -286,21 +289,19 @@ def run():
             else:
                 STOP_TRADING_FOR_TODAY = False
         
-        logger.info("")
-        logger.info("Starting Balance: {:.2f}, Current Balance: {:.2f}".format(DAILY_STARTING_BALANCE, CURRENT_BALANCE))
-        logger.info("Daily Result: {:.2f}, Stop Trading: {:.2f}".format(daily_return, STOP_TRADING_FOR_TODAY))   
                 
         params = fetch_data(all_coins)
-        logger.info("Parameters: {}".format(params))
-
+        
         params['STOP_TRADING_FOR_TODAY'] = STOP_TRADING_FOR_TODAY
 
+        database.insert_manager(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), DAILY_STARTING_BALANCE, CURRENT_BALANCE, params['winner'], params['looser'], params['pos_neg'], params['pos_neg_median'], params['fear_and_greed'])
+                
         traders_copy = traders.copy()
         for trader in traders:
             is_alive = traders[trader][0].is_alive()
             logger.info("Working with Trader: {}".format(trader))
             if is_alive:
-                #logger.info("--- Trader: {} is alive".format(trader))
+                logger.info("--- Trader: {} is alive".format(trader))
                 traders[trader][2].put(params)
                 values = traders[trader][3].get()
                 now = datetime.now()
