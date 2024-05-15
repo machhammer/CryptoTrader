@@ -273,7 +273,7 @@ class TraderClass(Thread):
                         if self.has_position:
                             self.live_sell(data.iloc[-1, 4])
 
-                    database.insert_trader(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), data.iloc[-1, 0], self.coin, self.model.params["sma"], self.model.params["aroon"], self.model.params["profit_threshold"], self.model.params["sell_threshold"], self.model.params["pnl"], data.iloc[-1, 4])
+                    database.insert_trader(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), data.iloc[-1, 0], self.coin, self.model.params["sma"], self.model.params["aroon"], self.model.params["profit_threshold"], self.model.params["sell_threshold"], self.model.params["pos_neg_threshold"], self.model.params["pnl"], data.iloc[-1, 4])
 
                 else:
                      self.logger.info("Expected PnL below threshold!")
