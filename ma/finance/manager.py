@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore")
 model = V3
 scenario = S1(params = {
         "exchange": "cryptocom",
-        "commission": 0.075 / 100,
+        "commission": 0.2 / 100,
         "base_currency": "USDT",
         "number_of_attempts_for_random_coins_wo_position": 24,
         "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
@@ -31,8 +31,6 @@ scenario = S1(params = {
         "frequency": 300,
         "timeframe": "5m",
         "mood_threshold": 0.0,
-        "pos_neg_threshold": -100,
-
     }
 )
 
@@ -219,6 +217,7 @@ def add_trader(coin):
         "profit_threshold": 0,
         "sell_threshold": 0,
         "urgency_sell": 0,
+        "por_neg_threshold": 0,
         "pnl": 0
     }
 

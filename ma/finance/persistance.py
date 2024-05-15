@@ -2,6 +2,7 @@
 import mariadb
 import sys
 import credentials
+import pandas as pd
 from datetime import datetime
 
 
@@ -97,6 +98,13 @@ def starting_balance():
     connection.close()
     return current_balance
 
+def execute_select(select):
+    connection = connect()
+    cursor = connection.cursor()
+    cursor.execute(select)
+    rows = cursor.fetchall()
+    connection.close()
+    return pd.DataFrame(rows)
 
 def insert_trader(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price):
     connection = connect()
@@ -121,8 +129,7 @@ def insert_transaction(timestamp, coin, type, amount, price):
 
 
 if __name__ == "__main__":
-    initialize_manager_table()
-    initialize_trader_table()
-    initialize_transaction_table()
+    df = execute_select("SELECT * fROM manager")
+    print (df)
 
 

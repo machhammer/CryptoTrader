@@ -13,7 +13,6 @@ class S1:
         "frequency": 300,
         "timeframe": "5m",
         "mood_treshold": 0.0,
-        "pos_neg_threshold": -100,
 
     }
 

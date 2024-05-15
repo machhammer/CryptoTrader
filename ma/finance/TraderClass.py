@@ -314,7 +314,7 @@ class TraderClass(Thread):
 
             if firstRun or (datetime.now().minute < 5):
                 firstRun = False
-                opt = optimizer.optimize_parameters("SOL-USD", self.model)
+                opt = optimizer.optimize_parameters("SOL-USD", self.model, days=2)
 
                 params = {
                     "sma": opt[0],
@@ -322,7 +322,8 @@ class TraderClass(Thread):
                     "profit_threshold": opt[2],
                     "sell_threshold": opt[3],
                     "urgency_sell": 0,
-                    "pnl": opt[4]
+                    "pos_neg_threshold": opt[4],
+                    "pnl": opt[5]
                 }
 
                 self.model.params = params
