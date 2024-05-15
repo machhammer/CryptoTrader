@@ -42,7 +42,6 @@ ignore_coins = scenario.params["ignore_coins"]
 coins_amount = scenario.params["coins_amount"]
 fix_coins = scenario.params["fix_coins"]
 mood_threshold = scenario.params["mood_threshold"]
-pos_neg_threshold = scenario.params["pos_neg_threshold"]
 STOP_TRADING_EMERGENCY_THRESHOLD = scenario.params["STOP_TRADING_EMERGENCY_THRESHOLD"]
 
 exchange = Exchange(exchange_name)
