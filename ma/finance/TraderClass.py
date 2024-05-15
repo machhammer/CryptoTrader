@@ -314,7 +314,7 @@ class TraderClass(Thread):
 
             if firstRun or (datetime.now().minute < 5):
                 firstRun = False
-                opt = optimizer.optimize_parameters("SOL-USD", self.model, days=2)
+                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=2)
 
                 params = {
                     "sma": opt[0],

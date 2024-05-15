@@ -1,1 +1,1 @@
-SELECT * from manager
+SELECT * FROM trader order BY timestamp desc
