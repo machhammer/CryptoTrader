@@ -106,11 +106,11 @@ def execute_select(select):
     connection.close()
     return pd.DataFrame(rows)
 
-def insert_trader(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price):
+def insert_trader(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pos_neg_threshold, pnl, c_price):
     connection = connect()
     insert_record = "INSERT INTO trader " \
-        "(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price) "\
-        "VALUES ('{}', '{}', '{}', {}, {}, {}, {}, {}, {})".format(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price)
+        "(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price, pos_neg_threshold) "\
+        "VALUES ('{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {})".format(timestamp, chart_time, coin, sma, aroon, profit_threshold, sell_threshold, pnl, c_price, pos_neg_threshold)
     connection.cursor().execute(insert_record)
     connection.commit()
     connection.close()
