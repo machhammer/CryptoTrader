@@ -107,7 +107,7 @@ def offline_sell(price, ts, commission, logger):
 def backtrading(coin, model, data, logger):
     global highest_price
     global has_position
-    commission = model.scenario.params["pos_neg_threshold"]
+    commission = model.scenario.params["commission"]
     original_budget = 100
     budget = original_budget
     pnl = 0
