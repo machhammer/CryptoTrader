@@ -24,7 +24,7 @@ test_params = {
     "aroon": [3, 5, 7, 9, 14, 21, 28, 32],
     "profit_threshold": [0, 1, 2, 3, 5, 8, 10],
     "sell_threshold": [0, 1, 2, 3, 5, 8, 10],
-    "pos_neg_threshold": [-100, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]
+    "pos_neg_threshold": [-100, -5, -3, -1]
 }
 
 
