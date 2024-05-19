@@ -312,9 +312,10 @@ class TraderClass(Thread):
 
         while not self.event.is_set():
 
-            if firstRun or (datetime.now().minute < 5):
+            #if firstRun or (datetime.now().minute < 5):
+            if firstRun:
                 firstRun = False
-                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=2)
+                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=9)
 
                 params = {
                     "sma": opt[0],

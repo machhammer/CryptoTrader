@@ -77,6 +77,39 @@ def initialize_transaction_table():
     connection.cursor().execute(create_table)
 
 
+def initialize_optimizer_results_table():
+    connection = connect()
+    create_table ="CREATE or REPLACE TABLE optimizer_results " \
+            "( "\
+                "coin VARCHAR(10), "\
+                "sma INT, "\
+                "aroon INT, "\
+                "profit_threshold FLOAT, "\
+                "sell_threshold FLOAT, "\
+                "pos_neg_threshold FLOAT, "\
+                "pnl FLOAT"\
+            ")"
+    connection.cursor().execute(create_table)
+
+def initialize_optimizer_results_transactions_table():
+    connection = connect()
+    create_table ="CREATE or REPLACE TABLE optimizer_results_transactions " \
+            "( "\
+                "timestamp TIMESTAMP, "\
+                "coin VARCHAR(10), "\
+                "sma INT,"\
+                "aroon INT, "\
+                "profit_threshold FLOAT, "\
+                "sell_threshold FLOAT, "\
+                "pos_neg_threshold FLOAT, "\
+                "type VARCHAR(10), "\
+                "price FLOAT, "\
+                "budget FLOAT, "\
+                "pnl FLOAT"\
+            ")"
+    connection.cursor().execute(create_table)
+
+
 def insert_manager(timestamp, starting_balance, current_balance, winner, looser, pos_neg, pos_neg_median, fear_and_greed):
     connection = connect()
     insert_record = "INSERT INTO manager " \
@@ -121,10 +154,28 @@ def insert_transaction(timestamp, coin, type, amount, price):
     insert_record = "INSERT INTO transactions " \
         "(timestamp, coin, type, amount, price) "\
         "VALUES ('{}', '{}', '{}', {}, {})".format(timestamp, coin, type, amount, price)
-    print(insert_record)
     connection.cursor().execute(insert_record)
     connection.commit()
     connection.close()
+
+def generate_optimizer_results(coin, data):
+    initialize_optimizer_results_table()
+    connection = connect()
+    for i in range(len(data)):
+        insert_record = "INSERT INTO optimizer_results " \
+            "(coin, sma, aroon, profit_threshold, sell_threshold, pos_neg_threshold, pnl) "\
+            "VALUES ('{}', {}, {}, {}, {}, {}, {})".format(coin, data.iloc[i, 0], data.iloc[i, 1], data.iloc[i, 2], data.iloc[i, 3], data.iloc[i, 4], data.iloc[i, 5])
+        connection.cursor().execute(insert_record)
+    connection.commit()
+    connection.close()
+
+
+
+def insert_optimizer_results_transactions(connection, timestamp, coin, sma, aroon,  profit_threshold, sell_threshold, pos_neg_threshold, type, price, budget, pnl):
+    insert_record = "INSERT INTO optimizer_results_transactions " \
+        "(timestamp, coin, sma, aroon,  profit_threshold, sell_threshold, pos_neg_threshold, type, price, budget, pnl) "\
+        "VALUES ('{}', '{}', {}, {}, {}, {}, {}, '{}', {}, {}, {})".format(timestamp, coin, sma, aroon,  profit_threshold, sell_threshold, pos_neg_threshold, type, price, budget, pnl)
+    connection.cursor().execute(insert_record)
 
 
 
