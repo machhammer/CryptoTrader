@@ -112,7 +112,7 @@ def backtrading(coin, model, data, logger):
     original_budget = 100
     budget = original_budget
     pnl = 0
-    connection = database.connect()
+    #connection = database.connect()
     data['mysql_timestamp'] = pd.to_datetime(data['timestamp']).dt.strftime('%Y-%m-%d %H:%M')
     set_position(0, 0, 0, None)
     logger.info("{}, {}, {}, {}".format(model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold']))
@@ -135,24 +135,24 @@ def backtrading(coin, model, data, logger):
                 budget = budget + offline_sell(data.iloc[i, 4], data.iloc[i, 0], commission, logger)
                 pnl = budget - original_budget
                 logger.info("Budget:\t{:.5f}\tPnL:\t{:.5f}".format(budget, pnl))
-                database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "BUY", data.iloc[i, 4], budget, pnl)
+                #database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "BUY", data.iloc[i, 4], budget, pnl)
                 data.iloc[i, -1] = -1
                 highest_price = 0
             if buy_sell_decision == 1:
                 budget = budget - offline_buy(data.iloc[i, 4], data.iloc[i, 0], commission, (budget-1)/data.iloc[i, 4], logger)
                 logger.info("\tBudget:\t{:.5f}".format(budget))
-                database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
+                #database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
                 data.iloc[i, -1] = 1
                 highest_price = data.iloc[i, 4]
     if has_position:
         budget = budget + offline_sell(data.iloc[i, 4], data.iloc[i, 0], commission, logger)
         pnl = budget - original_budget
         logger.info("Budget:\t{:.5f}\tPnL:\t{:.5f}".format(budget, pnl))
-        database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
+        #database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
         data.iloc[i, -1] = -1
 
-    connection.commit()
-    connection.close()
+    #connection.commit()
+    #connection.close()
 
     return [pnl, data]
 
