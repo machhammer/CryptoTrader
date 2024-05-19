@@ -69,6 +69,7 @@ class Exchange():
         except Exception as e:
             print(traceback.format_exc())
             self.log_error(e)
+            time.sleep(10)
             self.connect()
             result = self.exchange.fetch_tickers()
             self.log_error("fetch_tickers")
@@ -82,6 +83,7 @@ class Exchange():
             result = self.exchange.fetch_ticker(asset)
         except Exception as e:
             self.log_error(e)
+            time.sleep(10)
             self.connect()
             result = self.exchange.fetch_ticker(asset)
             self.log_error("fetch_ticker")
@@ -93,6 +95,7 @@ class Exchange():
             result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
         except Exception as e:
             self.log_error(e)
+            time.sleep(10)
             self.connect()
             result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
             self.log_error("fetch_ohlcv")
@@ -104,6 +107,7 @@ class Exchange():
             result = self.exchange.fetch_my_trades(symbol=asset)
         except Exception as e:
             self.log_error(e)
+            time.sleep(10)
             self.connect()
             result = self.exchange.fetch_my_trades(symbol=asset)
             self.log_error("fetch_my_trades")
