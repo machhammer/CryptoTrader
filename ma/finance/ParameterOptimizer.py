@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     scenario = S1({
         "exchange": "cryptocom",
-        "commission": 0.075 / 100,
+        "commission": 0.12 / 100,
         "base_currency": "USDT",
         "number_of_attempts_for_random_coins_wo_position": 24,
         "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
@@ -252,9 +252,11 @@ if __name__ == "__main__":
     database.initialize_optimizer_results_transactions_table()
 
 
-    par = optimize_parameters("WIF-USD", model, days=9)
+    par = optimize_parameters("SOL-USD", model, days=6)
     print(par)
     
+    
+
     #pnl = test_parameter("SOL-USD", model, params={'sma': par[0], 'aroon': par[1], 'profit_threshold': par[2], 'sell_threshold': par[3]})
     #print(pnl)
     
