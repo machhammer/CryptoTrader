@@ -287,7 +287,8 @@ class TraderClass(Thread):
             success = False
             self.logger.exception(e)
 
-        self.output.put([success, self.has_position])
+        return [success, self.has_position]
+
 
 
     def run(self):
@@ -312,7 +313,8 @@ class TraderClass(Thread):
 
         while not self.event.is_set():
 
-            if firstRun or (datetime.now().hour == 15 and datetime.now().minute < 5) or (datetime.now().hour == 1 and datetime.now().minute < 5):
+            #if firstRun or (datetime.now().hour == 15 and datetime.now().minute < 5) or (datetime.now().hour == 1 and datetime.now().minute < 5):
+            if firstRun:
                 firstRun = False
                 opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=6)
 
