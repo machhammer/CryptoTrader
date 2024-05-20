@@ -316,9 +316,9 @@ class TraderClass(Thread):
             #if firstRun or (datetime.now().hour == 15 and datetime.now().minute < 5) or (datetime.now().hour == 1 and datetime.now().minute < 5):
             if firstRun:
                 firstRun = False
-                """ opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=6)
+                #opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=6)
 
-                params = {
+                """ params = {
                     "sma": opt[0],
                     "aroon": opt[1],
                     "profit_threshold": opt[2],
@@ -326,9 +326,19 @@ class TraderClass(Thread):
                     "urgency_sell": 0,
                     "pos_neg_threshold": opt[4],
                     "pnl": opt[5]
+                } """
+
+                params = {
+                    "sma": 3,
+                    "aroon": 7,
+                    "profit_threshold": 5,
+                    "sell_threshold": 5,
+                    "urgency_sell": 0,
+                    "pos_neg_threshold": -100,
+                    "pnl": 14.3
                 }
 
-                self.model.params = params """
+                self.model.params = params
 
             self.data_processing()
             
