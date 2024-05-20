@@ -233,7 +233,7 @@ if __name__ == "__main__":
 
     scenario = S1({
         "exchange": "cryptocom",
-        "commission": 0.12 / 100,
+        "commission": 0.2 / 100,
         "base_currency": "USDT",
         "number_of_attempts_for_random_coins_wo_position": 24,
         "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],

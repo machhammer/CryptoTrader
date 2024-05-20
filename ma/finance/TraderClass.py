@@ -316,7 +316,7 @@ class TraderClass(Thread):
             #if firstRun or (datetime.now().hour == 15 and datetime.now().minute < 5) or (datetime.now().hour == 1 and datetime.now().minute < 5):
             if firstRun:
                 firstRun = False
-                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=6)
+                """ opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=6)
 
                 params = {
                     "sma": opt[0],
@@ -328,7 +328,7 @@ class TraderClass(Thread):
                     "pnl": opt[5]
                 }
 
-                self.model.params = params
+                self.model.params = params """
 
             self.data_processing()
             
