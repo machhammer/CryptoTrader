@@ -313,7 +313,6 @@ class TraderClass(Thread):
         while not self.event.is_set():
 
             if firstRun or (datetime.hour() == 15 and datetime.now().minute < 5) or (datetime.hour() == 1 and datetime.now().minute < 5):
-            if firstRun:
                 firstRun = False
                 opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=6)
 
