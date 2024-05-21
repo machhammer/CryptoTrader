@@ -58,7 +58,7 @@ handler = logging.FileHandler(
 )
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 
 
 def get_my_coins(all_coins):

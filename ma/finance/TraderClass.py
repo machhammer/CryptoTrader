@@ -59,7 +59,7 @@ class TraderClass(Thread):
         )
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
-        self.logger.setLevel(logging.ERROR)
+        self.logger.setLevel(logging.INFO)
 
     def set_position(self, price, size, total, timestamp):
         self.position["price"] = price
