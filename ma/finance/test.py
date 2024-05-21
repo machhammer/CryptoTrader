@@ -1,28 +1,31 @@
-from scenarios import S1
-from models import V3
+import pandas as pd
+import yfinance as yf
+from pandas_datareader import data as pdr
+import persistance as database
+from datetime import datetime, timedelta, timezone
+import pytz
 
-class A:
-    params = {
-        "exchange": "cryptocom",
-        "commission": 0.075 / 100,
-        "base_currency": "USDT",
-        "number_of_attempts_for_random_coins_wo_position": 24,
-        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
-        "coins_amount": 1,
-        "fix_coins": ["SOL"],
-    }
+yf.pdr_override()
 
 
-if __name__ == "__main__":
-    scenario = V3(params = {
-        "exchange": "cryptocom",
-        "commission": 0.075 / 100,
-        "base_currency": "USDT",
-        "number_of_attempts_for_random_coins_wo_position": 24,
-        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
-        "coins_amount": 1,
-        "fix_coins": ["SOL"],
-    }, none)
 
 
-    scenario.params["exchange"] = "hallo"
+data = database.execute_select("select * from transactions where coin = 'WIF' order by timestamp desc limit 1")
+
+print(len(data))
+
+if len(data)
+    order_date = data.iloc[0,0]
+    order = data.iloc[0,2]
+    size = data.iloc[0,3]
+    price = data.iloc[0,4]
+
+    europe = pytz.timezone('Europe/Berlin')
+    order_date = order_date.tz_localize(europe)
+    start_date = order_date.tz_convert(pytz.utc)
+
+    data = pdr.get_data_yahoo("SOL-USD", start=start_date, interval="5m")
+
+print(data['High'].max())
+
+

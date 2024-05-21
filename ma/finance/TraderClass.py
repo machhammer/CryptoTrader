@@ -1,10 +1,12 @@
 import pandas as pd
 import time
+import pytz
 import logging
 import argparse
 import random
 from random import randint
 import persistance as database
+from pandas_datareader import data as pdr
 import datetime
 from datetime import datetime, timedelta
 from threading import Thread
@@ -80,28 +82,21 @@ class TraderClass(Thread):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
         return data
 
-    def get_highest_price(self, data):
-
-        timestamp = 0
-
-        if self.has_position:
-            timestamp = self.position["timestamp"]
-
+    def get_highest_price(self):
+        highest_price = 0
+        data = database.execute_select("select * from transactions where coin = '" + self.coin + "' order by timestamp desc limit 1")
         if len(data) > 0:
-            data = pd.DataFrame(
-                data[:],
-                columns=["timestamp", "open", "high", "low", "close", "volume"],
-            )
+            order_date = data.iloc[0,0]
+            order = data.iloc[0,2]
+            if order == "buy":
+                europe = pytz.timezone('Europe/Berlin')
+                order_date = order_date.tz_localize(europe)
+                start_date = order_date.tz_convert(pytz.utc)
 
-        if timestamp == 0:
-            return data.iloc[-1, 4]
-        else:
-            if timestamp is None:
-                return data["high"].max()
-            else:
-                timestamp = datetime.utcfromtimestamp(timestamp / 1e3)
-                data = data[(data['timestamp'] >= timestamp)]
-                return data["high"].max()
+                data = pdr.get_data_yahoo(self.coin + "-USD", start=start_date, interval="5m")
+                highest_price = data['Close '].max()
+        
+        return highest_price
 
     def get_initial_position(self):
         time.sleep(random.randint(1, 3))
@@ -114,14 +109,14 @@ class TraderClass(Thread):
         current_price = 0
         ts_position = None
 
-        if len(trades) > 0:
-            if trades[-1]["side"] == "buy":
-                current_price = trades[-1]["price"]
-                ts_position = trades[-1]["timestamp"]
-        else:
-            current_price = self.exchange.fetch_ticker(
-                self.coin + "/" + self.base_currency
-            )["last"]
+        data = database.execute_select("select * from transactions where coin = '" + self.coin + "' order by timestamp desc limit 1")
+        if len(data) > 0:
+            order_date = data.iloc[0,0]
+            order = data.iloc[0,2]
+            price = data.iloc[0,4]
+            if order == "buy":
+                current_price = price
+                ts_position = order_date
 
         if current_balance * current_price > 5:
             self.set_position(
@@ -251,7 +246,7 @@ class TraderClass(Thread):
                 if self.model.params["pnl"] < 99:
 
                     data = self.fetch_data()
-                    self.highest_price = self.get_highest_price(data)
+                    self.highest_price = self.get_highest_price()
 
                     data = self.model.apply_indicators(data)
                     #data.to_csv("data_" + self.coin + ".csv")
