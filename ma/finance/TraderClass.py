@@ -287,7 +287,7 @@ class TraderClass(Thread):
             success = False
             self.logger.exception(e)
 
-        return [success, self.has_position]
+        self.output.put([success, self.has_position])
 
 
 
