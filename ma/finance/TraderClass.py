@@ -11,7 +11,7 @@ from threading import Thread
 import ParameterOptimizer as optimizer
 
 class TraderClass(Thread):
-    commission = 0.075 / 100
+    #commission = 0.2 / 100
     base_currency = "USDT"
 
     def __init__(
@@ -316,7 +316,7 @@ class TraderClass(Thread):
             #if firstRun or (datetime.now().hour == 15 and datetime.now().minute < 5) or (datetime.now().hour == 1 and datetime.now().minute < 5):
             if firstRun:
                 firstRun = False
-                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=6)
+                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=4)
 
                 params = {
                     "sma": opt[0],
