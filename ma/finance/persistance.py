@@ -175,9 +175,6 @@ def insert_optimizer_results_transactions(connection, timestamp, coin, sma, aroo
         "VALUES ('{}', '{}', {}, {}, {}, {}, {}, '{}', {}, {}, {})".format(timestamp, coin, sma, aroon,  profit_threshold, sell_threshold, pos_neg_threshold, type, price, budget, pnl)
     connection.cursor().execute(insert_record)
 
-def get_last_buy_transaction(coin):
-
-
 
 
 if __name__ == "__main__":
