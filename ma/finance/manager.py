@@ -53,7 +53,7 @@ logger = logging.getLogger("manager")
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 handler = logging.FileHandler(
     filename="trading-manager.log",
-    mode="a",
+    mode="w",
     encoding="utf-8",
 )
 handler.setFormatter(formatter)

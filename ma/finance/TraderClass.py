@@ -54,7 +54,7 @@ class TraderClass(Thread):
         formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
         handler = logging.FileHandler(
             filename="trading-" + coin + ".log",
-            mode="a",
+            mode="w",
             encoding="utf-8",
         )
         handler.setFormatter(formatter)
@@ -94,7 +94,7 @@ class TraderClass(Thread):
                 start_date = order_date.tz_convert(pytz.utc)
 
                 data = pdr.get_data_yahoo(self.coin + "-USD", start=start_date, interval="5m")
-                highest_price = data['Close '].max()
+                highest_price = data['Close'].max()
         
         return highest_price
 
@@ -105,7 +105,6 @@ class TraderClass(Thread):
         except:
             current_balance = 0
 
-        trades = self.exchange.fetch_my_trades(self.coin + "/" + self.base_currency)
         current_price = 0
         ts_position = None
 
@@ -243,35 +242,31 @@ class TraderClass(Thread):
 
             if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
-                if self.model.params["pnl"] < 99:
+                data = self.fetch_data()
+                self.highest_price = self.get_highest_price()
 
-                    data = self.fetch_data()
-                    self.highest_price = self.get_highest_price()
+                data = self.model.apply_indicators(data)
+                #data.to_csv("data_" + self.coin + ".csv")
+                buy_sell_decision = self.model.live_trading_model(
+                    data,
+                    self.logger,
+                    self.highest_price,
+                    self.mood,
+                    self.pos_neg,
+                    self.pos_neg_median,
+                    -1,
+                    self.has_position,
+                    self.position,
+                )
+                if buy_sell_decision == 1:
+                    if not self.has_position:
+                        self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
+                if buy_sell_decision == -1:
+                    if self.has_position:
+                        self.live_sell(data.iloc[-1, 4])
 
-                    data = self.model.apply_indicators(data)
-                    #data.to_csv("data_" + self.coin + ".csv")
-                    buy_sell_decision = self.model.live_trading_model(
-                        data,
-                        self.logger,
-                        self.highest_price,
-                        self.mood,
-                        self.pos_neg,
-                        self.pos_neg_median,
-                        -1,
-                        self.has_position,
-                        self.position,
-                    )
-                    if buy_sell_decision == 1:
-                        if not self.has_position:
-                            self.live_buy(data.iloc[-1, 4], data.iloc[-1, 0])
-                    if buy_sell_decision == -1:
-                        if self.has_position:
-                            self.live_sell(data.iloc[-1, 4])
+                database.insert_trader(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), data.iloc[-1, 0], self.coin, self.model.params["sma"], self.model.params["aroon"], self.model.params["profit_threshold"], self.model.params["sell_threshold"], self.model.params["pos_neg_threshold"], self.model.params["pnl"], data.iloc[-1, 4])
 
-                    database.insert_trader(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), data.iloc[-1, 0], self.coin, self.model.params["sma"], self.model.params["aroon"], self.model.params["profit_threshold"], self.model.params["sell_threshold"], self.model.params["pos_neg_threshold"], self.model.params["pnl"], data.iloc[-1, 4])
-
-                else:
-                     self.logger.info("Expected PnL below threshold!")
             else:
                 if self.has_position:
                     self.live_sell("automated")
@@ -308,10 +303,9 @@ class TraderClass(Thread):
 
         while not self.event.is_set():
 
-            #if firstRun or (datetime.now().hour == 15 and datetime.now().minute < 5) or (datetime.now().hour == 1 and datetime.now().minute < 5):
-            if firstRun:
+            if firstRun or (datetime.now().hour == 22 and datetime.now().minute > 35) or (datetime.now().hour == 1 and datetime.now().minute < 5):
                 firstRun = False
-                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=4)
+                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=5)
 
                 params = {
                     "sma": opt[0],
