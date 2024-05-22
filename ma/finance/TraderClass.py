@@ -13,7 +13,7 @@ from threading import Thread
 import ParameterOptimizer as optimizer
 
 class TraderClass(Thread):
-    #commission = 0.2 / 100
+
     base_currency = "USDT"
 
     def __init__(
@@ -282,6 +282,7 @@ class TraderClass(Thread):
 
 
     def run(self):
+        import ParameterOptimizer as optimizer
         self.logger.info(
             "Starting Trader for Coin: {}, Frequency: {}".format(
                 self.coin, self.frequency
