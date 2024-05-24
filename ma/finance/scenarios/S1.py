@@ -14,7 +14,7 @@ class S1:
         "frequency": 300,
         "timeframe": "5m",
         "mood_threshold": 0.0,
-        "days_for_optimizing": 2,
+        "days_for_optimizing": 2.5,
     }
 
     name = "Scenario v1.0"
