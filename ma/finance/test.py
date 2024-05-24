@@ -1,31 +1,34 @@
 import pandas as pd
-import yfinance as yf
-from pandas_datareader import data as pdr
 import persistance as database
-from datetime import datetime, timedelta, timezone
+import matplotlib.pyplot as plt
+from pandas_datareader import data as pdr
+from ta.trend import SMAIndicator
+from ta.momentum import RSIIndicator
 import pytz
+from datetime import datetime, timedelta
 
-yf.pdr_override()
+coin = 'SOL'
 
-
-
-
-data = database.execute_select("select * from transactions where coin = 'WIF' order by timestamp desc limit 1")
-
-print(len(data))
-
-if len(data)
-    order_date = data.iloc[0,0]
-    order = data.iloc[0,2]
-    size = data.iloc[0,3]
-    price = data.iloc[0,4]
-
-    europe = pytz.timezone('Europe/Berlin')
-    order_date = order_date.tz_localize(europe)
-    start_date = order_date.tz_convert(pytz.utc)
-
-    data = pdr.get_data_yahoo("SOL-USD", start=start_date, interval="5m")
-
-print(data['High'].max())
+pos_neg = database.execute_select("select timestamp, pos_neg_median from v_manager")
+indicator_SMA = SMAIndicator(close=pos_neg.iloc[:,1], window=200)
+pos_neg["sma"] = indicator_SMA.sma_indicator()
 
 
+
+sol = database.execute_select("select timestamp, c_price from v_trader where coin = 'SOL'")
+indicator_SMA = SMAIndicator(close=sol.iloc[:,1], window=200)
+sol["sma"] = indicator_SMA.sma_indicator()
+
+
+
+figure, axis = plt.subplots(
+            2, sharex=True, figsize=(16, 9), gridspec_kw={"height_ratios": [2, 2]}
+        )
+axis[0].plot(pos_neg.iloc[:,0], pos_neg.iloc[:,1], linewidth=2)
+axis[0].plot(pos_neg.iloc[:,0], pos_neg.iloc[:,2])
+
+axis[1].plot(sol.iloc[:,0], sol.iloc[:,1], linewidth=2)
+axis[1].plot(sol.iloc[:,0], sol.iloc[:,2])
+
+
+plt.show()

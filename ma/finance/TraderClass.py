@@ -2,15 +2,13 @@ import pandas as pd
 import time
 import pytz
 import logging
-import argparse
 import random
-from random import randint
 import persistance as database
 from pandas_datareader import data as pdr
 import datetime
-from datetime import datetime, timedelta
+from datetime import datetime
 from threading import Thread
-import ParameterOptimizer as optimizer
+
 
 class TraderClass(Thread):
 
@@ -88,14 +86,14 @@ class TraderClass(Thread):
         if len(data) > 0:
             order_date = data.iloc[0,0]
             order = data.iloc[0,2]
+            self.logger.info("Last order date: {}, {}".format(order_date, order))
             if order == "buy":
                 europe = pytz.timezone('Europe/Berlin')
                 order_date = order_date.tz_localize(europe)
                 start_date = order_date.tz_convert(pytz.utc)
-
                 data = pdr.get_data_yahoo(self.coin + "-USD", start=start_date, interval="5m")
                 highest_price = data['Close'].max()
-        
+        self.logger.info("Highest Price: {}".format(highest_price))
         return highest_price
 
     def get_initial_position(self):
@@ -304,10 +302,9 @@ class TraderClass(Thread):
 
         while not self.event.is_set():
 
-            if firstRun or (datetime.now().hour == 1 and datetime.now().minute < 5) or (datetime.now().hour == 13 and datetime.now().minute < 5) :
+            if firstRun or (datetime.now().hour == 1 and datetime.now().minute < 5) or (datetime.now().hour == 7 and datetime.now().minute < 5)  or (datetime.now().hour == 13 and datetime.now().minute < 5)  or (datetime.now().hour == 19 and datetime.now().minute < 5):
                 firstRun = False
                 opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=5)
-
                 params = {
                     "sma": opt[0],
                     "aroon": opt[1],
@@ -317,7 +314,6 @@ class TraderClass(Thread):
                     "pos_neg_threshold": opt[4],
                     "pnl": opt[5]
                 }
-
                 self.model.params = params
 
             self.data_processing()

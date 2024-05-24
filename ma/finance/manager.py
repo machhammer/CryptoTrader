@@ -68,7 +68,7 @@ def get_my_coins(all_coins):
     for check_coin in current_coins:
         if check_coin not in ignore_coins:
             current_balance = exchange.fetch_balance()[check_coin]["free"]
-            current_price = exchange.fetch_ticker(check_coin + "/USDT")["last"]
+            current_price = exchange.fetch_ticker(check_coin + "/" + base_currency)["last"]
             if current_balance * current_price > 5:
                 my_coins.append(check_coin)
 
@@ -98,7 +98,7 @@ def fetch_coins():
     tickers = exchange.fetch_tickers()
     df = pd.DataFrame(tickers)
     df = df.T
-    df = df[df["symbol"].str.contains("/USDT")]
+    df = df[df["symbol"].str.contains("/" + base_currency)]
 
     return df
 
@@ -151,7 +151,7 @@ def get_current_balance():
     balance = 0
     for asset in current_assets:
         if not asset =="USD":
-            price = exchange.fetch_ticker(asset + "/USD")["last"] * current_assets[asset]
+            price = exchange.fetch_ticker(asset + "/" + base_currency)["last"] * current_assets[asset]
         else:
             price = current_assets['USD']        
         balance = balance + price
@@ -165,7 +165,7 @@ def identify_candidate(all_coins, selected_coins):
     logger.info("selected coins: {}".format(selected_coins.keys()))
     for i in range(len(all_coins)):
         try:
-            found_coin = all_coins.iloc[i, 0].replace("/USDT", "-USD")
+            found_coin = all_coins.iloc[i, 0].replace("/" + base_currency, "-USD")
             data = pd.DataFrame(yf.download(found_coin, period="5d", interval="1h", progress=False))
             data = data.rename(columns={"Close": "close", "High": "high", "Low": "low"})
             data = model.apply_indicators(data)
@@ -271,7 +271,7 @@ def run():
         else:
             first_run = False
     
-        if (datetime.now().minute >= 0 and datetime.now().minute < 30 and datetime.now().hour == 1):
+        if (datetime.now().minute >= 0 and datetime.now().minute < 5 and datetime.now().hour == 2):
             logger.info("Reset Daily Balance.")
             STOP_TRADING_FOR_TODAY = False  
             DAILY_STARTING_BALANCE = 0

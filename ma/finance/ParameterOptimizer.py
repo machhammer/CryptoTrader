@@ -39,7 +39,7 @@ def setLogger(coin):
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.setLevel(logging.ERROR)
+    logger.setLevel(logging.INFO)
     return logger
 
 def fetch_and_join_manager(ticker_data):
@@ -105,14 +105,14 @@ def offline_sell(price, ts, commission, logger):
     return sell_total
 
 
-def backtrading(coin, model, data, logger):
+def backtrading(coin, model, data, logger, write_to_database=False):
     global highest_price
     global has_position
     commission = model.scenario.params["commission"]
     original_budget = 100
     budget = original_budget
     pnl = 0
-    #connection = database.connect()
+    if write_to_database: connection = database.connect()
     data['mysql_timestamp'] = pd.to_datetime(data['timestamp']).dt.strftime('%Y-%m-%d %H:%M')
     set_position(0, 0, 0, None)
     logger.info("{}, {}, {}, {}".format(model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold']))
@@ -135,24 +135,25 @@ def backtrading(coin, model, data, logger):
                 budget = budget + offline_sell(data.iloc[i, 4], data.iloc[i, 0], commission, logger)
                 pnl = budget - original_budget
                 logger.info("Budget:\t{:.5f}\tPnL:\t{:.5f}".format(budget, pnl))
-                #database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "BUY", data.iloc[i, 4], budget, pnl)
-                data.iloc[i, -1] = -1
+                if write_to_database: database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "BUY", data.iloc[i, 4], budget, pnl)
+                data.iloc[i, -2] = -1
                 highest_price = 0
             if buy_sell_decision == 1:
                 budget = budget - offline_buy(data.iloc[i, 4], data.iloc[i, 0], commission, (budget-1)/data.iloc[i, 4], logger)
                 logger.info("\tBudget:\t{:.5f}".format(budget))
-                #database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
-                data.iloc[i, -1] = 1
+                if write_to_database: database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
+                data.iloc[i, -2] = 1
                 highest_price = data.iloc[i, 4]
     if has_position:
         budget = budget + offline_sell(data.iloc[i, 4], data.iloc[i, 0], commission, logger)
         pnl = budget - original_budget
         logger.info("Budget:\t{:.5f}\tPnL:\t{:.5f}".format(budget, pnl))
-        #database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
-        data.iloc[i, -1] = -1
+        if write_to_database: database.insert_optimizer_results_transactions(connection, data.iloc[i, -1], coin, model.params['sma'], model.params['aroon'], model.params['profit_threshold'], model.params['sell_threshold'], model.params['pos_neg_threshold'], "SELL", data.iloc[i, 4], budget, pnl)
+        data.iloc[i, -2] = -1
 
-    #connection.commit()
-    #connection.close()
+    if write_to_database: 
+        connection.commit()
+        connection.close()
 
     return [pnl, data]
 
@@ -163,7 +164,7 @@ def analyze_paramters():
     return (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3]), (max_row.iloc[0,4])
 
 
-def optimize_parameters(coin, model, days):
+def optimize_parameters(coin, model, days, write_to_database=False):
     logger = setLogger(coin)
     original = fetch_data(coin, days=days)
     data = original.copy()
@@ -184,7 +185,7 @@ def optimize_parameters(coin, model, days):
                         model.params["pos_neg_threshold"] = pos_neg_threshold
                         
                         data = model.apply_indicators(data)
-                        [pnl, data] = backtrading(coin, model, data, logger)
+                        [pnl, data] = backtrading(coin, model, data, logger, write_to_database)
                             
                         results[counter] = {}
                         results[counter]['sma'] = sma
@@ -202,24 +203,25 @@ def optimize_parameters(coin, model, days):
                             pass
 
     data = pd.DataFrame.from_dict(results, orient='index')
-    database.generate_optimizer_results(coin, data)
+    if write_to_database: database.generate_optimizer_results(coin, data)
     max_row = data[data['pnl']==data['pnl'].max()]
     return (max_row.iloc[0,0]), (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3]), (max_row.iloc[0,4]), (max_row.iloc[0,5])
     
 
 
-def test_parameter(coin, model, params):
+def test_parameter(coin, model, params, days, write_to_database = False):
     logger = setLogger(coin)
-    original = fetch_data(coin)
+    original = fetch_data(coin, days=days)
     data = original.copy()
     model.params["sma"] = params["sma"]
     model.params["aroon"] = params["aroon"]
     model.params["profit_threshold"] = params["profit_threshold"]
     model.params["sell_threshold"] = params["sell_threshold"]
+    model.params["pos_neg_threshold"] = params["pos_neg_threshold"]
                     
     data = model.apply_indicators(data)
-    [pnl, data] = backtrading(coin, model, data, logger)
-        
+    [pnl, data] = backtrading(coin, model, data, logger, write_to_database)
+    data.to_csv("test-trading-data.csv")
     model.show_plot(data)
 
     return pnl
@@ -233,7 +235,7 @@ if __name__ == "__main__":
 
     scenario = S1({
         "exchange": "cryptocom",
-        "commission": 0.2 / 100,
+        "commission": 0.1 / 100,
         "base_currency": "USDT",
         "number_of_attempts_for_random_coins_wo_position": 24,
         "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
@@ -246,17 +248,26 @@ if __name__ == "__main__":
     })
 
 
+    params = {
+        "sma": [5],
+        "aroon": [32],
+        "profit_threshold": [0],
+        "sell_threshold": [0],
+        "pos_neg_threshold": [-100]
+    }
+
 
     model = V3(scenario=scenario)
 
     database.initialize_optimizer_results_transactions_table()
 
+    days = 2.5
 
-    par = optimize_parameters("SOL-USD", model, days=6)
+    par = optimize_parameters("SOL-USD", model, days=days)
     print(par)
     
     
 
-    #pnl = test_parameter("SOL-USD", model, params={'sma': par[0], 'aroon': par[1], 'profit_threshold': par[2], 'sell_threshold': par[3]})
-    #print(pnl)
+    pnl = test_parameter("SOL-USD", model, params={'sma': par[0], 'aroon': par[1], 'profit_threshold': par[2], 'sell_threshold': par[3], 'pos_neg_threshold': par[4]}, days=days)
+    print(pnl)
     
