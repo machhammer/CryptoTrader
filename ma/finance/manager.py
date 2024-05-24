@@ -134,9 +134,7 @@ def fetch_data(df):
 
 def get_current_balance():
     current_assets = exchange.fetch_balance()["free"]
-
     balance = 0
-    print(current_assets)
     for asset in current_assets:
         if not asset in scenario.params["ignore_coins"]:
             price = exchange.fetch_ticker(asset + "/" + base_currency)["last"] * current_assets[asset]
