@@ -1,6 +1,7 @@
 from datetime import datetime
 
 class S1:
+
     params = {
         "exchange": "cryptocom",
         "commission": 0.2 / 100,
@@ -12,20 +13,14 @@ class S1:
         "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
         "frequency": 300,
         "timeframe": "5m",
-        "mood_treshold": 0.0,
-
+        "mood_threshold": 0.0,
+        "days_for_optimizing": 2,
     }
 
     name = "Scenario v1.0"
 
-    def __init__(
-        self,
-        params,
-    ):
-        self.params = params
 
     def get_wait_time(self):
-        # to be improved
         minute = datetime.now().minute
         wait_time = (5 - (minute % 5)) * 60
         return wait_time

@@ -19,20 +19,7 @@ yf.pdr_override()
 warnings.filterwarnings("ignore")
 
 model = V3
-scenario = S1(params = {
-        "exchange": "cryptocom",
-        "commission": 0.2 / 100,
-        "base_currency": "USDT",
-        "number_of_attempts_for_random_coins_wo_position": 24,
-        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
-        "coins_amount": 1,
-        "fix_coins": ["SOL"],
-        "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
-        "frequency": 300,
-        "timeframe": "5m",
-        "mood_threshold": 0.0,
-    }
-)
+scenario = S1()
 
 commission = scenario.params["commission"]
 exchange_name = scenario.params["exchange"]
@@ -149,8 +136,9 @@ def get_current_balance():
     current_assets = exchange.fetch_balance()["free"]
 
     balance = 0
+    print(current_assets)
     for asset in current_assets:
-        if not asset =="USD":
+        if not asset in scenario.params["ignore_coins"]:
             price = exchange.fetch_ticker(asset + "/" + base_currency)["last"] * current_assets[asset]
         else:
             price = current_assets['USD']        

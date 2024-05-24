@@ -29,8 +29,6 @@ class TraderClass(Thread):
         self.input = input
         self.output = output
         self.coin = coin
-        self.frequency = scenario.params["frequency"]
-        self.timeframe = scenario.params["timeframe"]
         self.exchange = exchange
         self.model = model
         self.scenario = scenario
@@ -72,7 +70,7 @@ class TraderClass(Thread):
     def fetch_data(self):
         time.sleep(random.randint(1, 3))
         bars = self.exchange.fetch_ohlcv(
-            self.coin + "/" + self.base_currency, timeframe=self.timeframe, limit=38
+            self.coin + "/" + self.base_currency, timeframe=self.scenario.params["timeframe"], limit=38
         )
         data = pd.DataFrame(
             bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
@@ -283,7 +281,7 @@ class TraderClass(Thread):
         import ParameterOptimizer as optimizer
         self.logger.info(
             "Starting Trader for Coin: {}, Frequency: {}".format(
-                self.coin, self.frequency
+                self.coin, self.scenario.params["frequency"]
             )
         )
         
@@ -304,7 +302,7 @@ class TraderClass(Thread):
 
             if firstRun or (datetime.now().hour == 1 and datetime.now().minute < 5) or (datetime.now().hour == 7 and datetime.now().minute < 5)  or (datetime.now().hour == 13 and datetime.now().minute < 5)  or (datetime.now().hour == 19 and datetime.now().minute < 5):
                 firstRun = False
-                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=5)
+                opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=self.scenario.params["days_for_optimizing"])
                 params = {
                     "sma": opt[0],
                     "aroon": opt[1],
@@ -317,7 +315,7 @@ class TraderClass(Thread):
                 self.model.params = params
 
             self.data_processing()
-            
+
             wait_time = self.scenario.get_wait_time()
                 
             self.logger.info("Waiting Time in Seconds: {}".format(wait_time))
@@ -327,7 +325,7 @@ class TraderClass(Thread):
 
         self.logger.info(
             "Stopping Trader for Coin: {}, Frequency: {}".format(
-                self.coin, self.frequency
+                self.coin, self.scenario.params["frequency"]
             )
         )
 
