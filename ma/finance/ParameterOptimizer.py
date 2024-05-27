@@ -28,14 +28,6 @@ test_params = {
     "pos_neg_threshold": [-100]
 }
 
-test_params = {
-    "sma": [3],
-    "aroon": [32],
-    "profit_threshold": [0],
-    "sell_threshold": [0.8],
-    "pos_neg_threshold": [-100]
-}
-
 
 
 def setLogger(coin):
@@ -263,7 +255,7 @@ if __name__ == "__main__":
 
     days = 2.5
 
-    par = optimize_parameters("SOL-USD", model, days=days)
+    par = optimize_parameters("SOL-USD", model, days=days, write_to_database=True)
     print(par)
     
     
