@@ -1,34 +1,20 @@
-import pandas as pd
-import persistance as database
-import matplotlib.pyplot as plt
-from pandas_datareader import data as pdr
-from ta.trend import SMAIndicator
-from ta.momentum import RSIIndicator
-import pytz
-from datetime import datetime, timedelta
+from exchanges import Exchange
 
 coin = 'SOL'
 
-pos_neg = database.execute_select("select timestamp, pos_neg_median from v_manager")
-indicator_SMA = SMAIndicator(close=pos_neg.iloc[:,1], window=200)
-pos_neg["sma"] = indicator_SMA.sma_indicator()
+
+exchange = Exchange("cryptocom")
 
 
 
-sol = database.execute_select("select timestamp, c_price from v_trader where coin = 'SOL'")
-indicator_SMA = SMAIndicator(close=sol.iloc[:,1], window=200)
-sol["sma"] = indicator_SMA.sma_indicator()
+current_assets = exchange.fetch_balance()["free"]
+balance = 0
+for asset in current_assets:
+    if not asset in ["USD"]:
+        price = exchange.fetch_ticker(asset + "/USD")["last"] * current_assets[asset]
+    else:
+        price = current_assets[asset]
+    balance = balance + price
 
 
-
-figure, axis = plt.subplots(
-            2, sharex=True, figsize=(16, 9), gridspec_kw={"height_ratios": [2, 2]}
-        )
-axis[0].plot(pos_neg.iloc[:,0], pos_neg.iloc[:,1], linewidth=2)
-axis[0].plot(pos_neg.iloc[:,0], pos_neg.iloc[:,2])
-
-axis[1].plot(sol.iloc[:,0], sol.iloc[:,1], linewidth=2)
-axis[1].plot(sol.iloc[:,0], sol.iloc[:,2])
-
-
-plt.show()
+print(balance)

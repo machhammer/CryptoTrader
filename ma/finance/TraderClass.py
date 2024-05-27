@@ -78,7 +78,7 @@ class TraderClass(Thread):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
         return data
 
-    def get_highest_price(self):
+    def get_highest_price_from_database(self):
         highest_price = 0
         data = database.execute_select("select * from transactions where coin = '" + self.coin + "' order by timestamp desc limit 1")
         if len(data) > 0:
@@ -239,7 +239,11 @@ class TraderClass(Thread):
             if (not (self.STOP_TRADING_FOR_TODAY)) and self.tradeable_today:
 
                 data = self.fetch_data()
-                self.highest_price = self.get_highest_price()
+                if self.highest_price == 0:
+                    self.get_highest_price_from_database()
+                else:
+                    if data.iloc[-1, 4] > self.highest_price:
+                        self.highest_price = data.iloc[-1, 4]
 
                 data = self.model.apply_indicators(data)
                 #data.to_csv("data_" + self.coin + ".csv")
@@ -276,6 +280,9 @@ class TraderClass(Thread):
         self.output.put([success, self.has_position])
 
 
+    def recalibration_condition(self):
+        cond = (datetime.now().hour == 1 and datetime.now().minute < 5) or (datetime.now().hour == 7 and datetime.now().minute < 5)  or (datetime.now().hour == 13 and datetime.now().minute < 5)  or (datetime.now().hour == 19 and datetime.now().minute < 5)
+        return cond
 
     def run(self):
         import ParameterOptimizer as optimizer
@@ -300,9 +307,10 @@ class TraderClass(Thread):
 
         while not self.event.is_set():
 
-            if firstRun or (datetime.now().hour == 1 and datetime.now().minute < 5) or (datetime.now().hour == 7 and datetime.now().minute < 5)  or (datetime.now().hour == 13 and datetime.now().minute < 5)  or (datetime.now().hour == 19 and datetime.now().minute < 5):
+            if firstRun or self.recalibration_condition():
                 firstRun = False
                 opt = optimizer.optimize_parameters(self.coin + "-USD", self.model, days=self.scenario.params["days_for_optimizing"])
+                
                 params = {
                     "sma": opt[0],
                     "aroon": opt[1],

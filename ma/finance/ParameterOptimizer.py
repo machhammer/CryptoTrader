@@ -19,11 +19,20 @@ has_position = False
 position = {}
 
 
+
 test_params = {
-    "sma": [3, 5, 7, 9, 14, 21, 28, 32],
-    "aroon": [3, 5, 7, 9, 14, 21, 28, 32],
-    "profit_threshold": [0, 1, 2, 3, 5, 8, 10],
-    "sell_threshold": [0, 1, 2, 3, 5, 8, 10],
+    "sma": [3, 5, 7, 9, 14, 21, 28, 32, 41],
+    "aroon": [3, 5, 7, 9, 14, 21, 28, 32, 41],
+    "profit_threshold": [2, 1, 0],
+    "sell_threshold": [2, 1, 0],
+    "pos_neg_threshold": [-100]
+}
+
+test_params = {
+    "sma": [3],
+    "aroon": [32],
+    "profit_threshold": [0],
+    "sell_threshold": [0.8],
     "pos_neg_threshold": [-100]
 }
 
@@ -208,6 +217,9 @@ def optimize_parameters(coin, model, days, write_to_database=False):
     return (max_row.iloc[0,0]), (max_row.iloc[0,1]), (max_row.iloc[0,2]), (max_row.iloc[0,3]), (max_row.iloc[0,4]), (max_row.iloc[0,5])
     
 
+def adjust_threshold(current_treshold, current_profit):
+    return current_treshold / abs(current_profit)
+
 
 def test_parameter(coin, model, params, days, write_to_database = False):
     logger = setLogger(coin)
@@ -233,19 +245,7 @@ if __name__ == "__main__":
 
 
 
-    scenario = S1({
-        "exchange": "cryptocom",
-        "commission": 0.1 / 100,
-        "base_currency": "USDT",
-        "number_of_attempts_for_random_coins_wo_position": 24,
-        "ignore_coins": ["USDT", "USD", "CRO", "PAXG"],
-        "coins_amount": 1,
-        "fix_coins": ["SOL"],
-        "STOP_TRADING_EMERGENCY_THRESHOLD": -100,
-        "frequency": 300,
-        "timeframe": "5m",
-        "mood_treshold": 0.0,
-    })
+    scenario = S1()
 
 
     params = {
