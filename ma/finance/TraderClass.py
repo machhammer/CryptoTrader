@@ -240,7 +240,7 @@ class TraderClass(Thread):
 
                 data = self.fetch_data()
                 if self.highest_price == 0:
-                    self.get_highest_price_from_database()
+                    self.highest_price = self.get_highest_price_from_database()
                 else:
                     if data.iloc[-1, 4] > self.highest_price:
                         self.highest_price = data.iloc[-1, 4]
