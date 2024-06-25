@@ -39,8 +39,8 @@ class Exchange():
         )
 
     def coinbase(self):
-        api_key = credentials.provider_2.get("key")
-        api_secret = credentials.provider_2.get("secret")
+        api_key = credentials.provider_1.get("key")
+        api_secret = credentials.provider_1.get("secret")
 
         return ccxt.coinbase(
             {
