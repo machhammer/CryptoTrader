@@ -10,12 +10,12 @@ from exchanges import Exchange
 
 
 
-exchange = Exchange("coinbase")
+exchange = Exchange("cryptocom")
 
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
     bars = exchange.fetch_ohlcv(
-        ticker, "5m", limit=144
+        ticker, "1m", limit=180
     )
     data = pd.DataFrame(
         bars[:], columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
@@ -24,7 +24,7 @@ def load_data(ticker):
     return data
 
 # Berechnung der lokalen Hoch- und Tiefpunkte
-def find_local_extrema(data, order=5):
+def find_local_extrema(data, order=2):
     data['min'] = data.iloc[argrelextrema(data['Close'].values, np.less_equal, order=order)[0]]['Close']
     data['max'] = data.iloc[argrelextrema(data['Close'].values, np.greater_equal, order=order)[0]]['Close']
     return data
@@ -123,14 +123,14 @@ def candlesticks(stock_prices):
 
 # Hauptfunktion
 def main():
-    ticker = 'OCEAN/USD'
+    ticker = 'SLN/USD'
     
     # Daten laden
     data = load_data(ticker)
 
-    candlesticks(data)
+    #candlesticks(data)
 
-    exit()
+    
 
     # Lokale Hoch- und Tiefpunkte berechnen
     data = find_local_extrema(data)
