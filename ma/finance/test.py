@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 
 from ta.trend import EMAIndicator
+from ta.volume import VolumeWeightedAveragePrice
 
 from exchanges import Exchange
 
@@ -15,7 +16,7 @@ exchange = Exchange("cryptocom")
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
     bars = exchange.fetch_ohlcv(
-        ticker, "1m", limit=180
+        ticker, "1m", limit=90
     )
     data = pd.DataFrame(
         bars[:], columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
@@ -24,7 +25,7 @@ def load_data(ticker):
     return data
 
 # Berechnung der lokalen Hoch- und Tiefpunkte
-def find_local_extrema(data, order=2):
+def find_local_extrema(data, order=4):
     data['min'] = data.iloc[argrelextrema(data['Close'].values, np.less_equal, order=order)[0]]['Close']
     data['max'] = data.iloc[argrelextrema(data['Close'].values, np.greater_equal, order=order)[0]]['Close']
     return data
@@ -120,10 +121,26 @@ def candlesticks(stock_prices):
     plt.show() 
 
 
+def buy_sell(data):
+    max_column = data['max'].dropna().sort_values()
+    min_column = data['min'].dropna().sort_values()
+    
+    print (min_column)
+    print (max_column)
+    current_close = data.iloc[-1, 4]
+    print (current_close)
+    last_max = (max_column.values)[-1]
+    previous_max = (max_column.values)[-2]
+    
+    if current_close < last_max:
+        print('dont buy')
+    if current_close == last_max and current_close > previous_max:
+        print('buy')    
+
 
 # Hauptfunktion
 def main():
-    ticker = 'SLN/USD'
+    ticker = 'BONK/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -140,6 +157,8 @@ def main():
     data = find_big_candles(data)
 
     print(data)
+
+    buy_sell(data)
 
     # Unterstützung- und Widerstandslinien plotten
     plot_support_resistance(data)

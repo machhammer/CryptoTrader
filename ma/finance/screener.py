@@ -32,7 +32,7 @@ def get_tickers():
 
 
 def get_ticker_with_bigger_moves(tickers):
-    limit = 3
+    limit = 4
     bigger_moves = []
     iterations = len(tickers)
     progress_bar = iter(tqdm(range(iterations)))
@@ -50,10 +50,10 @@ def get_ticker_with_bigger_moves(tickers):
 
         ticker_check = {}
         ticker_check['ticker'] = ticker
-        ticker_check['change'] = data.tail(limit)["change"].to_list()
-        ticker_check['relevant'] = data.tail(limit)["is_change_relevant"].to_list()
+        ticker_check['change'] = data["change"].to_list()
+        ticker_check['relevant'] = data["is_change_relevant"].to_list()
         ticker_check['data'] = data
-        if ticker_check['relevant'].count(True) >=3:
+        if ticker_check['relevant'].count(True) >=2:
             bigger_moves.append(ticker)
         try:
             next(progress_bar)
@@ -126,7 +126,7 @@ def get_lowest_difference_to_maximum(tickers):
     return lowest_difference_to_maximum
 
 def is_buy(ticker):
-    order = 2
+    order = 5
     bars = exchange.fetch_ohlcv(
         ticker, "1m", limit=90
     )
@@ -139,19 +139,30 @@ def is_buy(ticker):
     )
     data["aroon_up"] = indicator_AROON.aroon_up()
     data["aroon_down"] = indicator_AROON.aroon_down()
+    
     data['min'] = data.iloc[argrelextrema(data['close'].values, np.less_equal, order=order)[0]]['close']
     data['max'] = data.iloc[argrelextrema(data['close'].values, np.greater_equal, order=order)[0]]['close']
-    print(data)
-    
 
-def get_wait_time_5():
+    max_column = data['max'].dropna().sort_values()
+    min_column = data['min'].dropna().sort_values()
+    
+    current_close = data.iloc[-1, 4]
+    last_max = (max_column.values)[-1]
+    previous_max = (max_column.values)[-2]
+    
+    if current_close < last_max:
+        print('dont buy')
+    if current_close == last_max and current_close > previous_max:
+        print('buy')
+
+def get_wait_time():
         minute = datetime.now().minute
-        wait_time = (5 - (minute % 5)) * 60
+        wait_time = (10 - (minute % 10)) * 60
         return wait_time
 
 def get_wait_time_1():
         seconds = datetime.now().second
-        wait_time = (60 - (seconds % 60)) * 60
+        wait_time = (60 - (seconds % 60))
         return wait_time
 
 
@@ -161,9 +172,13 @@ if __name__ == "__main__":
     candidate_not_found = True
     observed = False
 
+    count = 0
+
     while running:
-        #tickers = get_tickers()
-        tickers = ['RAD/USD']
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        print("Current Time =", current_time)
+        tickers = get_tickers()
         major_move = get_ticker_with_bigger_moves(tickers)
         print("major move: ", major_move)
         increased_volume = get_ticker_with_increased_volume(major_move)
@@ -174,11 +189,17 @@ if __name__ == "__main__":
         if selected_Ticker:
             print("selected: ", selected_Ticker)
             observed = True
+            count = 0
             while observed:
                 print("check if buyable")
-                is_buy(selected_Ticker)                
-                time.sleep(get_wait_time_1())
+                is_buy(selected_Ticker)
+                wait_time = get_wait_time_1()
+                print("wait: ", wait_time)                
+                time.sleep(wait_time)
+                count += 1
+                if count >= 10:
+                    observed = False
         else:  
             print("Wait for next check.")  
-            time.sleep(get_wait_time_5())
+            time.sleep(get_wait_time())
 
