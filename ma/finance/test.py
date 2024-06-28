@@ -140,7 +140,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'BONK/USD'
+    ticker = 'ACA/USD'
     
     # Daten laden
     data = load_data(ticker)

@@ -154,6 +154,10 @@ def is_buy(ticker):
         print('dont buy')
     if current_close == last_max and current_close > previous_max:
         print('buy')
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        print("**** Current Time =", current_time)
+        print('****', data.iloc[-1, 4])
 
 def get_wait_time():
         minute = datetime.now().minute
