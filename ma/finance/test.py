@@ -140,14 +140,10 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'BONK/USD'
+    ticker = 'MLN/USD'
     
     # Daten laden
     data = load_data(ticker)
-
-    #candlesticks(data)
-
-    
 
     # Lokale Hoch- und Tiefpunkte berechnen
     data = find_local_extrema(data)

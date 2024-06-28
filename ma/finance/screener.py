@@ -1,3 +1,4 @@
+from pdb import run
 from exchanges import Exchange
 import numpy as np
 import pandas as pd
@@ -31,6 +32,16 @@ def get_tickers():
     return tickers
 
 
+def get_data(ticker, interval, limit):
+    bars = exchange.fetch_ohlcv(
+            ticker, interval, limit=limit
+    )
+    data = pd.DataFrame(
+        bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
+    )
+    data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+    return data
+
 def get_ticker_with_bigger_moves(tickers):
     limit = 4
     bigger_moves = []
@@ -38,13 +49,9 @@ def get_ticker_with_bigger_moves(tickers):
     progress_bar = iter(tqdm(range(iterations)))
     next(progress_bar)
     for ticker in tickers:
-        bars = exchange.fetch_ohlcv(
-            ticker, "5m", limit=limit
-        )
-        data = pd.DataFrame(
-            bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
-        )
-        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+
+        data = get_data(ticker, "5m", limit)
+
         data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
         data["is_change_relevant"] = data["change"] >= 0.2
 
@@ -65,13 +72,7 @@ def get_ticker_with_bigger_moves(tickers):
 def get_ticker_with_aroon_buy_signals(tickers):
     buy_signals = []
     for ticker in tickers:
-        bars = exchange.fetch_ohlcv(
-            ticker, "1m", limit=20
-        )
-        data = pd.DataFrame(
-            bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
-        )
-        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+        data = get_data(ticker, "1m", limit=20)
         indicator_AROON = AroonIndicator(
             high=data["high"], low=data["low"], window=14
         )
@@ -86,13 +87,7 @@ def get_ticker_with_aroon_buy_signals(tickers):
 def get_ticker_with_increased_volume(tickers):
     increased_volumes = []
     for ticker in tickers:
-        bars = exchange.fetch_ohlcv(
-            ticker, "1d", limit=10
-        )
-        data = pd.DataFrame(
-            bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
-        )
-        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+        data = get_data(ticker, "1d", limit=10)
         last_mean = data.head(9)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
         print(ticker)
@@ -105,15 +100,9 @@ def get_lowest_difference_to_maximum(tickers):
     lowest_difference_to_maximum = None
     order = 2
     for ticker in tickers:
-        bars = exchange.fetch_ohlcv(
-            ticker, "1m", limit=90
-        )
-        data = pd.DataFrame(
-            bars[:], columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
-        )
-        data["Timestamp"] = pd.to_datetime(data["Timestamp"], unit="ms")
-        data['min'] = data.iloc[argrelextrema(data['Close'].values, np.less_equal, order=order)[0]]['Close']
-        data['max'] = data.iloc[argrelextrema(data['Close'].values, np.greater_equal, order=order)[0]]['Close']
+        data = get_data(ticker, "1m", limit=90)
+        data['min'] = data.iloc[argrelextrema(data['close'].values, np.less_equal, order=order)[0]]['close']
+        data['max'] = data.iloc[argrelextrema(data['close'].values, np.greater_equal, order=order)[0]]['close']
         local_max = data['max'].max()
         current_close = data.iloc[-1, 4]
         print(ticker)
@@ -125,15 +114,11 @@ def get_lowest_difference_to_maximum(tickers):
             lowest_difference_to_maximum = ticker
     return lowest_difference_to_maximum
 
+
+
 def is_buy(ticker):
     order = 5
-    bars = exchange.fetch_ohlcv(
-        ticker, "1m", limit=90
-    )
-    data = pd.DataFrame(
-        bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
-    )
-    data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+    data = get_data(ticker, "1m", limit=90)
     indicator_AROON = AroonIndicator(
         high=data["high"], low=data["low"], window=14
     )
@@ -144,16 +129,35 @@ def is_buy(ticker):
     data['max'] = data.iloc[argrelextrema(data['close'].values, np.greater_equal, order=order)[0]]['close']
 
     max_column = data['max'].dropna().sort_values()
-    min_column = data['min'].dropna().sort_values()
-    
+        
     current_close = data.iloc[-1, 4]
     last_max = (max_column.values)[-1]
     previous_max = (max_column.values)[-2]
     
     if current_close < last_max:
-        print('dont buy')
+        return False
     if current_close == last_max and current_close > previous_max:
-        print('buy')
+        buy(ticker, current_close)
+        return True
+
+
+def get_sell_trigger(ticker, buy_price, max_loss):
+    order = 5
+    data = get_data(ticker, "1m", limit=90)
+
+    data['min'] = data.iloc[argrelextrema(data['close'].values, np.less_equal, order=order)[0]]['close']
+    data['max'] = data.iloc[argrelextrema(data['close'].values, np.greater_equal, order=order)[0]]['close']
+
+    max_column = data['max'].dropna().sort_values()
+    min_column = data['min'].dropna().sort_values()
+    
+    print(min(min_column))
+
+    
+def buy(ticker, price):
+    print("***** Buy: ", price)
+    print("***** Sell Trigger: ", get_sell_trigger(ticker, price, 0.01))
+
 
 def get_wait_time():
         minute = datetime.now().minute
@@ -166,8 +170,7 @@ def get_wait_time_1():
         return wait_time
 
 
-if __name__ == "__main__":
-    
+def run_trader():
     running = True
     candidate_not_found = True
     observed = False
@@ -192,14 +195,22 @@ if __name__ == "__main__":
             count = 0
             while observed:
                 print("check if buyable")
-                is_buy(selected_Ticker)
-                wait_time = get_wait_time_1()
-                print("wait: ", wait_time)                
-                time.sleep(wait_time)
-                count += 1
-                if count >= 10:
+                if is_buy(selected_Ticker):
                     observed = False
+                    running = False
+                else:
+                    wait_time = get_wait_time_1()
+                    print("wait: ", wait_time)                
+                    time.sleep(wait_time)
+                    count += 1
+                    if count >= 10:
+                        observed = False
         else:  
             print("Wait for next check.")  
             time.sleep(get_wait_time())
 
+
+
+if __name__ == "__main__":
+    
+    run_trader()
