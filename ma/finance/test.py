@@ -25,7 +25,7 @@ def load_data(ticker):
     return data
 
 # Berechnung der lokalen Hoch- und Tiefpunkte
-def find_local_extrema(data, order=4):
+def find_local_extrema(data, order=3):
     data['min'] = data.iloc[argrelextrema(data['Close'].values, np.less_equal, order=order)[0]]['Close']
     data['max'] = data.iloc[argrelextrema(data['Close'].values, np.greater_equal, order=order)[0]]['Close']
     return data
@@ -140,7 +140,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'NKN/USD'
+    ticker = 'MLN/USD'
     
     # Daten laden
     data = load_data(ticker)
