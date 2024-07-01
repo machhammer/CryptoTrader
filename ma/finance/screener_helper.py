@@ -37,7 +37,6 @@ def get_wait_time_1():
         wait_time = (60 - (seconds % 60))
         return wait_time
 
-
 def get_data(exchange, ticker, interval, limit):
     bars = exchange.fetch_ohlcv(
             ticker, interval, limit=limit
@@ -141,7 +140,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
     return lowest_difference_to_maximum
 
 
-def is_buy_decision(exchange, ticker):
+def is_buy(exchange, ticker):
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     data = add_aroon(data)
@@ -153,68 +152,29 @@ def is_buy_decision(exchange, ticker):
     previous_max = (max_column.values)[-2]
     
     if current_close < last_max:
-        return [False, None]
-    elif current_close == last_max and current_close > previous_max:
-        return [True, current_close]
-    else:
-        return [False, None]
+        return False
+    if current_close == last_max and current_close > previous_max:
+        buy(exchange, ticker, current_close)
+        return True
 
-  
 
-def buy(ticker, price):
+def buy(exchange, ticker, price):
     print("***** Buy: ", price)
+    print("***** Sell Trigger: ", get_sell_trigger(exchange, ticker, price, 0.01))
 
 
-def set_sell_trigger(exchange, ticker, initial_set, buy_price, max_loss, min_profit):
+def get_sell_trigger(exchange, ticker, buy_price, max_loss):
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
-    data = add_ema(data)
+    
+    max_column = data['max'].dropna().sort_values()
+    min_column = data['min'].dropna().sort_values()
+    
+    last_min = (max_column.values)[-1]
 
-    current_price = data.iloc[-1, 4]
-    print("*** buy price: ", buy_price)
-    print("*** current price: ", current_price)
+    return last_min
 
-    current_pnl = (current_price - buy_price) / buy_price
-    max_loss_price = buy_price * (1 - max_loss)
-    min_profit_price = buy_price * (1 + min_profit)
-    print ("*** current pnl: ", current_pnl)
-    print ("*** max loss: ", max_loss_price)
-    print ("*** min profit: ", min_profit_price)
-
-    sell_value = None
-
-    if initial_set or (current_pnl >= max_loss_price and current_pnl < min_profit_price):
-        print("new or not within range")
-        min_column = data['min'].dropna().sort_values()
-        max_loss_price = buy_price * (1 - max_loss)
-        min_value = [None, 0]
-        for el in min_column:
-            diff = abs(max_loss_price - el)
-            if (min_value[0] == None or diff < min_value[0]):
-                min_value[0] = diff
-                min_value[1] = el
-        print("set sell at: ", min_value[1])
-        sell_value = min_value[1]
-    if current_pnl >= min_profit_price:
-        print("profit range")
-        sell_value = min_column.tail(1).item()
-        print("set sell at: ", sell_value)
-
-    # data['ema_20_gr_ema_9'] = data["ema_20"] > data["ema_9"]
-    # vs = data.tail(5)['ema_20_gr_ema_9'].to_list() 
-    # print(vs)
-    # if (vs).count(True) == 5:
-    #     now = datetime.now()
-    #     current_time = now.strftime("%H:%M:%S")
-    #     print("Current Time =", current_time)
-    #     print("*** *** SELL now: ", current_price)
-    #     sell_value = current_price
-    #     raise Exception("SELL position EMA crossing")
-
-    if sell_value == current_price:
-        print("*** *** SELL at triggered price: ", sell_value)
-        raise Exception("SELL at triggered price")
-
+    
 def plot(data):
     plt.figure(figsize=(14, 7))
     plt.plot(data['close'], label='close Price', color='black')
@@ -246,69 +206,45 @@ def get_candidate(exchange):
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     return selected_Ticker
 
-def still_has_postion(ticker):
-    return True
 
 def run_trader():
 
     exchange = Exchange("cryptocom")
 
     running = True
+    candidate_not_found = True
+    observed = False
+
+    count = 0
 
     while running:
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
         print("Current Time =", current_time)
         selected_Ticker = get_candidate(exchange)
-        
         if selected_Ticker:
             print("selected: ", selected_Ticker)
-            buy_attempts = 1
-
-            #observe selected Ticker
-            price = None
-            buy_decision = False
-            while not buy_decision and buy_attempts <= 10:
-                print("attempt: ", buy_attempts)
-                is_buy_info = is_buy_decision(exchange, selected_Ticker)
-                if not is_buy_info[0]:
-                    buy_attempts += 1
-                    wait_time = get_wait_time_1()
-                    
-                    print("wait: ", wait_time)
-                    time.sleep(wait_time)
+            observed = True
+            count = 0
+            while observed:
+                print("check if buyable")
+                if is_buy(exchange, selected_Ticker):
+                    observed = False
+                    running = False
                 else:
-                    price = is_buy_info[1]
-                    buy_decision = True
-            print("buy decision: ", buy_decision)    
-
-            #buy sleected Ticker
-            if buy_decision:
-                buy(selected_Ticker, price)
-
-                #adjust sell order
-                adjust_sell_trigger = True
-                initial_set = True
-                while adjust_sell_trigger:
-                    if still_has_postion(selected_Ticker):
-                        print("set sell trigger")
-                        set_sell_trigger(exchange, selected_Ticker, initial_set, price, max_loss = 0.01, min_profit=0.015)
-                        initial_set = False
-                        wait_time = get_wait_time_1()
-                        print("wait: ", wait_time)
-                        time.sleep(wait_time)
-                    else:
-                        adjust_sell_trigger = False
+                    wait_time = get_wait_time_1()
+                    print("wait: ", wait_time)                
+                    time.sleep(wait_time)
+                    count += 1
+                    if count >= 10:
+                        observed = False
         else:  
-            wait_time = get_wait_time() 
-            print("Wait for next check: ", wait_time)  
-            time.sleep(wait_time)
+            print("Wait for next check.")  
+            time.sleep(get_wait_time())
 
 
 
 if __name__ == "__main__":
     
     run_trader()
-    
-
 

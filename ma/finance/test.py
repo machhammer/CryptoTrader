@@ -35,7 +35,6 @@ def find_big_candles(data):
     data["change"] = (((data["Close"] - data["Open"]) / data["Open"]) * 100) >= 0.2
     return data
 
-
 def apply_indicators(data):
         indicator_EMA_9 = EMAIndicator(close=data["Close"], window=9)
         data["ema_9"] = indicator_EMA_9.ema_indicator()
@@ -140,14 +139,10 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'MLN/USD'
+    ticker = 'NKN/USD'
     
     # Daten laden
     data = load_data(ticker)
-
-    #candlesticks(data)
-
-    
 
     # Lokale Hoch- und Tiefpunkte berechnen
     data = find_local_extrema(data)
