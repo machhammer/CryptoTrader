@@ -37,6 +37,7 @@ def get_wait_time_1():
         wait_time = (60 - (seconds % 60))
         return wait_time
 
+
 def get_data(exchange, ticker, interval, limit):
     bars = exchange.fetch_ohlcv(
             ticker, interval, limit=limit
