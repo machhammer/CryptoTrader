@@ -25,7 +25,7 @@ def load_data(ticker):
     return data
 
 # Berechnung der lokalen Hoch- und Tiefpunkte
-def find_local_extrema(data, order=4):
+def find_local_extrema(data, order=3):
     data['min'] = data.iloc[argrelextrema(data['Close'].values, np.less_equal, order=order)[0]]['Close']
     data['max'] = data.iloc[argrelextrema(data['Close'].values, np.greater_equal, order=order)[0]]['Close']
     return data
@@ -34,7 +34,6 @@ def find_local_extrema(data, order=4):
 def find_big_candles(data):
     data["change"] = (((data["Close"] - data["Open"]) / data["Open"]) * 100) >= 0.2
     return data
-
 
 def apply_indicators(data):
         indicator_EMA_9 = EMAIndicator(close=data["Close"], window=9)
@@ -140,7 +139,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'MLN/USD'
+    ticker = 'NRN/USD'
     
     # Daten laden
     data = load_data(ticker)
