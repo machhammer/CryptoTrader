@@ -139,7 +139,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'NKN/USD'
+    ticker = 'OMNI/USD'
     
     # Daten laden
     data = load_data(ticker)

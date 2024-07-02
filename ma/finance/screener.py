@@ -27,6 +27,14 @@ def get_tickers(exchange):
     random.shuffle(tickers)
     return tickers
 
+def wait(period):
+    if period == "short":
+        wait_time = get_wait_time_1()
+    if period == "long":
+        wait_time = get_wait_time()
+    print("wait: ", wait_time)
+    time.sleep(wait_time)
+
 def get_wait_time():
         minute = datetime.now().minute
         wait_time = (10 - (minute % 10)) * 60
@@ -106,7 +114,7 @@ def get_ticker_with_bigger_moves(exchange, tickers):
     for ticker in tickers:
         data = get_data(exchange, ticker, "5m", limit)
         data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
-        data["is_change_relevant"] = data["change"] >= 0.2
+        data["is_change_relevant"] = data["change"] >= 0.3
         ticker_check = {}
         ticker_check['ticker'] = ticker
         ticker_check['change'] = data["change"].to_list()
@@ -272,10 +280,7 @@ def run_trader():
                 is_buy_info = is_buy_decision(exchange, selected_Ticker)
                 if not is_buy_info[0]:
                     buy_attempts += 1
-                    wait_time = get_wait_time_1()
-                    
-                    print("wait: ", wait_time)
-                    time.sleep(wait_time)
+                    wait("short")
                 else:
                     price = is_buy_info[1]
                     buy_decision = True
@@ -294,15 +299,11 @@ def run_trader():
                 while adjust_sell_trigger:
                     if still_has_postion(selected_Ticker):
                         highest_value = set_sell_trigger(exchange, selected_Ticker, size, highest_value)
-                        wait_time = get_wait_time_1()
-                        print("wait: ", wait_time)
-                        time.sleep(wait_time)
+                        wait("short")
                     else:
                         adjust_sell_trigger = False
         else:  
-            wait_time = get_wait_time() 
-            print("Wait for next check: ", wait_time)  
-            time.sleep(wait_time)
+            wait("long")
 
 
 
