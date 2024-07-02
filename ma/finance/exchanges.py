@@ -113,6 +113,10 @@ class Exchange():
             self.log_error("fetch_my_trades")
         return result
 
+    def create_stop_loss_order(self, asset, size, stopLossPrice):
+        self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
+
+
     def create_buy_order(self, asset, size, price):
         return self.exchange.create_order(
             asset,

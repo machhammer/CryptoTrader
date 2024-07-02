@@ -139,7 +139,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'NRN/USD'
+    ticker = 'WLD/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -157,6 +157,7 @@ def main():
 
     # Unterstützung- und Widerstandslinien plotten
     plot_support_resistance(data)
+
 
 if __name__ == "__main__":
     main()

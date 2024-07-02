@@ -37,6 +37,28 @@ def get_wait_time_1():
         wait_time = (60 - (seconds % 60))
         return wait_time
 
+def print_time():
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
+
+
+def get_USD_balance(exchange):
+    return exchange.fetch_balance()[base_currency]["free"]
+
+def buy_order(exchange, ticker, price):
+    print("BUY")
+    print_time()
+    funding = get_USD_balance(exchange) - 5
+    print("funding: ", funding)
+    size = funding / price
+    order_id = exchange.create_buy_order(ticker, size, price)
+    return [order_id, size]
+
+def sell_order(exchange, ticker, size, stopLossPrice):
+    print("SELL ORDER")
+    print_time()
+    return exchange.create_stop_loss_order(ticker, size, stopLossPrice)
 
 def get_data(exchange, ticker, interval, limit):
     bars = exchange.fetch_ohlcv(
@@ -147,73 +169,52 @@ def is_buy_decision(exchange, ticker):
     data = add_aroon(data)
 
     max_column = data['max'].dropna().sort_values()
-        
+    print(max_column)    
     current_close = data.iloc[-1, 4]
+    print("current close: ", current_close)
     last_max = (max_column.values)[-1]
+    print("last max: ", last_max)
     previous_max = (max_column.values)[-2]
+    print("previous max: ", previous_max)
     
     if current_close < last_max:
         return [False, None]
-    elif current_close == last_max and current_close > previous_max:
+    elif current_close >= last_max and current_close > previous_max:
         return [True, current_close]
     else:
         return [False, None]
 
-  
 
-def buy(ticker, price):
-    print("***** Buy: ", price)
-
-
-def set_sell_trigger(exchange, ticker, initial_set, buy_price, max_loss, min_profit):
+def set_sell_trigger(exchange, ticker, size, highest_value):
+    print("***********************")
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
-    data = add_ema(data)
-
-    current_price = data.iloc[-1, 4]
-    print("*** buy price: ", buy_price)
-    print("*** current price: ", current_price)
-
-    current_pnl = (current_price - buy_price) / buy_price
-    max_loss_price = buy_price * (1 - max_loss)
-    min_profit_price = buy_price * (1 + min_profit)
-    print ("*** current pnl: ", current_pnl)
-    print ("*** max loss: ", max_loss_price)
-    print ("*** min profit: ", min_profit_price)
-
-    sell_value = None
-
-    if initial_set or (current_pnl >= max_loss_price and current_pnl < min_profit_price):
-        print("new or not within range")
-        min_column = data['min'].dropna().sort_values()
-        max_loss_price = buy_price * (1 - max_loss)
-        min_value = [None, 0]
-        for el in min_column:
-            diff = abs(max_loss_price - el)
-            if (min_value[0] == None or diff < min_value[0]):
-                min_value[0] = diff
-                min_value[1] = el
-        print("set sell at: ", min_value[1])
-        sell_value = min_value[1]
-    if current_pnl >= min_profit_price:
-        print("profit range")
-        sell_value = min_column.tail(1).item()
-        print("set sell at: ", sell_value)
-
-    # data['ema_20_gr_ema_9'] = data["ema_20"] > data["ema_9"]
-    # vs = data.tail(5)['ema_20_gr_ema_9'].to_list() 
-    # print(vs)
-    # if (vs).count(True) == 5:
-    #     now = datetime.now()
-    #     current_time = now.strftime("%H:%M:%S")
-    #     print("Current Time =", current_time)
-    #     print("*** *** SELL now: ", current_price)
-    #     sell_value = current_price
-    #     raise Exception("SELL position EMA crossing")
-
-    if sell_value == current_price:
-        print("*** *** SELL at triggered price: ", sell_value)
-        raise Exception("SELL at triggered price")
+    min_column = data['min'].dropna().sort_values()
+    print(min_column)
+    print(len(min_column))
+    print("highest_value: ", highest_value)
+    print("current: ", data.iloc[-1, 4])
+    if highest_value < data.iloc[-1, 4]:
+        print("new highest value")
+        highest_value = data.iloc[-1, 4]
+        resistance_found = False
+        row = -1
+        while not resistance_found:
+            if row >= (-1) * len(min_column):
+                resistance = min_column.iloc[row]
+                diff = (abs(data.iloc[-1, 4] - resistance)) / data.iloc[-1, 4]
+                print("resistance: ", resistance)
+                print("diff: ", diff)
+                if (diff >= 0.005):
+                    print("set new sell triger: ", resistance)
+                    sell_order(exchange, ticker, size, resistance)
+                    resistance_found = True
+                else:
+                    row -= 1
+            else:
+                resistance = min_column.iloc[(-1) * len(min_column)]
+                resistance_found = True
+    return highest_value
 
 def plot(data):
     plt.figure(figsize=(14, 7))
@@ -256,11 +257,8 @@ def run_trader():
     running = True
 
     while running:
-        now = datetime.now()
-        current_time = now.strftime("%H:%M:%S")
-        print("Current Time =", current_time)
+        print_time()
         selected_Ticker = get_candidate(exchange)
-        
         if selected_Ticker:
             print("selected: ", selected_Ticker)
             buy_attempts = 1
@@ -268,7 +266,8 @@ def run_trader():
             #observe selected Ticker
             price = None
             buy_decision = False
-            while not buy_decision and buy_attempts <= 10:
+            is_buy_info = [True, 0]
+            while not buy_decision and buy_attempts <= 20:
                 print("attempt: ", buy_attempts)
                 is_buy_info = is_buy_decision(exchange, selected_Ticker)
                 if not is_buy_info[0]:
@@ -281,19 +280,20 @@ def run_trader():
                     price = is_buy_info[1]
                     buy_decision = True
             print("buy decision: ", buy_decision)    
-
-            #buy sleected Ticker
+            
             if buy_decision:
-                buy(selected_Ticker, price)
+
+                #buy sleected Ticker
+                order = buy_order(exchange, selected_Ticker, price)
+                order_id = order[0]
+                size = order[1]
 
                 #adjust sell order
                 adjust_sell_trigger = True
-                initial_set = True
+                highest_value = price
                 while adjust_sell_trigger:
                     if still_has_postion(selected_Ticker):
-                        print("set sell trigger")
-                        set_sell_trigger(exchange, selected_Ticker, initial_set, price, max_loss = 0.01, min_profit=0.015)
-                        initial_set = False
+                        highest_value = set_sell_trigger(exchange, selected_Ticker, size, highest_value)
                         wait_time = get_wait_time_1()
                         print("wait: ", wait_time)
                         time.sleep(wait_time)
