@@ -73,6 +73,7 @@ def buy_order(exchange, usd, ticker, price):
 def sell_order(exchange, ticker, size, stopLossPrice):
     print("SELL ORDER")
     print_time()
+    exchange.cancel_order(ticker)
     return exchange.create_stop_loss_order(ticker, size, stopLossPrice)
 
 def get_data(exchange, ticker, interval, limit):
@@ -266,18 +267,17 @@ def get_candidate(exchange):
 def still_has_postion(size, price):
     return (size * price) > 5
 
+
 def run_trader():
 
     exchange = Exchange("cryptocom")
-
     usd_balance = get_USD_balance(exchange)
 
     running = True
 
     while running:
         print_time()
-        #selected_Ticker = get_candidate(exchange)
-        selected_Ticker = "FXS/USD"
+        selected_Ticker = get_candidate(exchange)
         if selected_Ticker:
             print("selected: ", selected_Ticker)
             buy_attempts = 1
@@ -302,7 +302,7 @@ def run_trader():
             if buy_decision:
                 price = 2.6216
                 #buy sleected Ticker
-                #order = buy_order(exchange, usd_balance, selected_Ticker, price)
+                order = buy_order(exchange, usd_balance, selected_Ticker, price)
                 time.sleep(10)
                 size = get_Ticker_balance(exchange, selected_Ticker)
 
