@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+import math
+
 import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 
@@ -159,11 +161,20 @@ def main():
     plot_support_resistance(data)
 
 
-def getbalance():
-    current_coins = exchange.fetch_balance()["free"]
-    amount = current_coins['FXS']
-    order_id = exchange.create_stop_loss_order('DEGEN/USD', amount, 0.0072)
+def get_precision(ticker):
+    markets = exchange.exchange.load_markets()
+    return float((markets[ticker]['precision']['amount']))
+
+def convert_to_precision(size, precision):
+    return math.floor(size/precision) * precision
 
 
 if __name__ == "__main__":
-    main()
+    price = 0.5
+    budget = 46
+
+    print("reg size: ", budget / 0.5)
+
+    size = convert_to_precision((budget / 0.5), get_precision("NEON/USD"))
+
+    print(size)

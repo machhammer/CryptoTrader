@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import random
 import time
+import math
 from datetime import datetime
 from pandas_datareader import data as pdr
 import time
@@ -60,20 +61,29 @@ def get_Ticker_balance(exchange, ticker):
     ticker = ticker.replace("/" + base_currency, "")
     return exchange.fetch_balance()[ticker]["free"]
 
+def convert_to_precision(size, precision):
+    return math.floor(size/precision) * precision
+
+def get_precision(exchange, ticker):
+    markets = exchange.exchange.load_markets()
+    return float((markets[ticker]['precision']['amount']))
 
 def buy_order(exchange, usd, ticker, price):
     print("BUY")
     print_time()
     funding = usd - 3
     print("funding: ", funding)
-    size = funding / price
+    precision = get_precision(exchange, ticker)
+    size = convert_to_precision(funding / price, precision)
+    print("size: ", size)
     order_id = exchange.create_buy_order(ticker, size, price)
     return order_id
 
 def sell_order(exchange, ticker, size, stopLossPrice):
     print("SELL ORDER")
     print_time()
-    exchange.cancel_order(ticker)
+    exchange.cancel_orders(ticker)
+    time.sleep(10)
     return exchange.create_stop_loss_order(ticker, size, stopLossPrice)
 
 def get_data(exchange, ticker, interval, limit):
@@ -278,6 +288,7 @@ def run_trader():
     while running:
         print_time()
         selected_Ticker = get_candidate(exchange)
+        
         if selected_Ticker:
             print("selected: ", selected_Ticker)
             buy_attempts = 1
@@ -285,10 +296,9 @@ def run_trader():
             #observe selected Ticker
             price = None
             buy_decision = False
-            buy_decision = True
-
+        
             is_buy_info = [True, 0]
-            while not buy_decision and buy_attempts <= 20:
+            while not buy_decision and buy_attempts <= 30:
                 print("attempt: ", buy_attempts)
                 is_buy_info = is_buy_decision(exchange, selected_Ticker)
                 if not is_buy_info[0]:
@@ -300,24 +310,25 @@ def run_trader():
             print("buy decision: ", buy_decision)    
             
             if buy_decision:
-                price = 2.6216
+
                 #buy sleected Ticker
                 order = buy_order(exchange, usd_balance, selected_Ticker, price)
                 time.sleep(10)
-                size = get_Ticker_balance(exchange, selected_Ticker)
 
                 #adjust sell order
                 adjust_sell_trigger = True
                 isInitial = True
                 highest_value = price
                 while adjust_sell_trigger:
-                    if still_has_postion(size, price):
+                    size = get_Ticker_balance(exchange, selected_Ticker)
+                    if still_has_postion(size, highest_value):
                         highest_value = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
                         isInitial = False
                         wait("short")
                     else:
                         adjust_sell_trigger = False
                         running = False
+                        print("Stopping.")
         else:  
             wait("long")
 

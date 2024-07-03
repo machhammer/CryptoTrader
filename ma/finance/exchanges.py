@@ -53,25 +53,37 @@ class Exchange():
     def fetch_balance(self):
         result = None
         try:
-            result = self.exchange.fetch_balance()
+            if self.exchange is not None:
+                result = self.exchange.fetch_balance()
+            else:
+                raise Exception("Exchange is None.")
         except Exception as e:
             self.log_error(e)
             time.sleep(10)
             self.connect()
-            result = self.exchange.fetch_balance()
+            if self.exchange is not None:
+                result = self.exchange.fetch_balance()
+            else:
+                raise Exception("Exchange is None.")
             self.log_error("fetch_balance")
         return result
 
     def fetch_tickers(self):
         result = None
         try:
-            result = self.exchange.fetch_tickers()
+            if self.exchange is not None:
+                result = self.exchange.fetch_tickers()
+            else:
+                raise Exception("Exchange is None.")
         except Exception as e:
             print(traceback.format_exc())
             self.log_error(e)
             time.sleep(10)
             self.connect()
-            result = self.exchange.fetch_tickers()
+            if self.exchange is not None:
+                result = self.exchange.fetch_tickers()
+            else:
+                raise Exception("Exchange is None.")
             self.log_error("fetch_tickers")
         return result
     
@@ -80,63 +92,93 @@ class Exchange():
     def fetch_ticker(self, asset):
         result = None
         try:
-            result = self.exchange.fetch_ticker(asset)
+            if self.exchange is not None:
+                result = self.exchange.fetch_ticker(asset)
+            else:
+                raise Exception("Exchange is None.")
         except Exception as e:
             self.log_error(e)
             time.sleep(10)
             self.connect()
-            result = self.exchange.fetch_ticker(asset)
+            if self.exchange is not None:
+                result = self.exchange.fetch_ticker(asset)
+            else:
+                raise Exception("Exchange is None.")
             self.log_error("fetch_ticker")
         return result
     
     def fetch_ohlcv(self, asset, timeframe, limit):
         result = None
         try:
-            result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
+            if self.exchange is not None:
+                result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
+            else:
+                raise Exception("Exchange is None.")
         except Exception as e:
             self.log_error(e)
             time.sleep(10)
             self.connect()
-            result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
+            if self.exchange is not None:
+                result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
+            else:
+                raise Exception("Exchange is None.")
             self.log_error("fetch_ohlcv")
         return result
 
     def fetch_my_trades(self, asset):
         result = None
         try:
-            result = self.exchange.fetch_my_trades(symbol=asset)
+            if self.exchange is not None:
+                result = self.exchange.fetch_my_trades(symbol=asset)
+            else:
+                raise Exception("Exchange is None.")
         except Exception as e:
             self.log_error(e)
             time.sleep(10)
             self.connect()
-            result = self.exchange.fetch_my_trades(symbol=asset)
+            if self.exchange is not None:
+                result = self.exchange.fetch_my_trades(symbol=asset)
+            else:
+                raise Exception("Exchange is None.")
             self.log_error("fetch_my_trades")
         return result
 
 
     def cancel_orders(self, asset):
-        self.exchange.cancel_all_orders(symbol=asset)
+        if self.exchange is not None:
+            self.exchange.cancel_all_orders(symbol=asset)
+        else:
+                raise Exception("Exchange is None.")
         
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
-        self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
+        if self.exchange is not None:
+            self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
+        else:
+            raise Exception("Exchange is None.")
 
 
     def create_buy_order(self, asset, size, price):
-        return self.exchange.create_order(
-            asset,
-            "market",
-            "buy",
-            size,
-            price,
-        )
+        if self.exchange is not None:
+            return self.exchange.create_order(
+                asset,
+                "market",
+                "buy",
+                size,
+                price,
+            )
+        else:
+            raise Exception("Exchange is None.")
     
     def create_sell_order(self, asset, size):
-        return self.exchange.create_order(
-            asset,
-            "market",
-            "sell",
-            size,
-        )
+        if self.exchange is not None:
+            return self.exchange.create_order(
+                asset,
+                "market",
+                "sell",
+                size,
+            )
+        else:
+            raise Exception("Exchange is None.")
 
     
