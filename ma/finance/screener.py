@@ -57,7 +57,7 @@ def get_USD_balance(exchange):
 def buy_order(exchange, ticker, price):
     print("BUY")
     print_time()
-    funding = get_USD_balance(exchange) - 5
+    funding = get_USD_balance(exchange) - 3
     print("funding: ", funding)
     size = funding / price
     order_id = exchange.create_buy_order(ticker, size, price)
@@ -149,7 +149,7 @@ def get_ticker_with_increased_volume(exchange, tickers):
         current_mean = data.tail(1)["volume"].mean()
         print(ticker)
         print("volume ratio: ", current_mean / last_mean)
-        if (current_mean / last_mean) >= 1:
+        if (current_mean / last_mean) >= 2:
             increased_volumes.append(ticker)
     return increased_volumes
 
