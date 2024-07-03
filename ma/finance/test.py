@@ -139,7 +139,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'DEGEN/USD'
+    ticker = 'FXS/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -157,6 +157,12 @@ def main():
 
     # Unterstützung- und Widerstandslinien plotten
     plot_support_resistance(data)
+
+
+def getbalance():
+    current_coins = exchange.fetch_balance()["free"]
+    amount = current_coins['FXS']
+    order_id = exchange.create_stop_loss_order('DEGEN/USD', amount, 0.0072)
 
 
 if __name__ == "__main__":
