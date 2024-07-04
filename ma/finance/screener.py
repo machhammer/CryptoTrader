@@ -357,7 +357,6 @@ def run_trader():
                         wait("short")
                     else:
                         adjust_sell_trigger = False
-                        running = False
                         print("Stopping.")
         else:  
             wait("long")
