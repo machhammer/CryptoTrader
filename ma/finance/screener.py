@@ -18,17 +18,41 @@ base_currency = "USD"
 
 amount_coins = 500
 
+wait_time_next_asset_selection_minutes = 15
+wait_time_next_buy_selection_seconds = 60
+buy_attempts_nr = 30
+move_increase_threshold = 0.2
+move_increase_period_threshold = 2
+volume_increase_threshold = 1.5
+difference_to_maximum_max = -1
+difference_to_resistance_min = 0.005
+
+
 
 def get_tickers(exchange):
     tickers = exchange.fetch_tickers()
     tickers = pd.DataFrame(tickers)
     tickers = tickers.T
     tickers = tickers[tickers["symbol"].str.endswith("/" + base_currency)].head(amount_coins)
-    pos_neg_median = tickers["percentage"].mean()
-    print("pos neg median: ", pos_neg_median)
+    market_movement = tickers["percentage"].mean() * 100
+    print("market_movement: ", market_movement)
     tickers = tickers["symbol"].to_list()
     random.shuffle(tickers)
-    return tickers
+    return tickers, market_movement
+
+
+def get_market_factor(pos_neg_mean):
+    if pos_neg_mean > 3:
+        return 0.95
+    elif pos_neg_mean >1 and pos_neg_mean <=3:
+        return 0.8
+    elif pos_neg_mean >0 and pos_neg_mean <=1:
+        return 0.6
+    elif pos_neg_mean >-2 and pos_neg_mean <=0:
+        return 0.4
+    else:
+        return 0.2
+
 
 def wait(period):
     if period == "short":
@@ -40,12 +64,12 @@ def wait(period):
 
 def get_wait_time():
         minute = datetime.now().minute
-        wait_time = (15 - (minute % 15)) * 60
+        wait_time = (wait_time_next_asset_selection_minutes - (minute % wait_time_next_asset_selection_minutes)) * 60
         return wait_time
 
 def get_wait_time_1():
         seconds = datetime.now().second
-        wait_time = (60 - (seconds % 60))
+        wait_time = (wait_time_next_buy_selection_seconds - (seconds % wait_time_next_buy_selection_seconds))
         return wait_time
 
 def print_time():
@@ -61,6 +85,9 @@ def get_Ticker_balance(exchange, ticker):
     ticker = ticker.replace("/" + base_currency, "")
     return exchange.fetch_balance()[ticker]["free"]
 
+def get_funding(usd, market_movement):
+    return usd * get_market_factor(market_movement)
+
 def convert_to_precision(size, precision):
     return math.floor(size/precision) * precision
 
@@ -68,11 +95,9 @@ def get_precision(exchange, ticker):
     markets = exchange.exchange.load_markets()
     return float((markets[ticker]['precision']['amount']))
 
-def buy_order(exchange, usd, ticker, price):
+def buy_order(exchange, usd, ticker, price, funding):
     print("BUY")
     print_time()
-    funding = usd - 3
-    print("funding: ", funding)
     precision = get_precision(exchange, ticker)
     size = convert_to_precision(funding / price, precision)
     print("size: ", size)
@@ -132,13 +157,13 @@ def get_ticker_with_bigger_moves(exchange, tickers):
     for ticker in tickers:
         data = get_data(exchange, ticker, "5m", limit)
         data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
-        data["is_change_relevant"] = data["change"] >= 0.25
+        data["is_change_relevant"] = data["change"] >= move_increase_threshold
         ticker_check = {}
         ticker_check['ticker'] = ticker
         ticker_check['change'] = data["change"].to_list()
         ticker_check['relevant'] = data["is_change_relevant"].to_list()
         ticker_check['data'] = data
-        if ticker_check['relevant'].count(True) >=2:
+        if ticker_check['relevant'].count(True) >= move_increase_period_threshold:
             bigger_moves.append(ticker)
         try:
             next(progress_bar)
@@ -167,7 +192,7 @@ def get_ticker_with_increased_volume(exchange, tickers):
         current_mean = data.tail(1)["volume"].mean()
         print(ticker)
         print("volume ratio: ", current_mean / last_mean)
-        if (current_mean / last_mean) >= 1.5:
+        if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
     return increased_volumes
 
@@ -184,7 +209,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
         print("current close: ", current_close)
         ratio = ((current_close - local_max) * 100) / local_max
         print("ratio: ", ratio)
-        if ratio > -1:
+        if ratio > difference_to_maximum_max:
             lowest_difference_to_maximum = ticker
     return lowest_difference_to_maximum
 
@@ -194,7 +219,7 @@ def is_buy_decision(exchange, ticker):
     data = add_min_max(data)
     data = add_aroon(data)
 
-    max_column = data['max'].dropna().sort_values()
+    max_column = data['max'].dropna().drop_duplicates().sort_values()
     print(max_column)    
     current_close = data.iloc[-1, 4]
     print("current close: ", current_close)
@@ -205,7 +230,7 @@ def is_buy_decision(exchange, ticker):
     
     if current_close < last_max:
         return [False, None]
-    elif current_close >= last_max and current_close > previous_max:
+    elif current_close >= last_max and current_close >= previous_max:
         return [True, current_close]
     else:
         return [False, None]
@@ -231,7 +256,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
                 diff = (abs(data.iloc[-1, 4] - resistance)) / data.iloc[-1, 4]
                 print("resistance: ", resistance)
                 print("diff: ", diff)
-                if (diff >= 0.005):
+                if (diff >= difference_to_resistance_min):
                     print("set new sell triger: ", resistance)
                     sell_order(exchange, ticker, size, resistance)
                     resistance_found = True
@@ -264,7 +289,7 @@ def plot(data):
 
 
 def get_candidate(exchange):
-    tickers = get_tickers(exchange)
+    tickers, market_movement = get_tickers(exchange)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     print("major move: ", major_move)
     increased_volume = get_ticker_with_increased_volume(exchange, major_move)
@@ -272,7 +297,7 @@ def get_candidate(exchange):
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     print("buy signals", buy_signals)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
-    return selected_Ticker
+    return selected_Ticker, market_movement
 
 def still_has_postion(size, price):
     return (size * price) > 5
@@ -281,13 +306,16 @@ def still_has_postion(size, price):
 def run_trader():
 
     exchange = Exchange("cryptocom")
-    usd_balance = get_USD_balance(exchange)
 
     running = True
 
     while running:
+        
         print_time()
-        selected_Ticker = get_candidate(exchange)
+
+        usd_balance = get_USD_balance(exchange)
+
+        selected_Ticker, market_movement = get_candidate(exchange)
         
         if selected_Ticker:
             print("selected: ", selected_Ticker)
@@ -298,7 +326,7 @@ def run_trader():
             buy_decision = False
         
             is_buy_info = [True, 0]
-            while not buy_decision and buy_attempts <= 30:
+            while not buy_decision and buy_attempts <= buy_attempts_nr:
                 print("attempt: ", buy_attempts)
                 is_buy_info = is_buy_decision(exchange, selected_Ticker)
                 if not is_buy_info[0]:
@@ -312,7 +340,9 @@ def run_trader():
             if buy_decision:
 
                 #buy sleected Ticker
-                order = buy_order(exchange, usd_balance, selected_Ticker, price)
+                funding = get_funding(usd_balance, market_movement)
+                print("funding: ", funding)
+                order = buy_order(exchange, usd_balance, selected_Ticker, price, funding)
                 time.sleep(10)
 
                 #adjust sell order

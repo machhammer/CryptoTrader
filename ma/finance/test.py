@@ -141,7 +141,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'FXS/USD'
+    ticker = 'NEON/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -170,11 +170,4 @@ def convert_to_precision(size, precision):
 
 
 if __name__ == "__main__":
-    price = 0.5
-    budget = 46
-
-    print("reg size: ", budget / 0.5)
-
-    size = convert_to_precision((budget / 0.5), get_precision("NEON/USD"))
-
-    print(size)
+    main()
