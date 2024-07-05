@@ -141,7 +141,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'NEON/USD'
+    ticker = 'QNT/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -168,6 +168,15 @@ def get_precision(ticker):
 def convert_to_precision(size, precision):
     return math.floor(size/precision) * precision
 
+def get_current_balance():
+    current_assets = exchange.fetch_balance()["free"]
+    balance = 0
+    for asset in current_assets:
+        if not asset in ["USD"]:
+            price = exchange.fetch_ticker(asset + "/USD")["last"]
+            balance = exchange.fetch_balance()[asset]["free"]
+            print(asset)
+            print(balance * price)
 
 if __name__ == "__main__":
-    main()
+    get_current_balance()
