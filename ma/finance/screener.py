@@ -91,9 +91,9 @@ def print_time():
     logger.info("Current Time: {}".format(current_time))
 
 
-def get_USD_balance(exchange):
+def get_base_currency_balance(exchange):
     usd = exchange.fetch_balance()[base_currency]["free"]
-    logger.info("USD: {}".format(usd))
+    logger.info("Available Budget in {}: {}".format(base_currency, usd))
     return usd
 
 
@@ -102,7 +102,7 @@ def find_asset_with_balance(exchange):
     price = None
     current_assets = exchange.fetch_balance()["free"]
     for asset in current_assets:
-        if not asset in ["USD", "CRO"]:
+        if not asset in [base_currency, "CRO"]:
             found_price = exchange.fetch_ticker(asset + "/" + base_currency)["last"]
             balance = exchange.fetch_balance()[asset]["free"]
             if (balance * found_price) > 5:
@@ -115,13 +115,12 @@ def find_asset_with_balance(exchange):
 def get_Ticker_balance(exchange, ticker):
     ticker = ticker.replace("/" + base_currency, "")
     ticker_balance = exchange.fetch_balance()[ticker]["free"]
-    logger.info("Ticker Balance: {}".format(ticker_balance))
     return ticker_balance
 
 def get_funding(usd, market_movement):
     mf = get_market_factor(market_movement)
     funding = usd * get_market_factor(market_movement)
-    logger.info("USD {} * Market Factor {} = Funding {}".format(usd, mf, funding))
+    logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
     return funding
 
 def convert_to_precision(size, precision):
@@ -329,8 +328,9 @@ def get_candidate(exchange):
     logger.info("increased volume found: {}".format(len(increased_volume)))
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     logger.debug("buy signals: {}".format(buy_signals))
-    logger.debug("buy signals found: {}".format(len(buy_signals)))
+    logger.info("buy signals found: {}".format(len(buy_signals)))
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
+    logger.info("market: {}".format(market_movement))
     return selected_Ticker, market_movement
 
 def still_has_postion(size, price):
@@ -347,7 +347,7 @@ def run_trader():
 
     while running:
 
-        usd_balance = get_USD_balance(exchange)
+        usd_balance = get_base_currency_balance(exchange)
 
         if not asset_with_balance:
             selected_Ticker, market_movement = get_candidate(exchange)
