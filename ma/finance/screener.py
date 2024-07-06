@@ -105,7 +105,7 @@ def find_asset_with_balance(exchange):
         if not asset in [base_currency, "CRO"]:
             found_price = exchange.fetch_ticker(asset + "/" + base_currency)["last"]
             balance = exchange.fetch_balance()[asset]["free"]
-            if (balance * found_price) > 15:
+            if (balance * found_price) > 5:
                 logger.info("Found asset with balance: {}".format(asset))
                 asset_with_balance = asset + "/" + base_currency
                 price = found_price
