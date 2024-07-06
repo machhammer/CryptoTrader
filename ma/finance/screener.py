@@ -56,15 +56,15 @@ def get_tickers(exchange):
 
 def get_market_factor(pos_neg_mean):
     if pos_neg_mean > 3:
-        return 0.95
+        return 0.9
     elif pos_neg_mean >1 and pos_neg_mean <=3:
-        return 0.8
+        return 0.7
     elif pos_neg_mean >0 and pos_neg_mean <=1:
-        return 0.6
+        return 0.5
     elif pos_neg_mean >-2 and pos_neg_mean <=0:
-        return 0.4
+        return 0.3
     else:
-        return 0.2
+        return 0.1
 
 
 def wait(period):
