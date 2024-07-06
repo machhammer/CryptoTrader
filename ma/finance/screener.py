@@ -133,7 +133,7 @@ def get_precision(exchange, ticker):
 def buy_order(exchange, usd, ticker, price, funding):
     precision = get_precision(exchange, ticker)
     size = convert_to_precision(funding / price, precision)
-    logger.info("BUY {}, Size: {}".format(ticker, size))
+    logger.info("BUY {}, Size: {}, Price: {}".format(ticker, size, price))
     order_id = exchange.create_buy_order(ticker, size, price)
     return order_id
 
@@ -395,7 +395,7 @@ def run_trader():
                         wait("short")
                     else:
                         adjust_sell_trigger = False
-                        logger.info("SOLD: {}".format(selected_Ticker))
+                        logger.info("SOLD: {}, Price: {}".format(selected_Ticker))
         else:  
             logger.info("No Asset selected!")
             wait("long")
