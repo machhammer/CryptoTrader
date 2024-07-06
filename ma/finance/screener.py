@@ -25,7 +25,7 @@ handler = logging.FileHandler(
 )
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 base_currency = "USD"
 
