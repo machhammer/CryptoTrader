@@ -38,7 +38,7 @@ move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 2
 difference_to_maximum_max = -1
-difference_to_resistance_min = 0.02
+difference_to_resistance_min = 0.01
 
 
 
