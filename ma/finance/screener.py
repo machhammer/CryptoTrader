@@ -47,7 +47,7 @@ def get_tickers(exchange):
     tickers = pd.DataFrame(tickers)
     tickers = tickers.T
     tickers = tickers[tickers["symbol"].str.endswith("/" + base_currency)].head(amount_coins)
-    market_movement = tickers["percentage"].mean() * 100
+    market_movement = tickers["percentage"].median() * 100
     logger.info("market_movement: {}".format(market_movement))
     tickers = tickers["symbol"].to_list()
     random.shuffle(tickers)
