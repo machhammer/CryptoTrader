@@ -33,12 +33,12 @@ amount_coins = 500
 
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
-buy_attempts_nr = 30
+buy_attempts_nr = 20
 move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 2
-difference_to_maximum_max = -1
-difference_to_resistance_min = 0.01
+difference_to_maximum_max = -1.5
+difference_to_resistance_min = 0.005
 
 
 
@@ -259,9 +259,9 @@ def is_buy_decision(exchange, ticker):
     previous_max = (max_column.values)[-2]
     logger.debug("previous max: {}".format(previous_max))
     
-    if current_close < last_max:
+    if current_close <= last_max:
         return [False, None]
-    elif current_close >= last_max and current_close >= previous_max:
+    elif current_close > last_max and current_close > previous_max:
         return [True, current_close]
     else:
         return [False, None]
@@ -395,7 +395,7 @@ def run_trader():
                         wait("short")
                     else:
                         adjust_sell_trigger = False
-                        logger.info("SOLD: {}, Price: {}".format(selected_Ticker))
+                        logger.info("SOLD: {}, Price: {}".format(selected_Ticker, price))
         else:  
             logger.info("No Asset selected!")
             wait("long")
