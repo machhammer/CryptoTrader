@@ -2,9 +2,12 @@ import pandas as pd
 import numpy as np
 
 import math
+import pause
 
 import matplotlib.pyplot as plt
+
 from scipy.signal import argrelextrema
+from datetime import datetime
 
 from ta.trend import EMAIndicator
 from ta.volume import VolumeWeightedAveragePrice
@@ -173,4 +176,6 @@ def get_orders():
     
 
 if __name__ == "__main__":
-    get_orders()
+    
+    pause.until(datetime(2024, 7, 8, 18, 11, 0))
+    print("jetzt")
