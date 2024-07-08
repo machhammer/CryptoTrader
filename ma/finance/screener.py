@@ -381,6 +381,7 @@ def run_trader():
                 if not asset_with_balance:
                     funding = get_funding(usd_balance, market_movement)
                     order = buy_order(exchange, usd_balance, selected_Ticker, price, funding)
+                    logger.info(order)
                     time.sleep(10)
 
                 #adjust sell order
@@ -396,6 +397,8 @@ def run_trader():
                     else:
                         adjust_sell_trigger = False
                         logger.info("SOLD: {}, Price: {}".format(selected_Ticker, price))
+                        orders = exchange.exchange.fetch_orders(selected_Ticker)[-1]
+                        logger.info(orders)
         else:  
             logger.info("No Asset selected!")
             wait("long")

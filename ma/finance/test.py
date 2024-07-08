@@ -11,7 +11,7 @@ from ta.volume import VolumeWeightedAveragePrice
 
 from exchanges import Exchange
 
-
+import pprint
 
 exchange = Exchange("cryptocom")
 
@@ -141,7 +141,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'QNT/USD'
+    ticker = 'ETHFI/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -168,15 +168,8 @@ def get_precision(ticker):
 def convert_to_precision(size, precision):
     return math.floor(size/precision) * precision
 
-def get_current_balance():
-    current_assets = exchange.fetch_balance()["free"]
-    balance = 0
-    for asset in current_assets:
-        if not asset in ["USD"]:
-            price = exchange.fetch_ticker(asset + "/USD")["last"]
-            balance = exchange.fetch_balance()[asset]["free"]
-            print(asset)
-            print(balance * price)
+def get_orders():
+    pprint.pprint(exchange.exchange.fetch_orders("GMX/USD")[-1])
 
 if __name__ == "__main__":
-    get_current_balance()
+    get_orders()
