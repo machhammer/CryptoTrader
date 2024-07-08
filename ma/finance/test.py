@@ -169,7 +169,8 @@ def convert_to_precision(size, precision):
     return math.floor(size/precision) * precision
 
 def get_orders():
-    pprint.pprint(exchange.exchange.fetch_orders("GMX/USD")[-1])
+    pprint.pprint(exchange.exchange.fetch_order(id='4611686087313874522'))
+    
 
 if __name__ == "__main__":
     get_orders()

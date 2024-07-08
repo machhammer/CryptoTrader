@@ -33,7 +33,7 @@ amount_coins = 500
 
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
-buy_attempts_nr = 20
+buy_attempts_nr = 30
 move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 2
