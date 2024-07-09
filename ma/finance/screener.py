@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import random
 import time
+import pause
 import math
 import logging
 from datetime import datetime
@@ -338,6 +339,8 @@ def still_has_postion(size, price):
 
 
 def run_trader():
+
+    pause.until(datetime(2024, 7, 10, 3, 15, 0))
 
     exchange = Exchange("cryptocom")
 
