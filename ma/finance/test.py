@@ -160,7 +160,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'NEAR/USD'
+    ticker = 'IQ/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -169,7 +169,7 @@ def main():
     #data = find_local_extrema(data)
 
     #data = apply_indicators(data)
-    data = apply_macd(data)
+    data = apply_vwap(data)
 
     #data = find_big_candles(data)
 

@@ -271,11 +271,11 @@ def is_buy_decision(exchange, ticker):
 
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
-    logger.debug("current close: {}".format(current_close))
+    logger.info("current close: {}".format(current_close))
     last_max = (max_column.values)[-1]
-    logger.debug("last max: {}".format(last_max))
+    logger.info("last max: {}".format(last_max))
     previous_max = (max_column.values)[-2]
-    logger.debug("previous max: {}".format(previous_max))
+    logger.info("previous max: {}".format(previous_max))
     
     is_buy = False
 
@@ -286,8 +286,9 @@ def is_buy_decision(exchange, ticker):
     else:
         is_buy = False
 
+    vwap = data.iloc[-1, 10]
+    logger.info("vwap: {}".format(vwap))
     if is_buy:
-        vwap = data.iloc[-1, 10]
         if isinstance(current_close, float) and isinstance(vwap, float):
             if vwap > current_close:
                 logger.info("VWAP is Buy.")
@@ -298,11 +299,14 @@ def is_buy_decision(exchange, ticker):
         else:
             logger.debug("Not a float.")
 
-    if is_buy:
-        macd = data.iloc[-1, 11]
-        macd_diff = data.iloc[-1, 12]
-        macd_signal = data.iloc[-1, 13]
 
+    macd = data.iloc[-1, 11]
+    macd_diff = data.iloc[-1, 12]
+    macd_signal = data.iloc[-1, 13]
+    logger.info("macd: {}".format(macd))
+    logger.info("macd diff: {}".format(macd_diff))
+    logger.info("macd signal: {}".format(macd_signal))
+    if is_buy:
         if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
             if macd > macd_signal and macd_diff > 0:
                 logger.info("MACD is Buy.")
