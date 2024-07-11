@@ -10,11 +10,14 @@ from scipy.signal import argrelextrema
 from datetime import datetime
 
 from ta.trend import EMAIndicator
+from ta.trend import MACD
 from ta.volume import VolumeWeightedAveragePrice
 
 from exchanges import Exchange
 
 import pprint
+
+pd.set_option('display.max_rows', None)
 
 exchange = Exchange("cryptocom")
 
@@ -41,11 +44,24 @@ def find_big_candles(data):
     return data
 
 def apply_indicators(data):
-        indicator_EMA_9 = EMAIndicator(close=data["Close"], window=9)
-        data["ema_9"] = indicator_EMA_9.ema_indicator()
-        indicator_EMA_20 = EMAIndicator(close=data["Close"], window=20)
-        data["ema_20"] = indicator_EMA_20.ema_indicator()
-        return data
+    indicator_EMA_9 = EMAIndicator(close=data["Close"], window=9)
+    data["ema_9"] = indicator_EMA_9.ema_indicator()
+    indicator_EMA_20 = EMAIndicator(close=data["Close"], window=20)
+    data["ema_20"] = indicator_EMA_20.ema_indicator()
+    return data
+
+def apply_vwap(data):
+    indicator_vwap = VolumeWeightedAveragePrice(high=data["High"], low=data["Low"], close=data["Close"], volume=data["Volume"])
+    data["vwap"] = indicator_vwap.volume_weighted_average_price()
+    return data
+
+def apply_macd(data):
+    indicator_macd = MACD(close=data["Close"])
+    data["macd"] = indicator_macd.macd()
+    data["macd_diff"] = indicator_macd.macd_diff()
+    data["macd_signal"] = indicator_macd.macd_signal()
+    return data
+
 
 # Zeichnen der Unterstützung- und Widerstandslinien
 def plot_support_resistance(data):
@@ -144,24 +160,25 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'ETHFI/USD'
+    ticker = 'NEAR/USD'
     
     # Daten laden
     data = load_data(ticker)
 
     # Lokale Hoch- und Tiefpunkte berechnen
-    data = find_local_extrema(data)
+    #data = find_local_extrema(data)
 
-    data = apply_indicators(data)
+    #data = apply_indicators(data)
+    data = apply_macd(data)
 
-    data = find_big_candles(data)
+    #data = find_big_candles(data)
 
     print(data)
 
-    buy_sell(data)
+    #buy_sell(data)
 
     # Unterstützung- und Widerstandslinien plotten
-    plot_support_resistance(data)
+    #plot_support_resistance(data)
 
 
 def get_precision(ticker):
@@ -177,5 +194,4 @@ def get_orders():
 
 if __name__ == "__main__":
     
-    pause.until(datetime(2024, 7, 8, 18, 11, 0))
-    print("jetzt")
+    main()

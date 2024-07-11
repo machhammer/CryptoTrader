@@ -1,6 +1,7 @@
 from pdb import run
 
 from matplotlib import ticker
+from CryptoTrader.ma.finance.screener_helper import buy
 from exchanges import Exchange
 import numpy as np
 import pandas as pd
@@ -14,7 +15,8 @@ from pandas_datareader import data as pdr
 import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from ta.trend import AroonIndicator, EMAIndicator
+from ta.trend import AroonIndicator, EMAIndicator, MACD
+from ta.volume import VolumeWeightedAveragePrice
 from scipy.signal import argrelextrema
 
 logger = logging.getLogger("screener")
@@ -174,6 +176,20 @@ def add_aroon(data):
     data["aroon_down"] = indicator_AROON.aroon_down()
     return data
 
+def add_vwap(data):
+    indicator_vwap = VolumeWeightedAveragePrice(high=data["high"], low=data["low"], close=data["close"], volume=data["volume"])
+    data["vwap"] = indicator_vwap.volume_weighted_average_price()
+    return data
+
+
+def apply_macd(data):
+    indicator_macd = MACD(close=data["close"])
+    data["macd"] = indicator_macd.macd()
+    data["macd_diff"] = indicator_macd.macd_diff()
+    data["macd_signal"] = indicator_macd.macd_signal()
+    return data
+
+
 def add_ema(data):
         indicator_EMA_9 = EMAIndicator(close=data["close"], window=9)
         data["ema_9"] = indicator_EMA_9.ema_indicator()
@@ -251,6 +267,7 @@ def is_buy_decision(exchange, ticker):
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     data = add_aroon(data)
+    data = add_vwap(data)
 
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
@@ -260,12 +277,40 @@ def is_buy_decision(exchange, ticker):
     previous_max = (max_column.values)[-2]
     logger.debug("previous max: {}".format(previous_max))
     
+    is_buy = False
+
     if current_close <= last_max:
-        return [False, None]
+        is_buy = False
     elif current_close > last_max and current_close > previous_max:
-        return [True, current_close]
+        is_buy = True
     else:
-        return [False, None]
+        is_buy = False
+
+    vwap = data.iloc[-1, 10]
+    if isinstance(current_close, float) and isinstance(vwap, float):
+        if vwap > current_close:
+            logger.info("VWAP is Buy.")
+            is_buy = True
+        else:
+            logger.info("VWAP is NOT Buy.")
+            is_buy = False
+    else:
+        logger.debug("Not a float.")
+
+
+    macd = data.iloc[-1, 11]
+    macd_diff = data.iloc[-1, 12]
+    macd_signal = data.iloc[-1, 13]
+
+    if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
+        if macd > macd_signal and macd_diff > 0:
+            logger.info("MACD is Buy.")
+            is_buy = True
+        else:
+            logger.info("MACD is NOT Buy.")
+            is_buy = False
+
+    return [is_buy, current_close]
 
 
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
