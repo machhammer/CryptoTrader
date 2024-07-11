@@ -271,11 +271,11 @@ def is_buy_decision(exchange, ticker):
 
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
-    logger.info("current close: {}".format(current_close))
+    logger.debug("current close: {}".format(current_close))
     last_max = (max_column.values)[-1]
-    logger.info("last max: {}".format(last_max))
+    logger.debug("last max: {}".format(last_max))
     previous_max = (max_column.values)[-2]
-    logger.info("previous max: {}".format(previous_max))
+    logger.debug("previous max: {}".format(previous_max))
     
     is_buy = False
 
@@ -287,7 +287,7 @@ def is_buy_decision(exchange, ticker):
         is_buy = False
 
     vwap = data.iloc[-1, 10]
-    logger.info("vwap: {}".format(vwap))
+    logger.debug("vwap: {}".format(vwap))
     if is_buy:
         if isinstance(current_close, float) and isinstance(vwap, float):
             if vwap > current_close:
@@ -409,7 +409,7 @@ def run_trader():
             selected_Ticker = asset_with_balance
 
         if selected_Ticker:
-            logger.info("selected: {}".format(selected_Ticker))
+            logger.info("*********** selected: {}".format(selected_Ticker))
             buy_attempts = 1
 
             #observe selected Ticker
