@@ -181,7 +181,7 @@ def add_vwap(data):
     return data
 
 
-def apply_macd(data):
+def add_macd(data):
     indicator_macd = MACD(close=data["close"])
     data["macd"] = indicator_macd.macd()
     data["macd_diff"] = indicator_macd.macd_diff()
@@ -267,6 +267,7 @@ def is_buy_decision(exchange, ticker):
     data = add_min_max(data)
     data = add_aroon(data)
     data = add_vwap(data)
+    data = add_macd(data)
 
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
