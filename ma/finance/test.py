@@ -175,7 +175,11 @@ def get_orders():
     pprint.pprint(exchange.exchange.fetch_order(id='4611686087313874522'))
     
 
+def get_ticker(ticker):
+    pprint.pprint(exchange.fetch_ticker(ticker))
+
 if __name__ == "__main__":
     
-    pause.until(datetime(2024, 7, 8, 18, 11, 0))
-    print("jetzt")
+    get_ticker("SQT/USD")
+    
+    

@@ -26,7 +26,7 @@ handler = logging.FileHandler(
 )
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 base_currency = "USD"
 
@@ -248,7 +248,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
 
 
 def is_buy_decision(exchange, ticker):
-    data = get_data(exchange, ticker, "1m", limit=90)
+    data = get_data(exchange, ticker, "1m", limit=120)
     data = add_min_max(data)
     data = add_aroon(data)
 
@@ -260,9 +260,9 @@ def is_buy_decision(exchange, ticker):
     previous_max = (max_column.values)[-2]
     logger.debug("previous max: {}".format(previous_max))
     
-    if current_close <= last_max:
+    if current_close < last_max:
         return [False, None]
-    elif current_close > last_max and current_close > previous_max:
+    elif current_close >= last_max and current_close > previous_max:
         return [True, current_close]
     else:
         return [False, None]
