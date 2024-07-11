@@ -303,9 +303,9 @@ def is_buy_decision(exchange, ticker):
     macd = data.iloc[-1, 11]
     macd_diff = data.iloc[-1, 12]
     macd_signal = data.iloc[-1, 13]
-    logger.info("macd: {}".format(macd))
-    logger.info("macd diff: {}".format(macd_diff))
-    logger.info("macd signal: {}".format(macd_signal))
+    logger.debug("macd: {}".format(macd))
+    logger.debug("macd diff: {}".format(macd_diff))
+    logger.debug("macd signal: {}".format(macd_signal))
     if is_buy:
         if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
             if macd > macd_signal and macd_diff > 0:
@@ -446,6 +446,7 @@ def run_trader():
                     if still_has_postion(size, highest_value):
                         highest_value = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
                         isInitial = False
+          
                         wait("short")
                     else:
                         adjust_sell_trigger = False
