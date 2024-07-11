@@ -286,29 +286,30 @@ def is_buy_decision(exchange, ticker):
     else:
         is_buy = False
 
-    vwap = data.iloc[-1, 10]
-    if isinstance(current_close, float) and isinstance(vwap, float):
-        if vwap > current_close:
-            logger.info("VWAP is Buy.")
-            is_buy = True
+    if is_buy:
+        vwap = data.iloc[-1, 10]
+        if isinstance(current_close, float) and isinstance(vwap, float):
+            if vwap > current_close:
+                logger.info("VWAP is Buy.")
+                is_buy = True
+            else:
+                logger.info("VWAP is NOT Buy.")
+                is_buy = False
         else:
-            logger.info("VWAP is NOT Buy.")
-            is_buy = False
-    else:
-        logger.debug("Not a float.")
+            logger.debug("Not a float.")
 
+    if is_buy:
+        macd = data.iloc[-1, 11]
+        macd_diff = data.iloc[-1, 12]
+        macd_signal = data.iloc[-1, 13]
 
-    macd = data.iloc[-1, 11]
-    macd_diff = data.iloc[-1, 12]
-    macd_signal = data.iloc[-1, 13]
-
-    if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
-        if macd > macd_signal and macd_diff > 0:
-            logger.info("MACD is Buy.")
-            is_buy = True
-        else:
-            logger.info("MACD is NOT Buy.")
-            is_buy = False
+        if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
+            if macd > macd_signal and macd_diff > 0:
+                logger.info("MACD is Buy.")
+                is_buy = True
+            else:
+                logger.info("MACD is NOT Buy.")
+                is_buy = False
 
     return [is_buy, current_close]
 
