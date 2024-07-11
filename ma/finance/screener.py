@@ -28,7 +28,7 @@ handler = logging.FileHandler(
 )
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 base_currency = "USD"
 
@@ -264,7 +264,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
 
 
 def is_buy_decision(exchange, ticker):
-    data = get_data(exchange, ticker, "1m", limit=90)
+    data = get_data(exchange, ticker, "1m", limit=120)
     data = add_min_max(data)
     data = add_aroon(data)
     data = add_vwap(data)
