@@ -282,14 +282,18 @@ def is_buy_decision(exchange, ticker):
         is_buy = True
     else:
         is_buy = False
+    logger.info("after resistance check - buy: {}".format(is_buy))
 
     vwap = data.iloc[-1, 10]
     if is_buy:
         if isinstance(current_close, float) and isinstance(vwap, float):
-            if vwap > current_close:
+            logger.info("float check ok")
+            if vwap < current_close:
                 is_buy = True
             else:
                 is_buy = False
+
+    logger.info("after vwap check - buy: {}".format(is_buy))
 
     macd = data.iloc[-1, 11]
     macd_diff = data.iloc[-1, 12]
@@ -303,6 +307,8 @@ def is_buy_decision(exchange, ticker):
                 is_buy = True
             else:
                 is_buy = False
+
+    logger.info("after macd check - buy: {}".format(is_buy))
 
     return is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff
 
