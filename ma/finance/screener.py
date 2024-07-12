@@ -334,15 +334,15 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
                 logger.debug("diff: {}".format(diff))
                 if (diff >= difference_to_resistance_min):
                     logger.debug("set new sell triger: {}".format(resistance))
-                    sell_order(exchange, ticker, size, resistance)
+                    order = sell_order(exchange, ticker, size, resistance)
                     resistance_found = True
                 else:
                     row -= 1
             else:
                 resistance = min_column.iloc[(-1) * len(min_column)]
-                sell_order(exchange, ticker, size, resistance)
+                order = sell_order(exchange, ticker, size, resistance)
                 resistance_found = True
-    return highest_value
+    return highest_value, order
 
 def plot(data):
     plt.figure(figsize=(14, 7))
@@ -383,7 +383,7 @@ def still_has_postion(size, price):
     return (size * price) > 5
 
 
-def write_to_db(market=None, market_factor=None, base_currency=None, selected_ticker=None, major_move=None, increase_volume=None, buy_signal=None, close_to_maximum=None, is_buy=None, current_close=None, last_max=None, previous_max=None, vwap=None,macd=None, macd_signal=None, macd_diff=None, buy_order_id=None, sell_order_id=None):
+def write_to_db(market=None, market_factor=None, base_currency=None, selected_ticker=None, funding=None, major_move=None, increase_volume=None, buy_signal=None, close_to_maximum=None, is_buy=None, current_close=None, last_max=None, previous_max=None, vwap=None,macd=None, macd_signal=None, macd_diff=None, buy_order_id=None, sell_order_id=None):
     if (major_move and len(major_move) > 0): 
         major_move=';'.join(map(str, major_move))
     else:
@@ -396,7 +396,7 @@ def write_to_db(market=None, market_factor=None, base_currency=None, selected_ti
         buy_signal=';'.join(map(str, buy_signal))
     else:
         buy_signal=None
-    database.insert_screener(get_time(), market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)    
+    database.insert_screener(get_time(), market, market_factor, base_currency, selected_ticker, funding, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)    
 
 
 def run_trader():
@@ -448,7 +448,7 @@ def run_trader():
                 if not asset_with_balance:
                     funding = get_funding(usd_balance, market_movement)
                     order = buy_order(exchange, usd_balance, selected_Ticker, price, funding)
-                    write_to_db(selected_ticker=selected_Ticker, buy_order_id=order['id'])
+                    write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=order['id'])
                     time.sleep(10)
 
                 #adjust sell order
@@ -458,14 +458,15 @@ def run_trader():
                 while adjust_sell_trigger:
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
-                        highest_value = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
+                        highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
+                        write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
                         isInitial = False
           
                         wait("short")
                     else:
                         adjust_sell_trigger = False
                         order = exchange.exchange.fetch_orders(selected_Ticker)[-1]
-                        write_to_db(selected_ticker=selected_Ticker, buy_order_id=order['id'])
+                        write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
         else:  
             logger.info("No Asset selected!")
             wait("long")
