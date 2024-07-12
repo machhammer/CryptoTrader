@@ -419,7 +419,7 @@ def run_trader():
             buy_decision = True
         else:
             selected_Ticker = asset_with_balance
-            write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
+            write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
             
 
         if selected_Ticker:
