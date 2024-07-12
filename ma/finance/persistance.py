@@ -75,11 +75,11 @@ def initialize_screener_table():
 
 def insert_screener(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id):
     connection = connect()
-    insert_record = "INSERT INTO trader " \
+    query = "INSERT INTO trader " \
         "(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id) " \
-        "VALUES ('{}', {}, {}, '{}', '{}', '{}', '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, '{}', '{}')".format(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)
-    print(insert_record)
-    connection.cursor().execute(insert_record)
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)".format(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)
+    values = (timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)
+    connection.cursor().execute(query, values)
     connection.commit()
     connection.close()
 
