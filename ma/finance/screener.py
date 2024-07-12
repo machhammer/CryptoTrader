@@ -39,7 +39,7 @@ wait_time_next_buy_selection_seconds = 60
 buy_attempts_nr = 30
 move_increase_threshold = 0.2
 move_increase_period_threshold = 2
-volume_increase_threshold = 2
+volume_increase_threshold = 1
 difference_to_maximum_max = -2
 difference_to_resistance_min = 0.005
 
@@ -459,14 +459,14 @@ def run_trader():
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
-                        write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                        #write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
                         isInitial = False
           
                         wait("short")
                     else:
                         adjust_sell_trigger = False
                         order = exchange.exchange.fetch_orders(selected_Ticker)[-1]
-                        write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                        #write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
         else:  
             logger.info("No Asset selected!")
             wait("long")
