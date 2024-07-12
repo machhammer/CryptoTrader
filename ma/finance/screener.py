@@ -280,7 +280,7 @@ def is_buy_decision(exchange, ticker):
     
     is_buy = False
 
-    if current_close <= last_max:
+    if current_close < last_max:
         is_buy = False
     elif current_close >= last_max and current_close > previous_max:
         is_buy = True
