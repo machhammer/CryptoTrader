@@ -10,6 +10,7 @@ import pause
 import math
 import logging
 from datetime import datetime
+import persistance as database
 from pandas_datareader import data as pdr
 import time
 import matplotlib.pyplot as plt
@@ -86,6 +87,9 @@ def get_wait_time_1():
         seconds = datetime.now().second
         wait_time = (wait_time_next_buy_selection_seconds - (seconds % wait_time_next_buy_selection_seconds))
         return wait_time
+
+def get_time():
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 def print_time():
     now = datetime.now()
@@ -271,11 +275,8 @@ def is_buy_decision(exchange, ticker):
 
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
-    logger.debug("current close: {}".format(current_close))
     last_max = (max_column.values)[-1]
-    logger.debug("last max: {}".format(last_max))
     previous_max = (max_column.values)[-2]
-    logger.debug("previous max: {}".format(previous_max))
     
     is_buy = False
 
@@ -287,18 +288,12 @@ def is_buy_decision(exchange, ticker):
         is_buy = False
 
     vwap = data.iloc[-1, 10]
-    logger.debug("vwap: {}".format(vwap))
     if is_buy:
         if isinstance(current_close, float) and isinstance(vwap, float):
             if vwap > current_close:
-                logger.info("VWAP is Buy.")
                 is_buy = True
             else:
-                logger.info("VWAP is NOT Buy.")
                 is_buy = False
-        else:
-            logger.debug("Not a float.")
-
 
     macd = data.iloc[-1, 11]
     macd_diff = data.iloc[-1, 12]
@@ -309,13 +304,11 @@ def is_buy_decision(exchange, ticker):
     if is_buy:
         if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
             if macd > macd_signal and macd_diff > 0:
-                logger.info("MACD is Buy.")
                 is_buy = True
             else:
-                logger.info("MACD is NOT Buy.")
                 is_buy = False
 
-    return [is_buy, current_close]
+    return is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff
 
 
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
@@ -382,10 +375,14 @@ def get_candidate(exchange):
     logger.info("buy signals found: {}".format(len(buy_signals)))
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     logger.info("market: {}".format(market_movement))
-    return selected_Ticker, market_movement
+    return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
 def still_has_postion(size, price):
     return (size * price) > 5
+
+
+def write_to_db(market=None, market_factor=None, base_currency=None, selected_ticker=None, major_move=None, increase_volume=None, buy_signal=None, close_to_maximum=None, is_buy=None, current_close=None, last_max=None, previous_max=None, vwap=None,macd=None, macd_signal=None, macd_diff=None, buy_order_id=None, sell_order_id=None):
+    database.insert_screener(get_time(), market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)    
 
 
 def run_trader():
@@ -403,13 +400,15 @@ def run_trader():
         usd_balance = get_base_currency_balance(exchange)
 
         if not asset_with_balance:
-            selected_Ticker, market_movement = get_candidate(exchange)
+            selected_Ticker, market_movement, major_move, increased_volume, buy_signals, lowest_distance_to_max = get_candidate(exchange)
             buy_decision = True
         else:
             selected_Ticker = asset_with_balance
 
+        write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
+
         if selected_Ticker:
-            logger.info("*********** selected: {}".format(selected_Ticker))
+
             buy_attempts = 1
 
             #observe selected Ticker
@@ -419,12 +418,13 @@ def run_trader():
             is_buy_info = [True, 0]
             while not buy_decision and buy_attempts <= buy_attempts_nr:
                 logger.debug("attempt: {}".format(buy_attempts))
-                is_buy_info = is_buy_decision(exchange, selected_Ticker)
-                if not is_buy_info[0]:
+                is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker)
+                write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
+                if not is_buy:
                     buy_attempts += 1
                     wait("short")
                 else:
-                    price = is_buy_info[1]
+                    price = current_close
                     buy_decision = True
             logger.debug("buy decision: {}".format(buy_decision))
             
@@ -434,7 +434,7 @@ def run_trader():
                 if not asset_with_balance:
                     funding = get_funding(usd_balance, market_movement)
                     order = buy_order(exchange, usd_balance, selected_Ticker, price, funding)
-                    logger.info(order)
+                    write_to_db(selected_ticker=selected_Ticker, buy_order_id=order['id'])
                     time.sleep(10)
 
                 #adjust sell order
@@ -450,9 +450,8 @@ def run_trader():
                         wait("short")
                     else:
                         adjust_sell_trigger = False
-                        logger.info("SOLD: {}, Price: {}".format(selected_Ticker, price))
-                        orders = exchange.exchange.fetch_orders(selected_Ticker)[-1]
-                        logger.info(orders)
+                        order = exchange.exchange.fetch_orders(selected_Ticker)[-1]
+                        write_to_db(selected_ticker=selected_Ticker, buy_order_id=order['id'])
         else:  
             logger.info("No Asset selected!")
             wait("long")

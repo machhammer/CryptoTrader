@@ -47,6 +47,43 @@ def initialize_manager_table():
     connection.cursor().execute(create_table)
 
 
+def initialize_screener_table():
+    connection = connect()
+    create_table ="CREATE or REPLACE TABLE screener " \
+            "( "\
+                "timestamp TIMESTAMP, "\
+                "market FLOAT, "\
+                "market_factor FLOAT, "\
+                "base_currency VARCHAR(3), "\
+                "selected_ticker VARCHAR(10), "\
+                "major_move TEXT, "\
+                "increase_volume TEXT, "\
+                "buy_signal TEXT, "\
+                "close_to_maximum TEXT, "\
+                "is_buy BOOL, "\
+                "current_close FLOAT, "\
+                "last_max FLOAT, "\
+                "previous_max FLOAT, "\
+                "vwap FLOAT, "\
+                "macd FLOAT, "\
+                "macd_signal FLOAT, "\
+                "macd_diff FLOAT, "\
+                "buy_order_id TINYTEXT, "\
+                "sell_order_id TINYTEXT "\
+            ")"
+    connection.cursor().execute(create_table)
+
+def insert_screener(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id):
+    connection = connect()
+    insert_record = "INSERT INTO trader " \
+        "(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id) " \
+        "VALUES ('{}', {}, {}, '{}', '{}', '{}', '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, '{}', '{}')".format(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)
+    connection.cursor().execute(insert_record)
+    connection.commit()
+    connection.close()
+
+
+
 def initialize_trader_table():
     connection = connect()
     create_table ="CREATE or REPLACE TABLE trader " \
@@ -178,7 +215,6 @@ def insert_optimizer_results_transactions(connection, timestamp, coin, sma, aroo
 
 
 if __name__ == "__main__":
-    df = execute_select("SELECT * fROM manager")
-    print (df)
+    initialize_screener_table()
 
 
