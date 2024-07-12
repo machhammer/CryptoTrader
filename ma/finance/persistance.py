@@ -78,6 +78,7 @@ def insert_screener(timestamp, market, market_factor, base_currency, selected_ti
     insert_record = "INSERT INTO trader " \
         "(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id) " \
         "VALUES ('{}', {}, {}, '{}', '{}', '{}', '{}', '{}', '{}', {}, {}, {}, {}, {}, {}, {}, {}, '{}', '{}')".format(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)
+    print(insert_record)
     connection.cursor().execute(insert_record)
     connection.commit()
     connection.close()

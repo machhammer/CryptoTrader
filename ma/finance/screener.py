@@ -32,7 +32,7 @@ logger.setLevel(logging.INFO)
 
 base_currency = "USD"
 
-amount_coins = 500
+amount_coins = 100
 
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
