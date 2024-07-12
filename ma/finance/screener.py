@@ -32,7 +32,7 @@ logger.setLevel(logging.INFO)
 
 base_currency = "USD"
 
-amount_coins = 100
+amount_coins = 1000
 
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
@@ -51,7 +51,6 @@ def get_tickers(exchange):
     tickers = tickers.T
     tickers = tickers[tickers["symbol"].str.endswith("/" + base_currency)].head(amount_coins)
     market_movement = tickers["percentage"].median() * 100
-    logger.info("market_movement: {}".format(market_movement))
     tickers = tickers["symbol"].to_list()
     random.shuffle(tickers)
     return tickers, market_movement
@@ -99,7 +98,6 @@ def print_time():
 
 def get_base_currency_balance(exchange):
     usd = exchange.fetch_balance()[base_currency]["free"]
-    logger.info("Available Budget in {}: {}".format(base_currency, usd))
     return usd
 
 
@@ -139,12 +137,10 @@ def get_precision(exchange, ticker):
 def buy_order(exchange, usd, ticker, price, funding):
     precision = get_precision(exchange, ticker)
     size = convert_to_precision(funding / price, precision)
-    logger.info("BUY {}, Size: {}, Price: {}".format(ticker, size, price))
     order_id = exchange.create_buy_order(ticker, size, price)
     return order_id
 
 def sell_order(exchange, ticker, size, stopLossPrice):
-    logger.info("Put Sell Order, Ticker {}, Size {}, StopLossPrice {}".format(ticker, size, stopLossPrice))
     exchange.cancel_orders(ticker)
     time.sleep(10)
     return exchange.create_stop_loss_order(ticker, size, stopLossPrice)
