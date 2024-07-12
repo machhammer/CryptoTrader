@@ -79,6 +79,7 @@ def insert_screener(timestamp, market, market_factor, base_currency, selected_ti
         "(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id) " \
         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)".format(timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)
     values = (timestamp, market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)
+    print(values)
     connection.cursor().execute(query, values)
     connection.commit()
     connection.close()
