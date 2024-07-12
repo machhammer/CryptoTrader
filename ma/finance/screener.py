@@ -382,6 +382,10 @@ def still_has_postion(size, price):
 
 
 def write_to_db(market=None, market_factor=None, base_currency=None, selected_ticker=None, major_move=None, increase_volume=None, buy_signal=None, close_to_maximum=None, is_buy=None, current_close=None, last_max=None, previous_max=None, vwap=None,macd=None, macd_signal=None, macd_diff=None, buy_order_id=None, sell_order_id=None):
+    if (major_move): major_move=';'.join(map(str, major_move))
+    if (increase_volume): increase_volume=';'.join(map(str, increase_volume))
+    if (buy_signal): buy_signal=';'.join(map(str, buy_signal))
+    if (close_to_maximum): close_to_maximum=';'.join(map(str, close_to_maximum))
     database.insert_screener(get_time(), market, market_factor, base_currency, selected_ticker, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)    
 
 
