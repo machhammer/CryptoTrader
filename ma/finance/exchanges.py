@@ -148,7 +148,7 @@ class Exchange():
         if self.exchange is not None:
             self.exchange.cancel_all_orders(symbol=asset)
         else:
-                raise Exception("Exchange is None.")
+            raise Exception("Exchange is None.")
         
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
@@ -181,4 +181,8 @@ class Exchange():
         else:
             raise Exception("Exchange is None.")
 
-    
+    def fetch_orders(self, asset):
+        if self.exchange is not None:
+            return self.exchange.fetch_orders(asset)
+        else:
+            raise Exception("Exchange is None.")

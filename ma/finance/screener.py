@@ -41,7 +41,7 @@ move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 1
 difference_to_maximum_max = -2
-difference_to_resistance_min = 0.005
+difference_to_resistance_min = 0.0075
 
 
 
@@ -317,6 +317,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
+    order = None
     logger.debug(min_column)
     logger.debug(len(min_column))
     logger.debug("highest_value: {}".format(highest_value))
@@ -460,14 +461,16 @@ def run_trader():
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
-                        #write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                        if order:
+                            write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
                         isInitial = False
           
                         wait("short")
                     else:
                         adjust_sell_trigger = False
-                        order = exchange.exchange.fetch_orders(selected_Ticker)[-1]
-                        #write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                        order = exchange.fetch_orders(selected_Ticker)[-1]
+                        if order:
+                            write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
         else:  
             logger.info("No Asset selected!")
             wait("long")
