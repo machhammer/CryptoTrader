@@ -409,6 +409,7 @@ def run_trader():
     running = True
 
     asset_with_balance, price = find_asset_with_balance(exchange)
+    print("price: ", price)
 
     while running:
 
