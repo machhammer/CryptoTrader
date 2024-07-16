@@ -160,7 +160,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'IQ/USD'
+    ticker = 'ACS/USD'
     
     # Daten laden
     data = load_data(ticker)
@@ -197,4 +197,4 @@ def get_ticker(ticker):
 
 if __name__ == "__main__":
     
-    main()
+    get_ticker("ACS/USD")

@@ -463,6 +463,8 @@ def run_trader():
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                        else:
+                            logger.info("No order available.")
                         isInitial = False
           
                         wait("short")
@@ -471,6 +473,8 @@ def run_trader():
                         order = exchange.fetch_orders(selected_Ticker)[-1]
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                        else:
+                            logger.info("No order available.")
         else:  
             logger.info("No Asset selected!")
             wait("long")
