@@ -402,14 +402,11 @@ def write_to_db(market=None, market_factor=None, base_currency=None, selected_ti
 
 def run_trader():
 
-    pause.until(datetime(2024, 7, 10, 3, 15, 0))
-
     exchange = Exchange("cryptocom")
 
     running = True
 
     asset_with_balance, price = find_asset_with_balance(exchange)
-    print("price: ", price)
 
     while running:
 
@@ -429,7 +426,6 @@ def run_trader():
             buy_attempts = 1
 
             #observe selected Ticker
-            #price = None
             buy_decision = False
            
             while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
@@ -459,26 +455,23 @@ def run_trader():
                 highest_value = price
                 while adjust_sell_trigger:
                     size = get_Ticker_balance(exchange, selected_Ticker)
-                    print("highest_value: ", highest_value)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
                         time.sleep(5)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
-                            
-                        else:
-                            logger.info("No order available.")
+
                         isInitial = False
           
                         wait("short")
                     else:
+                        logger.info("Asset has been sold!")
                         adjust_sell_trigger = False
                         order = exchange.fetch_orders(selected_Ticker)[-1]
                         time.sleep(5)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
-                        else:
-                            logger.info("No order available.")
+
         else:  
             logger.info("No Asset selected!")
             wait("long")
