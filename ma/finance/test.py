@@ -166,19 +166,19 @@ def main():
     data = load_data(ticker)
 
     # Lokale Hoch- und Tiefpunkte berechnen
-    #data = find_local_extrema(data)
+    data = find_local_extrema(data)
 
-    #data = apply_indicators(data)
+    data = apply_indicators(data)
     data = apply_vwap(data)
 
     #data = find_big_candles(data)
 
     print(data)
 
-    #buy_sell(data)
+    buy_sell(data)
 
     # Unterstützung- und Widerstandslinien plotten
-    #plot_support_resistance(data)
+    plot_support_resistance(data)
 
 
 def get_precision(ticker):
@@ -197,4 +197,4 @@ def get_ticker(ticker):
 
 if __name__ == "__main__":
     
-    get_ticker("ACS/USD")
+    main()

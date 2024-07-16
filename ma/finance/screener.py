@@ -44,7 +44,6 @@ difference_to_maximum_max = -2
 difference_to_resistance_min = 0.0075
 
 
-
 def get_tickers(exchange):
     tickers = exchange.fetch_tickers()
     tickers = pd.DataFrame(tickers)
@@ -77,18 +76,22 @@ def wait(period):
     logger.debug("wait: {}".format(wait_time))
     time.sleep(wait_time)
 
+
 def get_wait_time():
         minute = datetime.now().minute
         wait_time = (wait_time_next_asset_selection_minutes - (minute % wait_time_next_asset_selection_minutes)) * 60
         return wait_time
+
 
 def get_wait_time_1():
         seconds = datetime.now().second
         wait_time = (wait_time_next_buy_selection_seconds - (seconds % wait_time_next_buy_selection_seconds))
         return wait_time
 
+
 def get_time():
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
 
 def print_time():
     now = datetime.now()
@@ -119,7 +122,9 @@ def find_asset_with_balance(exchange):
 def get_Ticker_balance(exchange, ticker):
     ticker = ticker.replace("/" + base_currency, "")
     ticker_balance = exchange.fetch_balance()[ticker]["free"]
+    logger.info("Ticker Balance: {}".format(ticker_balance))
     return ticker_balance
+
 
 def get_funding(usd, market_movement):
     mf = get_market_factor(market_movement)
@@ -127,23 +132,34 @@ def get_funding(usd, market_movement):
     logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
     return funding
 
+
 def convert_to_precision(size, precision):
+    value = math.floor(size/precision) * precision
+    logger.info("convert_to_precision - size: {}, precision: {}, value: {}".format(size, precision, value)) 
     return math.floor(size/precision) * precision
+
 
 def get_precision(exchange, ticker):
     markets = exchange.exchange.load_markets()
-    return float((markets[ticker]['precision']['amount']))
+    value = float((markets[ticker]['precision']['amount'])) 
+    logger.info("get_precision - ticker: {}, value: {}".format(ticker, value))
+    return value
+
 
 def buy_order(exchange, usd, ticker, price, funding):
     precision = get_precision(exchange, ticker)
     size = convert_to_precision(funding / price, precision)
-    order_id = exchange.create_buy_order(ticker, size, price)
-    return order_id
+    order = exchange.create_buy_order(ticker, size, price)
+    logger.info("buy order id : {}".format(ticker, order["id"]))
+    return order
+
 
 def sell_order(exchange, ticker, size, stopLossPrice):
     exchange.cancel_orders(ticker)
-    time.sleep(10)
-    return exchange.create_stop_loss_order(ticker, size, stopLossPrice)
+    order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
+    logger.info("sell order id : {}".format(ticker, order["id"]))
+    return order
+
 
 def get_data(exchange, ticker, interval, limit):
     bars = exchange.fetch_ohlcv(
@@ -155,17 +171,21 @@ def get_data(exchange, ticker, interval, limit):
     data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
     return data
 
+
 def save_to_file(data, filename):
     data.to_csv(filename, header=True, index=None, sep=';', mode='w')
 
+
 def read_from_file(filename):
     return pd.read_csv(filename, sep=';')
+
 
 def add_min_max(data):
     order = 3
     data['min'] = data.iloc[argrelextrema(data['close'].values, np.less_equal, order=order)[0]]['close']
     data['max'] = data.iloc[argrelextrema(data['close'].values, np.greater_equal, order=order)[0]]['close']
     return data
+
 
 def add_aroon(data):
     indicator_AROON = AroonIndicator(
@@ -174,6 +194,7 @@ def add_aroon(data):
     data["aroon_up"] = indicator_AROON.aroon_up()
     data["aroon_down"] = indicator_AROON.aroon_down()
     return data
+
 
 def add_vwap(data):
     indicator_vwap = VolumeWeightedAveragePrice(high=data["high"], low=data["low"], close=data["close"], volume=data["volume"])
@@ -217,6 +238,7 @@ def get_ticker_with_bigger_moves(exchange, tickers):
             next(progress_bar)
         except:
             pass
+    logger.info("ticker with bigger moves: {}".format(len(bigger_moves)))
     return bigger_moves
 
 
@@ -229,6 +251,7 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
         logger.debug(data.tail(3)["aroon_up"])
         if (100 in data.tail(3)["aroon_up"].to_list()):
             buy_signals.append(ticker)
+    logger.info("ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
     return buy_signals
 
 
@@ -242,6 +265,7 @@ def get_ticker_with_increased_volume(exchange, tickers):
         logger.debug("volume ratio: {}".format(current_mean / last_mean))
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
+    logger.info("ticker_with_increased_volume: {}".format(len(increased_volumes)))
     return increased_volumes
 
 
@@ -252,17 +276,18 @@ def get_lowest_difference_to_maximum(excheange, tickers):
         data = add_min_max(data)
         local_max = data['max'].max()
         current_close = data.iloc[-1, 4]
-        logger.debug(ticker)
-        logger.debug("maximum: {}".format(local_max))
-        logger.debug("current close: {}".format(current_close))
+        logger.info("maximum: {}".format(local_max))
+        logger.info("current close: {}".format(current_close))
         ratio = ((current_close - local_max) * 100) / local_max
-        logger.debug("ratio: {}".format(ratio))
+        logger.info("ratio: {}".format(ratio))
         if ratio > difference_to_maximum_max:
             lowest_difference_to_maximum = ticker
+    logger.info("lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum)))
     return lowest_difference_to_maximum
 
 
 def is_buy_decision(exchange, ticker):
+    logger.info("is_buy_decision - ticker: {}".format(ticker))
     data = get_data(exchange, ticker, "1m", limit=120)
     data = add_min_max(data)
     data = add_aroon(data)
@@ -282,25 +307,24 @@ def is_buy_decision(exchange, ticker):
         is_buy = True
     else:
         is_buy = False
-    logger.info("after resistance check - buy: {}".format(is_buy))
+    logger.info("Resistance check - buy: {}".format(is_buy))
 
     vwap = data.iloc[-1, 10]
     if is_buy:
         if isinstance(current_close, float) and isinstance(vwap, float):
-            logger.info("float check ok")
             if vwap < current_close:
                 is_buy = True
             else:
                 is_buy = False
 
-    logger.info("after vwap check - buy: {}".format(is_buy))
+    logger.info("vwap check - buy: {}".format(is_buy))
 
     macd = data.iloc[-1, 11]
     macd_diff = data.iloc[-1, 12]
     macd_signal = data.iloc[-1, 13]
-    logger.debug("macd: {}".format(macd))
-    logger.debug("macd diff: {}".format(macd_diff))
-    logger.debug("macd signal: {}".format(macd_signal))
+    logger.info("macd: {}".format(macd))
+    logger.info("macd diff: {}".format(macd_diff))
+    logger.info("macd signal: {}".format(macd_signal))
     if is_buy:
         if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
             if macd > macd_signal and macd_diff > 0:
@@ -308,33 +332,29 @@ def is_buy_decision(exchange, ticker):
             else:
                 is_buy = False
 
-    logger.info("after macd check - buy: {}".format(is_buy))
+    logger.info("macd check - buy: {}".format(is_buy))
 
     return is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff
 
 
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
+    logger.info("set_sell_trigger - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
     order = None
-    logger.debug(min_column)
-    logger.debug(len(min_column))
-    logger.debug("highest_value: {}".format(highest_value))
-    logger.debug("current: {}".format(data.iloc[-1, 4]))
+    logger.info("current: {}".format(data.iloc[-1, 4]))
     if isInitial or (highest_value < data.iloc[-1, 4]):
-        logger.debug("new highest value")
         highest_value = data.iloc[-1, 4]
+        logger.info("new highest value: {}", highest_value)
         resistance_found = False
         row = -1
         while not resistance_found:
             if row >= (-1) * len(min_column):
                 resistance = min_column.iloc[row]
                 diff = (abs(data.iloc[-1, 4] - resistance)) / data.iloc[-1, 4]
-                logger.debug("resistance: {}".format(resistance))
-                logger.debug("diff: {}".format(diff))
                 if (diff >= difference_to_resistance_min):
-                    logger.debug("set new sell triger: {}".format(resistance))
+                    logger.info("set new sell triger: {}".format(resistance))
                     order = sell_order(exchange, ticker, size, resistance)
                     resistance_found = True
                 else:
@@ -368,20 +388,19 @@ def plot(data):
 def get_candidate(exchange):
     tickers, market_movement = get_tickers(exchange)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
-    logger.debug("major move: {}".format(major_move))
     logger.info("major move found: {}".format(len(major_move)))
     increased_volume = get_ticker_with_increased_volume(exchange, major_move)
-    logger.debug("increased volume: {}".format(increased_volume))
     logger.info("increased volume found: {}".format(len(increased_volume)))
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
-    logger.debug("buy signals: {}".format(buy_signals))
     logger.info("buy signals found: {}".format(len(buy_signals)))
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     logger.info("market: {}".format(market_movement))
     return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
 def still_has_postion(size, price):
-    return (size * price) > 5
+    value = (size * price) > 5 
+    logger.info("still has position: {}".format(value))
+    return value
 
 
 def write_to_db(market=None, market_factor=None, base_currency=None, selected_ticker=None, funding=None, major_move=None, increase_volume=None, buy_signal=None, close_to_maximum=None, is_buy=None, current_close=None, last_max=None, previous_max=None, vwap=None,macd=None, macd_signal=None, macd_diff=None, buy_order_id=None, sell_order_id=None):
@@ -429,7 +448,6 @@ def run_trader():
             buy_decision = False
            
             while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
-                logger.debug("attempt: {}".format(buy_attempts))
                 is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker)
                 write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
                 if not is_buy:
@@ -438,7 +456,6 @@ def run_trader():
                 else:
                     price = current_close
                     buy_decision = True
-            logger.debug("buy decision: {}".format(buy_decision))
             
             if buy_decision or asset_with_balance:
 
@@ -447,7 +464,6 @@ def run_trader():
                     funding = get_funding(usd_balance, market_movement)
                     order = buy_order(exchange, usd_balance, selected_Ticker, price, funding)
                     write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=order['id'])
-                    time.sleep(10)
 
                 #adjust sell order
                 adjust_sell_trigger = True
@@ -457,7 +473,6 @@ def run_trader():
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
-                        time.sleep(5)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
 
@@ -466,11 +481,13 @@ def run_trader():
                         wait("short")
                     else:
                         logger.info("Asset has been sold!")
-                        adjust_sell_trigger = False
                         order = exchange.fetch_orders(selected_Ticker)[-1]
-                        time.sleep(5)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                        adjust_sell_trigger = False
+                        asset_with_balance = None
+                        buy_decision = False
+
 
         else:  
             logger.info("No Asset selected!")
