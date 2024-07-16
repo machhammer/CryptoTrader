@@ -429,7 +429,7 @@ def run_trader():
             buy_attempts = 1
 
             #observe selected Ticker
-            price = None
+            #price = None
             buy_decision = False
            
             while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
