@@ -430,9 +430,8 @@ def run_trader():
             #observe selected Ticker
             price = None
             buy_decision = False
-        
-            is_buy_info = [True, 0]
-            while not buy_decision and buy_attempts <= buy_attempts_nr:
+           
+            while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
                 logger.debug("attempt: {}".format(buy_attempts))
                 is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker)
                 write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
@@ -444,7 +443,7 @@ def run_trader():
                     buy_decision = True
             logger.debug("buy decision: {}".format(buy_decision))
             
-            if buy_decision:
+            if buy_decision or asset_with_balance:
 
                 #buy sleected Ticker
                 if not asset_with_balance:
