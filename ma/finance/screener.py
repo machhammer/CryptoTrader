@@ -461,8 +461,10 @@ def run_trader():
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
+                        time.sleep(5)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
+                            
                         else:
                             logger.info("No order available.")
                         isInitial = False
@@ -471,6 +473,7 @@ def run_trader():
                     else:
                         adjust_sell_trigger = False
                         order = exchange.fetch_orders(selected_Ticker)[-1]
+                        time.sleep(5)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
                         else:
