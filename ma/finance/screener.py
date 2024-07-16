@@ -282,7 +282,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
         logger.info("ratio: {}".format(ratio))
         if ratio > difference_to_maximum_max:
             lowest_difference_to_maximum = ticker
-    logger.info("lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum)))
+    logger.info("lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
     return lowest_difference_to_maximum
 
 
