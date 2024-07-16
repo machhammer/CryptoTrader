@@ -459,6 +459,7 @@ def run_trader():
                 highest_value = price
                 while adjust_sell_trigger:
                     size = get_Ticker_balance(exchange, selected_Ticker)
+                    print("highest_value: ", highest_value)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
                         time.sleep(5)
