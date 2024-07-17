@@ -40,7 +40,7 @@ move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 1
 difference_to_maximum_max = -2
-difference_to_resistance_min = 0.01
+#difference_to_resistance_min = 0.01
 
 
 def get_tickers(exchange):
@@ -56,15 +56,15 @@ def get_tickers(exchange):
 
 def get_market_factor(pos_neg_mean):
     if pos_neg_mean > 3:
-        return 0.9
+        return 0.9, 0.02
     elif pos_neg_mean >1 and pos_neg_mean <=3:
-        return 0.7
+        return 0.7, 0.01
     elif pos_neg_mean >0 and pos_neg_mean <=1:
-        return 0.5
+        return 0.5, 0.075
     elif pos_neg_mean >-2 and pos_neg_mean <=0:
-        return 0.3
+        return 0.3, 0.005
     else:
-        return 0.1
+        return 0.1, 0.005
 
 
 def wait(period):
@@ -126,7 +126,7 @@ def get_Ticker_balance(exchange, ticker):
 
 
 def get_funding(usd, market_movement):
-    mf = get_market_factor(market_movement)
+    mf, _ = get_market_factor(market_movement)
     funding = usd * get_market_factor(market_movement)
     logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
     return funding
@@ -330,8 +330,7 @@ def is_buy_decision(exchange, ticker, attempt):
     return is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff
 
 
-def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
-    
+def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss):
     logger.info("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
@@ -347,7 +346,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
             if row >= (-1) * len(min_column):
                 resistance = min_column.iloc[row]
                 diff = (abs(data.iloc[-1, 4] - resistance)) / data.iloc[-1, 4]
-                if (diff >= difference_to_resistance_min):
+                if (diff >= max_loss):
                     logger.info("   set new sell triger: {}".format(resistance))
                     order = sell_order(exchange, ticker, size, resistance)
                     resistance_found = True
@@ -460,6 +459,7 @@ def run_trader():
 
                 #buy sleected Ticker
                 if not asset_with_balance:
+                    _, market_movement = get_tickers(exchange)
                     funding = get_funding(usd_balance, market_movement)
                     order = buy_order(exchange, usd_balance, selected_Ticker, price, funding)
                     write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=order['id'])
@@ -473,9 +473,11 @@ def run_trader():
 
                 highest_value = price
                 while adjust_sell_trigger:
+                    _, market_movement = get_tickers(exchange)
+                    _, max_loss = get_market_factor(market_movement)
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
-                        highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value)
+                        highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
                         if order:
                             write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
 
