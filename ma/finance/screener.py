@@ -134,29 +134,31 @@ def get_funding(usd, market_movement):
 
 def convert_to_precision(size, precision):
     value = math.floor(size/precision) * precision
-    logger.info("convert_to_precision - size: {}, precision: {}, value: {}".format(size, precision, value)) 
+    logger.info("   convert_to_precision - size: {}, precision: {}, value: {}".format(size, precision, value)) 
     return math.floor(size/precision) * precision
 
 
 def get_precision(exchange, ticker):
     markets = exchange.exchange.load_markets()
     value = float((markets[ticker]['precision']['amount'])) 
-    logger.info("get_precision - ticker: {}, value: {}".format(ticker, value))
+    logger.info("   get_precision - ticker: {}, value: {}".format(ticker, value))
     return value
 
 
 def buy_order(exchange, usd, ticker, price, funding):
+    logger.info("3. ******** Buy Decision, Ticker: {}, Price: {}, Funding: {}".format(ticker, price, funding))
     precision = get_precision(exchange, ticker)
     size = convert_to_precision(funding / price, precision)
     order = exchange.create_buy_order(ticker, size, price)
-    logger.info("buy order id : {}".format(ticker, order["id"]))
+    logger.info("   buy order id : {}".format(ticker, order["id"]))
     return order
 
 
 def sell_order(exchange, ticker, size, stopLossPrice):
     exchange.cancel_orders(ticker)
+    logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
-    logger.info("sell order id : {}".format(ticker, order["id"]))
+    logger.info("   sell order id : {}".format(order))
     return order
 
 
@@ -332,7 +334,7 @@ def is_buy_decision(exchange, ticker, attempt):
 
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
     
-    logger.info("3. ********  set_sell_trigger - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
+    logger.info("4. ********  set_sell_trigger - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
@@ -390,7 +392,7 @@ def get_candidate(exchange):
     logger.info("   buy signals found: {}".format(len(buy_signals)))
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     logger.info("   market: {}".format(market_movement))
-    logger.info("******** Selected: {}".format(selected_Ticker))
+    logger.info("   Selected: {}".format(selected_Ticker))
     return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
 def still_has_postion(size, price):
