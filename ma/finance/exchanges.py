@@ -1,4 +1,4 @@
-import ccxt.async_support as ccxt
+import ccxt
 import credentials
 from datetime import datetime
 import time
@@ -63,7 +63,7 @@ class Exchange():
             time.sleep(10)
             self.connect()
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_balance())
+                result = self.exchange.fetch_balance()
             else:
                 raise Exception("Exchange is None.")
             self.log_error("fetch_balance")
@@ -82,7 +82,7 @@ class Exchange():
             time.sleep(10)
             self.connect()
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_tickers())
+                result = self.exchange.fetch_tickers()
             else:
                 raise Exception("Exchange is None.")
             self.log_error("fetch_tickers")
@@ -94,7 +94,7 @@ class Exchange():
         result = None
         try:
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_ticker(asset))
+                result = self.exchange.fetch_ticker(asset)
             else:
                 raise Exception("Exchange is None.")
         except Exception as e:
@@ -102,7 +102,7 @@ class Exchange():
             time.sleep(10)
             self.connect()
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_ticker(asset))
+                result = self.exchange.fetch_ticker(asset)
             else:
                 raise Exception("Exchange is None.")
             self.log_error("fetch_ticker")
@@ -112,7 +112,7 @@ class Exchange():
         result = None
         try:
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_ohlcv(asset, timeframe, limit=limit))
+                result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
             else:
                 raise Exception("Exchange is None.")
         except Exception as e:
@@ -120,7 +120,7 @@ class Exchange():
             time.sleep(10)
             self.connect()
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_ohlcv(asset, timeframe, limit=limit))
+                result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
             else:
                 raise Exception("Exchange is None.")
             self.log_error("fetch_ohlcv")
@@ -130,7 +130,7 @@ class Exchange():
         result = None
         try:
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_my_trades(symbol=asset))
+                result = self.exchange.fetch_my_trades(symbol=asset)
             else:
                 raise Exception("Exchange is None.")
         except Exception as e:
@@ -138,7 +138,7 @@ class Exchange():
             time.sleep(10)
             self.connect()
             if self.exchange is not None:
-                result = asyncio.run(self.exchange.fetch_my_trades(symbol=asset))
+                result = self.exchange.fetch_my_trades(symbol=asset)
             else:
                 raise Exception("Exchange is None.")
             self.log_error("fetch_my_trades")
@@ -147,45 +147,45 @@ class Exchange():
 
     def cancel_orders(self, asset):
         if self.exchange is not None:
-            asyncio.run(self.exchange.cancel_all_orders(symbol=asset))
+            self.exchange.cancel_all_orders(symbol=asset)
         else:
             raise Exception("Exchange is None.")
         
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
         if self.exchange is not None:
-            asyncio.run(self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice}))
+            self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
         else:
             raise Exception("Exchange is None.")
 
 
     def create_buy_order(self, asset, size, price):
         if self.exchange is not None:
-            order = asyncio.run(self.exchange.create_order(
+            order = self.exchange.create_order(
                 asset,
                 "market",
                 "buy",
                 size,
                 price,
-            ))
+            )
             return order
         else:
             raise Exception("Exchange is None.")
     
     def create_sell_order(self, asset, size):
         if self.exchange is not None:
-            order = asyncio.run(self.exchange.create_order(
+            order = self.exchange.create_order(
                 asset,
                 "market",
                 "sell",
                 size,
-            ))
+            )
             return order
         else:
             raise Exception("Exchange is None.")
 
     def fetch_orders(self, asset):
         if self.exchange is not None:
-            return asyncio.run(self.exchange.fetch_orders(asset))
+            return self.exchange.fetch_orders(asset)
         else:
             raise Exception("Exchange is None.")

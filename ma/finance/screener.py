@@ -1,5 +1,4 @@
-from pdb import run
-
+import asyncio
 from matplotlib import ticker
 from exchanges import Exchange
 import numpy as np
@@ -41,7 +40,7 @@ move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 1
 difference_to_maximum_max = -2
-difference_to_resistance_min = 0.0075
+difference_to_resistance_min = 0.01
 
 
 def get_tickers(exchange):
@@ -276,18 +275,15 @@ def get_lowest_difference_to_maximum(excheange, tickers):
         data = add_min_max(data)
         local_max = data['max'].max()
         current_close = data.iloc[-1, 4]
-        logger.info("maximum: {}".format(local_max))
-        logger.info("current close: {}".format(current_close))
         ratio = ((current_close - local_max) * 100) / local_max
-        logger.info("ratio: {}".format(ratio))
         if ratio > difference_to_maximum_max:
             lowest_difference_to_maximum = ticker
     logger.info("lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
     return lowest_difference_to_maximum
 
 
-def is_buy_decision(exchange, ticker):
-    logger.info("is_buy_decision - ticker: {}".format(ticker))
+def is_buy_decision(exchange, ticker, attempt):
+    logger.info("2. ******** Check for Buy Decision, Ticker: {}, #".format(ticker, attempt))
     data = get_data(exchange, ticker, "1m", limit=120)
     data = add_min_max(data)
     data = add_aroon(data)
@@ -307,7 +303,7 @@ def is_buy_decision(exchange, ticker):
         is_buy = True
     else:
         is_buy = False
-    logger.info("Resistance check - buy: {}".format(is_buy))
+    logger.info("   Resistance check - buy: {}".format(is_buy))
 
     vwap = data.iloc[-1, 10]
     if is_buy:
@@ -317,14 +313,11 @@ def is_buy_decision(exchange, ticker):
             else:
                 is_buy = False
 
-    logger.info("vwap check - buy: {}".format(is_buy))
+    logger.info("   vwap check - buy: {}".format(is_buy))
 
     macd = data.iloc[-1, 11]
     macd_diff = data.iloc[-1, 12]
     macd_signal = data.iloc[-1, 13]
-    logger.info("macd: {}".format(macd))
-    logger.info("macd diff: {}".format(macd_diff))
-    logger.info("macd signal: {}".format(macd_signal))
     if is_buy:
         if isinstance(macd, float) and isinstance(macd_signal, float) and isinstance(macd_diff, float):
             if macd > macd_signal and macd_diff > 0:
@@ -332,21 +325,22 @@ def is_buy_decision(exchange, ticker):
             else:
                 is_buy = False
 
-    logger.info("macd check - buy: {}".format(is_buy))
+    logger.info("   macd check - buy: {}".format(is_buy))
 
     return is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff
 
 
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
-    logger.info("set_sell_trigger - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
+    
+    logger.info("3. ********  set_sell_trigger - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
     order = None
-    logger.info("current: {}".format(data.iloc[-1, 4]))
+    logger.info("   current: {}".format(data.iloc[-1, 4]))
     if isInitial or (highest_value < data.iloc[-1, 4]):
         highest_value = data.iloc[-1, 4]
-        logger.info("new highest value: {}", highest_value)
+        logger.info("   new highest value: {}", highest_value)
         resistance_found = False
         row = -1
         while not resistance_found:
@@ -354,7 +348,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
                 resistance = min_column.iloc[row]
                 diff = (abs(data.iloc[-1, 4] - resistance)) / data.iloc[-1, 4]
                 if (diff >= difference_to_resistance_min):
-                    logger.info("set new sell triger: {}".format(resistance))
+                    logger.info("   set new sell triger: {}".format(resistance))
                     order = sell_order(exchange, ticker, size, resistance)
                     resistance_found = True
                 else:
@@ -386,15 +380,17 @@ def plot(data):
 
 
 def get_candidate(exchange):
+    logger.info("1. ******** Check for New Candidate ********")
     tickers, market_movement = get_tickers(exchange)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
-    logger.info("major move found: {}".format(len(major_move)))
+    logger.info("   major move found: {}".format(len(major_move)))
     increased_volume = get_ticker_with_increased_volume(exchange, major_move)
-    logger.info("increased volume found: {}".format(len(increased_volume)))
+    logger.info("   increased volume found: {}".format(len(increased_volume)))
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
-    logger.info("buy signals found: {}".format(len(buy_signals)))
+    logger.info("   buy signals found: {}".format(len(buy_signals)))
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
-    logger.info("market: {}".format(market_movement))
+    logger.info("   market: {}".format(market_movement))
+    logger.info("******** Selected: {}".format(selected_Ticker))
     return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
 def still_has_postion(size, price):
@@ -448,7 +444,7 @@ def run_trader():
             buy_decision = False
            
             while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
-                is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker)
+                is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker , buy_attempts)
                 write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
                 if not is_buy:
                     buy_attempts += 1
@@ -496,7 +492,6 @@ def run_trader():
 
 
 if __name__ == "__main__":
-    
     run_trader()
     
 
