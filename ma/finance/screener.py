@@ -121,7 +121,7 @@ def find_asset_with_balance(exchange):
 def get_Ticker_balance(exchange, ticker):
     ticker = ticker.replace("/" + base_currency, "")
     ticker_balance = exchange.fetch_balance()[ticker]["free"]
-    logger.info("Ticker Balance: {}".format(ticker_balance))
+    logger.info("   Ticker Balance: {}".format(ticker_balance))
     return ticker_balance
 
 
@@ -239,7 +239,7 @@ def get_ticker_with_bigger_moves(exchange, tickers):
             next(progress_bar)
         except:
             pass
-    logger.info("ticker with bigger moves: {}".format(len(bigger_moves)))
+    logger.info("   ticker with bigger moves: {}".format(len(bigger_moves)))
     return bigger_moves
 
 
@@ -252,7 +252,7 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
         logger.debug(data.tail(3)["aroon_up"])
         if (100 in data.tail(3)["aroon_up"].to_list()):
             buy_signals.append(ticker)
-    logger.info("ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
+    logger.info("   ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
     return buy_signals
 
 
@@ -262,11 +262,9 @@ def get_ticker_with_increased_volume(exchange, tickers):
         data = get_data(exchange, ticker, "1d", limit=10)
         last_mean = data.head(9)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
-        logger.debug(ticker)
-        logger.debug("volume ratio: {}".format(current_mean / last_mean))
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
-    logger.info("ticker_with_increased_volume: {}".format(len(increased_volumes)))
+    logger.info("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
     return increased_volumes
 
 
@@ -280,7 +278,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
         ratio = ((current_close - local_max) * 100) / local_max
         if ratio > difference_to_maximum_max:
             lowest_difference_to_maximum = ticker
-    logger.info("lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
+    logger.info("   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
     return lowest_difference_to_maximum
 
 
@@ -334,15 +332,15 @@ def is_buy_decision(exchange, ticker, attempt):
 
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
     
-    logger.info("4. ********  set_sell_trigger - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
+    logger.info("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
     order = None
-    logger.info("   current: {}".format(data.iloc[-1, 4]))
+    logger.info("   highest value: {}, current value: {}".format(highest_value, data.iloc[-1, 4]))
     if isInitial or (highest_value < data.iloc[-1, 4]):
         highest_value = data.iloc[-1, 4]
-        logger.info("   new highest value: {}", highest_value)
+        logger.info("   new high: {}", highest_value)
         resistance_found = False
         row = -1
         while not resistance_found:
@@ -357,8 +355,11 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
                     row -= 1
             else:
                 resistance = min_column.iloc[(-1) * len(min_column)]
+                logger.info("   set new sell triger: {}".format(resistance))
                 order = sell_order(exchange, ticker, size, resistance)
                 resistance_found = True
+    else:
+        logger.info("   No new sell trigger")
     return highest_value, order
 
 def plot(data):
@@ -397,7 +398,7 @@ def get_candidate(exchange):
 
 def still_has_postion(size, price):
     value = (size * price) > 5 
-    logger.info("still has position: {}".format(value))
+    logger.info("   still has position: {}".format(value))
     return value
 
 
