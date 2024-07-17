@@ -283,7 +283,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
 
 
 def is_buy_decision(exchange, ticker, attempt):
-    logger.info("2. ******** Check for Buy Decision, Ticker: {}, #".format(ticker, attempt))
+    logger.info("2. ******** Check for Buy Decision, Ticker: {}, #{}".format(ticker, attempt))
     data = get_data(exchange, ticker, "1m", limit=120)
     data = add_min_max(data)
     data = add_aroon(data)
