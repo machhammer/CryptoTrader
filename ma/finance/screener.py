@@ -127,7 +127,7 @@ def get_Ticker_balance(exchange, ticker):
 
 def get_funding(usd, market_movement):
     mf, _ = get_market_factor(market_movement)
-    funding = usd * get_market_factor(market_movement)
+    funding = usd * mf
     logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
     return funding
 
@@ -331,7 +331,7 @@ def is_buy_decision(exchange, ticker, attempt):
 
 
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss):
-    logger.info("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}".format(ticker, isInitial, size, highest_value))
+    logger.info("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(ticker, isInitial, size, highest_value, max_loss))
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
