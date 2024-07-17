@@ -466,7 +466,11 @@ def run_trader():
 
                 #adjust sell order
                 adjust_sell_trigger = True
-                isInitial = True
+                if asset_with_balance:
+                    isInitial = False
+                else:
+                    isInitial = True
+
                 highest_value = price
                 while adjust_sell_trigger:
                     size = get_Ticker_balance(exchange, selected_Ticker)
