@@ -340,7 +340,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value):
     logger.info("   highest value: {}, current value: {}".format(highest_value, data.iloc[-1, 4]))
     if isInitial or (highest_value < data.iloc[-1, 4]):
         highest_value = data.iloc[-1, 4]
-        logger.info("   new high: {}", highest_value)
+        logger.info("   new high: {}".format(highest_value))
         resistance_found = False
         row = -1
         while not resistance_found:
