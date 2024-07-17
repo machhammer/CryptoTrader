@@ -55,16 +55,25 @@ def get_tickers(exchange):
 
 
 def get_market_factor(pos_neg_mean):
+    fund_ratio = 0
+    max_loss = 0
     if pos_neg_mean > 3:
-        return 0.9, 0.02
+        fund_ratio = 0.9
+        max_loss = 0.02
     elif pos_neg_mean >1 and pos_neg_mean <=3:
-        return 0.7, 0.01
+        fund_ratio = 0.7
+        max_loss = 0.01
     elif pos_neg_mean >0 and pos_neg_mean <=1:
-        return 0.5, 0.075
+        fund_ratio = 0.5
+        max_loss = 0.0075
     elif pos_neg_mean >-2 and pos_neg_mean <=0:
-        return 0.3, 0.005
+        fund_ratio = 0.9
+        max_loss = 0.02
     else:
-        return 0.1, 0.005
+        fund_ratio = 0.9
+        max_loss = 0.02
+    logger.info("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))    
+    return fund_ratio, max_loss
 
 
 def wait(period):
