@@ -35,7 +35,7 @@ amount_coins = 1000
 
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
-buy_attempts_nr = 30
+buy_attempts_nr = 60
 move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 1
@@ -397,13 +397,10 @@ def get_candidate(exchange):
     logger.info("1. ******** Check for New Candidate ********")
     tickers, market_movement = get_tickers(exchange)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
-    logger.info("   major move found: {}".format(len(major_move)))
     increased_volume = get_ticker_with_increased_volume(exchange, major_move)
-    logger.info("   increased volume found: {}".format(len(increased_volume)))
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
-    logger.info("   buy signals found: {}".format(len(buy_signals)))
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
-    logger.info("   market: {}".format(market_movement))
+    logger.info("   market movment: {}".format(market_movement))
     logger.info("   Selected: {}".format(selected_Ticker))
     return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
