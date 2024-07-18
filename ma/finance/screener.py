@@ -344,23 +344,25 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
     data = get_data(exchange, ticker, "1m", limit=90)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
+    current_value = data.iloc[-1, 4]
     order = None
-    logger.info("   highest value: {}, current value: {}".format(highest_value, data.iloc[-1, 4]))
-    if isInitial or (highest_value < data.iloc[-1, 4]):
-        highest_value = data.iloc[-1, 4]
+    logger.info("   highest value: {}, current value: {}".format(highest_value, current_value))
+    if isInitial or (highest_value < current_value):
+        highest_value = current_value
         logger.info("   new high: {}".format(highest_value))
         resistance_found = False
         row = -1
         while not resistance_found:
             if row >= (-1) * len(min_column):
                 resistance = min_column.iloc[row]
-                diff = (abs(data.iloc[-1, 4] - resistance)) / data.iloc[-1, 4]
-                if (diff >= max_loss):
-                    logger.info("   set new sell triger: {}".format(resistance))
-                    order = sell_order(exchange, ticker, size, resistance)
-                    resistance_found = True
-                else:
-                    row -= 1
+                if resistance <= current_value: 
+                    diff = (abs(current_value - resistance)) / current_value
+                    if (diff >= max_loss):
+                        logger.info("   set new sell triger: {}".format(resistance))
+                        order = sell_order(exchange, ticker, size, resistance)
+                        resistance_found = True
+                    else:
+                        row -= 1
             else:
                 resistance = min_column.iloc[(-1) * len(min_column)]
                 logger.info("   set new sell triger: {}".format(resistance))
