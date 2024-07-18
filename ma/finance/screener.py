@@ -357,7 +357,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
             if row >= (-1) * len(min_column):
                 resistance = min_column.iloc[row]
                 logger.info("   resistance: {}".format(resistance))
-                diff = (abs(current_value - resistance)) / current_value
+                diff = (current_value - resistance) / current_value
                 if (diff >= max_loss):
                     logger.info("   set new sell triger: {}".format(resistance))
                     order = sell_order(exchange, ticker, size, resistance)
