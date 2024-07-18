@@ -160,7 +160,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'GODS/USD'
+    ticker = 'POWR/USD'
     
     # Daten laden
     data = load_data(ticker)
