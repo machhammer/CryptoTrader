@@ -42,6 +42,7 @@ move_increase_threshold = 0.2
 move_increase_period_threshold = 2
 volume_increase_threshold = 1
 difference_to_maximum_max = -2
+valid_position_amount = 2
 #difference_to_resistance_min = 0.01
 
 
@@ -122,7 +123,7 @@ def find_asset_with_balance(exchange):
         if not asset in ignored_coins:
             found_price = exchange.fetch_ticker(asset + "/" + base_currency)["last"]
             balance = exchange.fetch_balance()[asset]["free"]
-            if (balance * found_price) > 2:
+            if (balance * found_price) > valid_position_amount:
                 logger.info("Found asset with balance: {}".format(asset))
                 asset_with_balance = asset + "/" + base_currency
                 price = found_price
@@ -407,7 +408,7 @@ def get_candidate(exchange):
     return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
 def still_has_postion(size, price):
-    value = (size * price) > 5 
+    value = (size * price) > valid_position_amount
     logger.info("   still has position: {}".format(value))
     return value
 
