@@ -31,6 +31,8 @@ logger.setLevel(logging.INFO)
 
 base_currency = "USD"
 
+ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG"]
+
 amount_coins = 1000
 
 wait_time_next_asset_selection_minutes = 30
@@ -117,10 +119,10 @@ def find_asset_with_balance(exchange):
     price = None
     current_assets = exchange.fetch_balance()["free"]
     for asset in current_assets:
-        if not asset in [base_currency, "CRO"]:
+        if not asset in ignored_coins:
             found_price = exchange.fetch_ticker(asset + "/" + base_currency)["last"]
             balance = exchange.fetch_balance()[asset]["free"]
-            if (balance * found_price) > 5:
+            if (balance * found_price) > 2:
                 logger.info("Found asset with balance: {}".format(asset))
                 asset_with_balance = asset + "/" + base_currency
                 price = found_price
