@@ -24,7 +24,7 @@ exchange = Exchange("cryptocom")
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
     bars = exchange.fetch_ohlcv(
-        ticker, "1m", limit=90
+        ticker, "1m", limit=720
     )
     data = pd.DataFrame(
         bars[:], columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
@@ -160,7 +160,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'POWR/USD'
+    ticker = 'WEMIX/USD'
     
     # Daten laden
     data = load_data(ticker)
