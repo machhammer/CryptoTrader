@@ -24,12 +24,13 @@ exchange = Exchange("cryptocom")
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
     bars = exchange.fetch_ohlcv(
-        ticker, "1m", limit=720
+        ticker, "1m", limit=2880
     )
     data = pd.DataFrame(
         bars[:], columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
     )
     data["Timestamp"] = pd.to_datetime(data["Timestamp"], unit="ms")
+    data.to_csv("data.csv", sep=";")
     return data
 
 # Berechnung der lokalen Hoch- und Tiefpunkte
@@ -37,7 +38,6 @@ def find_local_extrema(data, order=3):
     data['min'] = data.iloc[argrelextrema(data['Close'].values, np.less_equal, order=order)[0]]['Close']
     data['max'] = data.iloc[argrelextrema(data['Close'].values, np.greater_equal, order=order)[0]]['Close']
     return data
-
 
 def find_big_candles(data):
     data["change"] = (((data["Close"] - data["Open"]) / data["Open"]) * 100) >= 0.2
@@ -62,21 +62,16 @@ def apply_macd(data):
     data["macd_signal"] = indicator_macd.macd_signal()
     return data
 
-
-# Zeichnen der Unterstützung- und Widerstandslinien
 def plot_support_resistance(data):
     plt.figure(figsize=(14, 7))
     plt.plot(data['Close'], label='Close Price', color='black')
 
-    
-    # Plotting local minima and maxima
     plt.scatter(data.index, data['min'], label='Local Minima', color='green', marker='^', alpha=1)
     plt.scatter(data.index, data['max'], label='Local Maxima', color='red', marker='v', alpha=1)
   
     plt.plot(data.index, data['ema_9'], label='EMA 9', color='red', alpha=1)
     plt.plot(data.index, data['ema_20'], label='EMA 20', color='blue', alpha=1)
 
-    # Plotting support and resistance lines based on local extrema
     minima = data.dropna(subset=['min'])
     maxima = data.dropna(subset=['max'])
     
@@ -160,7 +155,7 @@ def buy_sell(data):
 
 # Hauptfunktion
 def main():
-    ticker = 'WEMIX/USD'
+    ticker = 'MYRO/USD'
     
     # Daten laden
     data = load_data(ticker)

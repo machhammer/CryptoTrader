@@ -60,7 +60,10 @@ def get_tickers(exchange):
 def get_market_factor(pos_neg_mean):
     fund_ratio = 0
     max_loss = 0
-    if pos_neg_mean > 3:
+    if pos_neg_mean > 4:
+        fund_ratio = 0.9
+        max_loss = 0.05
+    elif pos_neg_mean > 3:
         fund_ratio = 0.9
         max_loss = 0.03
     elif pos_neg_mean >1 and pos_neg_mean <=3:
