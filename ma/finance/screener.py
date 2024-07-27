@@ -295,8 +295,9 @@ def get_top_ticker_expected_results(exchange, tickers):
         accepted_expected_results[ticker] = min
     print(accepted_expected_results)
     df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
-    df = df.sort_values(by='min')    
-    df = df.head(5)['min'].to_list()
+    df = df.sort_values(by='min')   
+    print(df) 
+    df = df.head(5)['ticker'].to_list()
     print(df)
     return df
 
