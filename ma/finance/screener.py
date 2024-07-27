@@ -289,9 +289,9 @@ def get_top_ticker_expected_results(exchange, tickers):
     accepted_expected_results = {}
     for ticker in tickers:
         data = get_data(exchange, ticker, "5m", limit=120)
-        data['pct_change'] = data['close'].pct_change()
+        data['pct_change'] = data['close'].pct_change(periods=3)
         min = data['pct_change'].min()
-        if min > -0.009:
+        if min > -0.005:
             accepted_expected_results[ticker] = min
     df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
     df = df.sort_values(by='min')   
@@ -374,13 +374,11 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
     if isInitial or (highest_value < current_value):
         highest_value = current_value
         logger.info("   new high: {}".format(highest_value))
-        logger.info("   {}".format(min_column))
         resistance_found = False
         row = -1
         while not resistance_found:
             if row >= (-1) * len(min_column):
                 resistance = min_column.iloc[row]
-                logger.info("   resistance: {}".format(resistance))
                 diff = (current_value - resistance) / current_value
                 if (diff >= max_loss):
                     logger.info("   set new sell triger: {}".format(resistance))
