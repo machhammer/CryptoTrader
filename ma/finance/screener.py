@@ -292,11 +292,10 @@ def get_top_ticker_expected_results(exchange, tickers):
         data['pct_change'] = data['close'].pct_change(periods=5)
         min = data['pct_change'].min()
         max = data['pct_change'].max()
-        if min > -0.005:
-            accepted_expected_results[ticker] = min
-            accepted_expected_results[ticker] = max
+        accepted_expected_results[ticker] = min
+        accepted_expected_results[ticker] = max
     print(accepted_expected_results)
-    df = pd.DataFrame(accepted_expected_results)
+    df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
     df.sort_values(by='min', inplace=True)    
     print(df)
     return df.head(5)['min'].to_list()
