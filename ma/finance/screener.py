@@ -293,12 +293,10 @@ def get_top_ticker_expected_results(exchange, tickers):
         min = data['pct_change'].min()
         if min > -0.009:
             accepted_expected_results[ticker] = min
-    print(accepted_expected_results)
     df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
     df = df.sort_values(by='min')   
-    print(df) 
     df = df.tail(5)['ticker'].to_list()
-    print(df)
+    logger.info("   ticker_with_expected_results: {}".format(len(df)))
     return df
 
 
