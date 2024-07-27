@@ -233,6 +233,8 @@ def add_ema(data):
         data["ema_20"] = indicator_EMA_20.ema_indicator()
         return data
 
+
+
 def get_ticker_with_bigger_moves(exchange, tickers):
     limit = 4
     bigger_moves = []
@@ -283,6 +285,21 @@ def get_ticker_with_increased_volume(exchange, tickers):
     return increased_volumes
 
 
+def get_top_ticker_expected_results(exchange, tickers):
+    accepted_expected_results = {}
+    for ticker in tickers:
+        data = get_data(exchange, ticker, "5m", limit=120)
+        data['pct_change'] = data['close'].pct_change(periods=5)
+        min = data['change'].min()
+        max = data['change'].max()
+        accepted_expected_results[ticker] = min
+    df = pd.DataFrame(accepted_expected_results)
+    df.sort_values(by='min', inplace=True)    
+    print(df)
+    return df.head(5)['min'].to_list()
+
+
+
 def get_lowest_difference_to_maximum(excheange, tickers):
     lowest_difference_to_maximum = None
     for ticker in tickers:
@@ -304,7 +321,7 @@ def is_buy_decision(exchange, ticker, attempt):
     data = add_aroon(data)
     data = add_vwap(data)
     data = add_macd(data)
-
+    
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
     last_max = (max_column.values)[-1]
@@ -403,7 +420,8 @@ def get_candidate(exchange):
     logger.info("1. ******** Check for New Candidate ********")
     tickers, market_movement = get_tickers(exchange)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
-    increased_volume = get_ticker_with_increased_volume(exchange, major_move)
+    expected_results = get_top_ticker_expected_results(exchange, major_move)
+    increased_volume = get_ticker_with_increased_volume(exchange, expected_results)
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     logger.info("   market movment: {}".format(market_movement))

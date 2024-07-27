@@ -24,7 +24,7 @@ exchange = Exchange("cryptocom")
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
     bars = exchange.fetch_ohlcv(
-        ticker, "1m", limit=2880
+        ticker, "5m", limit=120
     )
     data = pd.DataFrame(
         bars[:], columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
@@ -190,6 +190,15 @@ def get_orders():
 def get_ticker(ticker):
     pprint.pprint(exchange.fetch_ticker(ticker))
 
+def get_variance(ticker):
+    data = load_data(ticker)
+    data['change'] = data['Close'].pct_change(periods=5)
+    #var = data['change'].std()
+    #print(data['change'].mean())
+    #print(var)
+    print(data['change'].min())
+    print(data['change'].max())
+
 if __name__ == "__main__":
     
-    main()
+    get_variance('SHDW/USD')
