@@ -55,7 +55,7 @@ def initialize_screener_table():
                 "market FLOAT, "\
                 "market_factor FLOAT, "\
                 "base_currency VARCHAR(3), "\
-                "selected_ticker VARCHAR(10), "\
+                "selected_ticker VARCHAR(15), "\
                 "funding float, "\
                 "major_move TEXT, "\
                 "increase_volume TEXT, "\
