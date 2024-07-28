@@ -420,6 +420,7 @@ def get_candidate(exchange):
     tickers, market_movement = get_tickers(exchange)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     expected_results = get_top_ticker_expected_results(exchange, major_move)
+    logger.info("   {}".format(expected_results))
     increased_volume = get_ticker_with_increased_volume(exchange, expected_results)
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
