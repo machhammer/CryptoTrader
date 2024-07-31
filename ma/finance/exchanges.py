@@ -39,6 +39,18 @@ class Exchange():
             }
         )
 
+    def bitget(self):
+        api_key = credentials.provider_3.get("key")
+        api_secret = credentials.provider_3.get("secret")
+
+        return ccxt.cryptocom(
+            {
+                "apiKey": api_key,
+                "secret": api_secret,
+                #'verbose': True
+            }
+        )
+
     def coinbase(self):
         api_key = credentials.provider_1.get("key")
         api_secret = credentials.provider_1.get("secret")

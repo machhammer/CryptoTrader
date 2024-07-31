@@ -234,7 +234,6 @@ def add_ema(data):
         return data
 
 
-
 def get_ticker_with_bigger_moves(exchange, tickers):
     limit = 4
     bigger_moves = []
@@ -407,7 +406,6 @@ def plot(data):
     for i in range(len(minima) - 1):
         plt.plot([minima.index[i], minima.index[i + 1]], [minima['min'].iloc[i], minima['min'].iloc[i + 1]], label='Support Line', color='green', linestyle='--')
     
-
     for i in range(len(maxima) - 1):
         plt.plot([maxima.index[i], maxima.index[i + 1]], [maxima['max'].iloc[i], maxima['max'].iloc[i + 1]], label='Resistance Line', color='red', linestyle='--')
 
@@ -427,6 +425,7 @@ def get_candidate(exchange):
     logger.info("   market movment: {}".format(market_movement))
     logger.info("   Selected: {}".format(selected_Ticker))
     return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
+
 
 def still_has_postion(size, price):
     value = (size * price) > valid_position_amount
@@ -452,7 +451,7 @@ def write_to_db(market=None, market_factor=None, base_currency=None, selected_ti
 
 def run_trader():
 
-    exchange = Exchange("cryptocom")
+    exchange = Exchange("bitget")
 
     running = True
 
