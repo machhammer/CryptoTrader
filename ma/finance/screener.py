@@ -29,7 +29,9 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-base_currency = "USD"
+exchange_name = "bitget"
+
+base_currency = "USDT"
 
 ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG"]
 
@@ -51,7 +53,9 @@ def get_tickers(exchange):
     tickers = pd.DataFrame(tickers)
     tickers = tickers.T
     tickers = tickers[tickers["symbol"].str.endswith("/" + base_currency)].head(amount_coins)
-    market_movement = tickers["percentage"].median() * 100
+    market_movement = tickers["percentage"].median()
+    if not exchange_name == "bitget":
+        market_movement *= 100
     tickers = tickers["symbol"].to_list()
     random.shuffle(tickers)
     return tickers, market_movement

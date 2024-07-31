@@ -54,7 +54,7 @@ def initialize_screener_table():
                 "timestamp TIMESTAMP, "\
                 "market FLOAT, "\
                 "market_factor FLOAT, "\
-                "base_currency VARCHAR(3), "\
+                "base_currency VARCHAR(5), "\
                 "selected_ticker VARCHAR(15), "\
                 "funding float, "\
                 "major_move TEXT, "\

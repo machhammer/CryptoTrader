@@ -25,6 +25,8 @@ class Exchange():
             self.exchange = self.cryptocom()
         elif self.name == "coinbase":
             self.exchange = self.coinbase()
+        elif self.name == "bitget":
+            self.exchange = self.bitget()
         else: raise Exception("Exchange {} not implemented!".format(self.name))
 
     def cryptocom(self):
@@ -42,11 +44,15 @@ class Exchange():
     def bitget(self):
         api_key = credentials.provider_3.get("key")
         api_secret = credentials.provider_3.get("secret")
+        password = credentials.provider_3.get("password")
+        passphrase = credentials.provider_3.get("passphrase")
 
-        return ccxt.cryptocom(
+        return ccxt.bitget(
             {
                 "apiKey": api_key,
                 "secret": api_secret,
+                "password": passphrase
+
                 #'verbose': True
             }
         )
