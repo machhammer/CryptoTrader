@@ -246,7 +246,8 @@ def get_ticker_with_bigger_moves(exchange, tickers):
     next(progress_bar)
     for ticker in tickers:
         data = get_data(exchange, ticker, "5m", limit)
-        data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
+        #data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
+        data["change"] = data["close"].pct_change()
         data["is_change_relevant"] = data["change"] >= move_increase_threshold
         ticker_check = {}
         ticker_check['ticker'] = ticker
