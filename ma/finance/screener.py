@@ -285,6 +285,8 @@ def get_ticker_with_increased_volume(exchange, tickers):
         data = get_data(exchange, ticker, "1d", limit=10)
         last_mean = data.head(9)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
+        print(ticker)
+        print(data)
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
     logger.info("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
@@ -297,6 +299,8 @@ def get_top_ticker_expected_results(exchange, tickers):
         data = get_data(exchange, ticker, "5m", limit=120)
         data['pct_change'] = data['close'].pct_change(periods=3)
         min = data['pct_change'].min()
+        print(ticker)
+        print(min)
         if min > -0.005:
             accepted_expected_results[ticker] = min
     df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
