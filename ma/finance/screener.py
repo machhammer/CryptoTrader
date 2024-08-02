@@ -42,7 +42,7 @@ wait_time_next_buy_selection_seconds = 60
 buy_attempts_nr = 120
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
-volume_increase_threshold = 1
+volume_increase_threshold = 0.8
 difference_to_maximum_max = -2
 valid_position_amount = 2
 #difference_to_resistance_min = 0.01
@@ -281,12 +281,13 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
 
 def get_ticker_with_increased_volume(exchange, tickers):
     increased_volumes = []
+    print("increased volume")
     for ticker in tickers:
         data = get_data(exchange, ticker, "1d", limit=10)
         last_mean = data.head(9)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
         print(ticker)
-        print(data)
+        print(current_mean / last_mean)
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
     logger.info("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
@@ -313,7 +314,7 @@ def get_top_ticker_expected_results(exchange, tickers):
 def get_close_to_high(exchange, tickers):
     close_to_high = []
     for ticker in tickers:
-        data = get_data(exchange, ticker, "1h", limit=12)
+        data = get_data(exchange, ticker, "1h", limit=48)
         max = data['close'].max()
         print(ticker)
         print(max)
