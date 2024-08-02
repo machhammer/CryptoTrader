@@ -442,7 +442,10 @@ def get_candidate(exchange):
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     expected_results = get_top_ticker_expected_results(exchange, major_move)
     close_to_high = get_close_to_high(exchange, major_move)
-    expected_results = expected_results.append(close_to_high)
+    if expected_results:
+        expected_results = expected_results.append(close_to_high)
+    else:
+        expected_results = close_to_high
     logger.info("   {}".format(expected_results))
     increased_volume = get_ticker_with_increased_volume(exchange, expected_results)
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
