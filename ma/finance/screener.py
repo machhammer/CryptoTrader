@@ -35,14 +35,14 @@ base_currency = "USDT"
 
 ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG"]
 
-amount_coins = 1000
+amount_coins = 300
 
 wait_time_next_asset_selection_minutes = 30
 wait_time_next_buy_selection_seconds = 60
 buy_attempts_nr = 120
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
-volume_increase_threshold = 0.8
+volume_increase_threshold = 1
 difference_to_maximum_max = -2
 valid_position_amount = 2
 #difference_to_resistance_min = 0.01
@@ -247,17 +247,16 @@ def get_ticker_with_bigger_moves(exchange, tickers):
     for ticker in tickers:
         data = get_data(exchange, ticker, "1m", limit)
         #data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
-        data["change"] = data["close"].pct_change()
-        data["is_change_relevant"] = data["change"] >= move_increase_threshold
-        ticker_check = {}
-        ticker_check['ticker'] = ticker
-        ticker_check['change'] = data["change"].to_list()
-        ticker_check['relevant'] = data["is_change_relevant"].to_list()
-        ticker_check['data'] = data
-        if ticker_check['relevant'].count(True) >= move_increase_period_threshold:
-            print(ticker)
-            print(data)
-            bigger_moves.append(ticker)
+        if not data.empty:
+            data["change"] = data["close"].pct_change()
+            data["is_change_relevant"] = data["change"] >= move_increase_threshold
+            ticker_check = {}
+            ticker_check['ticker'] = ticker
+            ticker_check['change'] = data["change"].to_list()
+            ticker_check['relevant'] = data["is_change_relevant"].to_list()
+            ticker_check['data'] = data
+            if ticker_check['relevant'].count(True) >= move_increase_period_threshold:
+                bigger_moves.append(ticker)
         try:
             next(progress_bar)
         except:
@@ -300,8 +299,6 @@ def get_top_ticker_expected_results(exchange, tickers):
         data = get_data(exchange, ticker, "5m", limit=120)
         data['pct_change'] = data['close'].pct_change(periods=3)
         min = data['pct_change'].min()
-        print(ticker)
-        print(min)
         if min > -0.005:
             accepted_expected_results[ticker] = min
     df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
@@ -316,8 +313,6 @@ def get_close_to_high(exchange, tickers):
     for ticker in tickers:
         data = get_data(exchange, ticker, "1h", limit=48)
         max = data['close'].max()
-        print(ticker)
-        print(max)
         if data.iloc[-1, 4] >= max:
             close_to_high.append(ticker)
     logger.info("   ticker_close_to_high: {}".format(len(close_to_high)))
@@ -443,12 +438,9 @@ def get_candidate(exchange):
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     expected_results = get_top_ticker_expected_results(exchange, major_move)
     close_to_high = get_close_to_high(exchange, major_move)
-    if expected_results:
-        expected_results = expected_results.append(close_to_high)
-    else:
-        expected_results = close_to_high
-    logger.info("   {}".format(expected_results))
-    increased_volume = get_ticker_with_increased_volume(exchange, expected_results)
+    relevant_tickers = expected_results + close_to_high
+    logger.info("   {}".format(relevant_tickers))
+    increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     logger.info("   market movment: {}".format(market_movement))
