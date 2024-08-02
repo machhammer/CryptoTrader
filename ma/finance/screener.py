@@ -40,8 +40,8 @@ amount_coins = 1000
 wait_time_next_asset_selection_minutes = 30
 wait_time_next_buy_selection_seconds = 60
 buy_attempts_nr = 120
-move_increase_threshold = 0.002
-move_increase_period_threshold = 2
+move_increase_threshold = 0.003
+move_increase_period_threshold = 1
 volume_increase_threshold = 1
 difference_to_maximum_max = -2
 valid_position_amount = 2
@@ -310,6 +310,18 @@ def get_top_ticker_expected_results(exchange, tickers):
     return df
 
 
+def get_close_to_high(exchange, tickers):
+    close_to_high = []
+    for ticker in tickers:
+        data = get_data(exchange, ticker, "1h", limit=12)
+        max = data['close'].max()
+        print(ticker)
+        print(max)
+        if data.iloc[-1, 4] >= max:
+            close_to_high.append(ticker)
+    logger.info("   ticker_close_to_high: {}".format(len(close_to_high)))
+    return close_to_high
+
 
 def get_lowest_difference_to_maximum(excheange, tickers):
     lowest_difference_to_maximum = None
@@ -429,6 +441,8 @@ def get_candidate(exchange):
     tickers, market_movement = get_tickers(exchange)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     expected_results = get_top_ticker_expected_results(exchange, major_move)
+    close_to_high = get_close_to_high(exchange, major_move)
+    expected_results = expected_results.append(close_to_high)
     logger.info("   {}".format(expected_results))
     increased_volume = get_ticker_with_increased_volume(exchange, expected_results)
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
