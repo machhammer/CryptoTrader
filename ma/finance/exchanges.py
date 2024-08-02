@@ -4,6 +4,8 @@ from datetime import datetime
 import time
 import traceback
 import asyncio
+from pybitget import Client
+
 
 class Exchange():
 
@@ -56,6 +58,15 @@ class Exchange():
                 #'verbose': True
             }
         )
+
+    def bitget_native(self):
+        api_key = credentials.provider_3.get("key")
+        api_secret = credentials.provider_3.get("secret")
+        password = credentials.provider_3.get("password")
+        passphrase = credentials.provider_3.get("passphrase")
+        client = Client(api_key, api_secret, passphrase=passphrase)
+        return client
+
 
     def coinbase(self):
         api_key = credentials.provider_1.get("key")
@@ -171,10 +182,17 @@ class Exchange():
         
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
-        if self.exchange is not None:
-            self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
+        if self.name == 'bitget':
+            client = self.bitget_native()
+            asset = asset.split("/")
+            asset = asset[0] + asset[1] + "_SPBL"
+            data = client.spot_place_plan_order(asset, side="sell", triggerPrice=stopLossPrice, size=size, triggerType="market_price", orderType="market")
+            print(data)
         else:
-            raise Exception("Exchange is None.")
+            if self.exchange is not None:
+                self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
+            else:
+                raise Exception("Exchange is None.")
 
 
     def create_buy_order(self, asset, size, price):

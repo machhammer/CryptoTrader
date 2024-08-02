@@ -19,7 +19,7 @@ import pprint
 
 pd.set_option('display.max_rows', None)
 
-exchange = Exchange("cryptocom")
+exchange = Exchange("bitget")
 
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
@@ -200,6 +200,11 @@ def get_variance(ticker):
     print(data['change'].min())
     print(data['change'].max())
 
+
+def test_bitget_stoploss(ticker):
+    exchange.create_stop_loss_order(ticker, 262.2, 0.026605)
+
+
 if __name__ == "__main__":
     
-    get_variance('LEASH/USD')
+   test_bitget_stoploss("GFT/USDT")
