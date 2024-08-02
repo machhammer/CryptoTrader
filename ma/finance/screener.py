@@ -35,7 +35,7 @@ base_currency = "USDT"
 
 ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG"]
 
-amount_coins = 300
+amount_coins = 1000
 
 wait_time_next_asset_selection_minutes = 30
 wait_time_next_buy_selection_seconds = 60
