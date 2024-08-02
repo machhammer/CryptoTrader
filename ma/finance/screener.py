@@ -311,7 +311,7 @@ def get_top_ticker_expected_results(exchange, tickers):
 def get_close_to_high(exchange, tickers):
     close_to_high = []
     for ticker in tickers:
-        data = get_data(exchange, ticker, "15m", limit=288)
+        data = get_data(exchange, ticker, "1h", limit=48)
         max = data['close'].max()
         if data.iloc[-1, 4] >= max:
             close_to_high.append(ticker)
