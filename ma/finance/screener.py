@@ -447,7 +447,7 @@ def get_candidate(exchange):
     relevant_tickers = expected_results + close_to_high
     logger.info("   {}".format(relevant_tickers))
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
-    buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
+    buy_signals = get_ticker_with_aroon_buy_signals(exchange, relevant_tickers)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     logger.info("   market movment: {}".format(market_movement))
     logger.info("   Selected: {}".format(selected_Ticker))

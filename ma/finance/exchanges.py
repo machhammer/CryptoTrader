@@ -182,18 +182,20 @@ class Exchange():
         
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
+        orderId = None
         if self.name == 'bitget':
             client = self.bitget_native()
             asset = asset.split("/")
             asset = asset[0] + asset[1] + "_SPBL"
             data = client.spot_cancel_batch_orders
             data = client.spot_place_plan_order(asset, side="sell", triggerPrice=stopLossPrice, size=size, triggerType="market_price", orderType="market")
-            print(data)
+            orderId = data
         else:
             if self.exchange is not None:
                 self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
             else:
                 raise Exception("Exchange is None.")
+        return orderId
 
 
     def create_buy_order(self, asset, size, price):
