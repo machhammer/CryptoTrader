@@ -208,6 +208,10 @@ def test_balance(ticker):
     ticker_balance = exchange.fetch_balance()[ticker]["free"]
     print(ticker_balance)
 
+def test_order():
+    data = {'code': '00000', 'msg': 'success', 'requestTime': 1722618302748, 'data': {'orderId': '1203313865767063552', 'clientOrderId': '1203313865762869248'}}
+    print(data['data']['orderId'])
+
 if __name__ == "__main__":
     
-   test_balance('BGB')
+   test_order()

@@ -46,7 +46,7 @@ volume_increase_threshold = 1
 difference_to_maximum_max = -2
 valid_position_amount = 2
 #difference_to_resistance_min = 0.01
-
+minimum_funding = 10
 
 def get_tickers(exchange):
     tickers = exchange.fetch_tickers()
@@ -151,6 +151,8 @@ def get_Ticker_balance(exchange, ticker):
 def get_funding(usd, market_movement):
     mf, _ = get_market_factor(market_movement)
     funding = usd * mf
+    if funding < minimum_funding:
+        funding = minimum_funding
     logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
     return funding
 

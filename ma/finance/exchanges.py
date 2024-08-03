@@ -186,6 +186,7 @@ class Exchange():
             client = self.bitget_native()
             asset = asset.split("/")
             asset = asset[0] + asset[1] + "_SPBL"
+            data = client.spot_cancel_batch_orders
             data = client.spot_place_plan_order(asset, side="sell", triggerPrice=stopLossPrice, size=size, triggerType="market_price", orderType="market")
             print(data)
         else:
