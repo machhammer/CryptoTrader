@@ -204,7 +204,10 @@ def get_variance(ticker):
 def test_bitget_stoploss(ticker):
     exchange.create_stop_loss_order(ticker, 262.2, 0.026605)
 
+def test_balance(ticker):
+    ticker_balance = exchange.fetch_balance()[ticker]["free"]
+    print(ticker_balance)
 
 if __name__ == "__main__":
     
-   test_bitget_stoploss("GFT/USDT")
+   test_balance('BGB')

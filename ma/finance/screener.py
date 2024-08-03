@@ -139,7 +139,11 @@ def find_asset_with_balance(exchange):
 
 def get_Ticker_balance(exchange, ticker):
     ticker = ticker.replace("/" + base_currency, "")
-    ticker_balance = exchange.fetch_balance()[ticker]["free"]
+    ticker_balance = 0
+    try:
+        ticker_balance = exchange.fetch_balance()[ticker]["free"]
+    except:
+        logger.info("   Ticker not in Wallet")
     logger.info("   Ticker Balance: {}".format(ticker_balance))
     return ticker_balance
 
