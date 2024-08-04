@@ -545,9 +545,6 @@ def run_trader():
                         wait("short")
                     else:
                         logger.info("Asset has been sold!")
-                        order = exchange.fetch_orders(selected_Ticker)[-1]
-                        if order:
-                            write_to_db(selected_ticker=selected_Ticker, sell_order_id=order['id'])
                         adjust_sell_trigger = False
                         asset_with_balance = None
                         buy_decision = False
