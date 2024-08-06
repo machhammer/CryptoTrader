@@ -208,13 +208,14 @@ def test_balance(ticker):
     ticker_balance = exchange.fetch_balance()[ticker]["free"]
     print(ticker_balance)
 
-def test_get_order(orderId):
-    
+def test_order_book():
+    orderbook = exchange.exchange.fetch_order_book ("ZAI/USDT")
+    bid = orderbook['bids'][0][0] if len (orderbook['bids']) > 0 else None
+    ask = orderbook['asks'][0][0] if len (orderbook['asks']) > 0 else None
+    spread = (ask - bid) if (bid and ask) else None
+    print (exchange.exchange.id, 'market price', { 'bid': bid, 'ask': ask, 'spread': spread })
 
-def test_order():
-    data = {'code': '00000', 'msg': 'success', 'requestTime': 1722618302748, 'data': {'orderId': '1203313865767063552', 'clientOrderId': '1203313865762869248'}}
-    print(data['data']['orderId'])
 
 if __name__ == "__main__":
     
-   test_order()
+   test_order_book()
