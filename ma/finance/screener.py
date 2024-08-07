@@ -1,23 +1,17 @@
-import asyncio
-from matplotlib import ticker
 from exchanges import Exchange
 import numpy as np
 import pandas as pd
 import random
-import time
-import pause
 import math
 import logging
-from datetime import datetime
-import persistance as database
-from pandas_datareader import data as pdr
-import time
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 from ta.trend import AroonIndicator, EMAIndicator, MACD
 from ta.volume import VolumeWeightedAveragePrice
 from scipy.signal import argrelextrema
+from screener_helper import Helper
 
+
+#************************************ Logging
 logger = logging.getLogger("screener")
 formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
 handler = logging.FileHandler(
@@ -29,14 +23,12 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
+
+#************************************ Confiuguration
 exchange_name = "bitget"
-
 base_currency = "USDT"
-
 ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG"]
-
 amount_coins = 1000
-
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
 buy_attempts_nr = 120
@@ -48,19 +40,92 @@ valid_position_amount = 2
 #difference_to_resistance_min = 0.01
 minimum_funding = 10
 
+
+helper = Helper(logger, wait_time_next_asset_selection_minutes, wait_time_next_buy_selection_seconds)
+
+
+#************************************ Get Ticker Data
+def get_data(exchange, ticker, interval, limit):
+    bars = exchange.fetch_ohlcv(
+            ticker, interval, limit=limit
+    )
+    data = pd.DataFrame(
+        bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
+    )
+    data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+    return data
+
+
+#************************************ Balance of base currency
+def get_base_currency_balance(exchange):
+    usd = exchange.fetch_balance()[base_currency]["free"]
+    return usd
+
+
+#************************************ Assets with existing balance
+def find_asset_with_balance(exchange):
+    asset_with_balance = None
+    price = None
+    current_assets = exchange.fetch_balance()["free"]
+    for asset in current_assets:
+        if not asset in ignored_coins:
+            found_price = exchange.fetch_ticker(asset + "/" + base_currency)["last"]
+            balance = exchange.fetch_balance()[asset]["free"]
+            if (balance * found_price) > valid_position_amount:
+                logger.info("Found asset with balance: {}".format(asset))
+                asset_with_balance = asset + "/" + base_currency
+                price = found_price
+    return asset_with_balance, price
+
+
+#************************************ Balance for specific ticker
+def get_Ticker_balance(exchange, ticker):
+    ticker = ticker.replace("/" + base_currency, "")
+    ticker_balance = 0
+    try:
+        ticker_balance = exchange.fetch_balance()[ticker]["free"]
+    except:
+        logger.info("   Ticker not in Wallet")
+    logger.info("   Ticker Balance: {}".format(ticker_balance))
+    return ticker_balance
+
+
+#************************************ check for valid position
+def still_has_postion(size, price):
+    value = (size * price) > valid_position_amount
+    logger.info("   still has position: {}".format(value))
+    return value
+
+
+#************************************ get All Tickers
 def get_tickers(exchange):
     tickers = exchange.fetch_tickers()
     tickers = pd.DataFrame(tickers)
     tickers = tickers.T
     tickers = tickers[tickers["symbol"].str.endswith("/" + base_currency)].head(amount_coins)
+    tickers = tickers["symbol"].to_list()
+    random.shuffle(tickers)
+    return tickers
+
+
+#************************************ get market movement
+def get_market_movement(tickers):
     market_movement = tickers["percentage"].median()
     if not exchange_name == "bitget":
         market_movement *= 100
-    tickers = tickers["symbol"].to_list()
-    random.shuffle(tickers)
-    return tickers, market_movement
 
 
+#************************************ Funding based on market movment
+def get_funding(usd, market_movement):
+    mf, _ = get_market_factor(market_movement)
+    funding = usd * mf
+    if funding < minimum_funding:
+        funding = minimum_funding
+    logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
+    return funding
+
+
+#************************************ get Factors based on market movement
 def get_market_factor(pos_neg_mean):
     fund_ratio = 0
     max_loss = 0
@@ -86,83 +151,7 @@ def get_market_factor(pos_neg_mean):
     return fund_ratio, max_loss
 
 
-def wait(period):
-    if period == "short":
-        wait_time = get_wait_time_1()
-    if period == "long":
-        wait_time = get_wait_time()
-    logger.debug("wait: {}".format(wait_time))
-    time.sleep(wait_time)
-
-
-def get_wait_time():
-        minute = datetime.now().minute
-        wait_time = (wait_time_next_asset_selection_minutes - (minute % wait_time_next_asset_selection_minutes)) * 60
-        return wait_time
-
-
-def get_wait_time_1():
-        seconds = datetime.now().second
-        wait_time = (wait_time_next_buy_selection_seconds - (seconds % wait_time_next_buy_selection_seconds))
-        return wait_time
-
-
-def get_time():
-    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-
-def print_time():
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
-    logger.info("Current Time: {}".format(current_time))
-
-
-def get_base_currency_balance(exchange):
-    usd = exchange.fetch_balance()[base_currency]["free"]
-    return usd
-
-
-def find_asset_with_balance(exchange):
-    asset_with_balance = None
-    price = None
-    current_assets = exchange.fetch_balance()["free"]
-    for asset in current_assets:
-        if not asset in ignored_coins:
-            found_price = exchange.fetch_ticker(asset + "/" + base_currency)["last"]
-            balance = exchange.fetch_balance()[asset]["free"]
-            if (balance * found_price) > valid_position_amount:
-                logger.info("Found asset with balance: {}".format(asset))
-                asset_with_balance = asset + "/" + base_currency
-                price = found_price
-    return asset_with_balance, price
-
-
-def get_Ticker_balance(exchange, ticker):
-    ticker = ticker.replace("/" + base_currency, "")
-    ticker_balance = 0
-    try:
-        ticker_balance = exchange.fetch_balance()[ticker]["free"]
-    except:
-        logger.info("   Ticker not in Wallet")
-    logger.info("   Ticker Balance: {}".format(ticker_balance))
-    return ticker_balance
-
-
-def get_funding(usd, market_movement):
-    mf, _ = get_market_factor(market_movement)
-    funding = usd * mf
-    if funding < minimum_funding:
-        funding = minimum_funding
-    logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
-    return funding
-
-
-def convert_to_precision(size, precision):
-    value = math.floor(size/precision) * precision
-    logger.info("   convert_to_precision - size: {}, precision: {}, value: {}".format(size, precision, value)) 
-    return math.floor(size/precision) * precision
-
-
+#************************************ get precision for specific ticker
 def get_precision(exchange, ticker):
     markets = exchange.exchange.load_markets()
     value = float((markets[ticker]['precision']['amount'])) 
@@ -170,42 +159,15 @@ def get_precision(exchange, ticker):
     return value
 
 
-def buy_order(exchange, usd, ticker, price, funding):
-    logger.info("3. ******** Buy Decision, Ticker: {}, Price: {}, Funding: {}".format(ticker, price, funding))
-    precision = get_precision(exchange, ticker)
-    size = convert_to_precision(funding / price, precision)
-    order = exchange.create_buy_order(ticker, size, price)
-    logger.info("   buy order id : {}".format(ticker, order["id"]))
-    return order
+#************************************ get convert price fitting to precision
+def convert_to_precision(size, precision):
+    value = math.floor(size/precision) * precision
+    logger.info("   convert_to_precision - size: {}, precision: {}, value: {}".format(size, precision, value)) 
+    return math.floor(size/precision) * precision
 
 
-def sell_order(exchange, ticker, size, stopLossPrice):
-    exchange.cancel_orders(ticker)
-    logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
-    order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
-    logger.info("   sell order id : {}".format(order))
-    return order
 
-
-def get_data(exchange, ticker, interval, limit):
-    bars = exchange.fetch_ohlcv(
-            ticker, interval, limit=limit
-    )
-    data = pd.DataFrame(
-        bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
-    )
-    data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
-    return data
-
-
-def save_to_file(data, filename):
-    data.to_csv(filename, header=True, index=None, sep=';', mode='w')
-
-
-def read_from_file(filename):
-    return pd.read_csv(filename, sep=';')
-
-
+#************************************ add Indicators
 def add_min_max(data):
     order = 3
     data['min'] = data.iloc[argrelextrema(data['close'].values, np.less_equal, order=order)[0]]['close']
@@ -243,6 +205,23 @@ def add_ema(data):
         data["ema_20"] = indicator_EMA_20.ema_indicator()
         return data
 
+
+#************************************ get Candidate Functions
+def get_candidate(exchange):
+    logger.info("1. ******** Check for New Candidate ********")
+    tickers = get_tickers(exchange)
+    market_movement = get_market_movement(tickers)
+    major_move = get_ticker_with_bigger_moves(exchange, tickers)
+    expected_results = get_top_ticker_expected_results(exchange, major_move)
+    close_to_high = get_close_to_high(exchange, major_move)
+    relevant_tickers = expected_results + close_to_high
+    logger.info("   {}".format(relevant_tickers))
+    increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
+    buy_signals = get_ticker_with_aroon_buy_signals(exchange, relevant_tickers)
+    selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
+    logger.info("   market movment: {}".format(market_movement))
+    logger.info("   Selected: {}".format(selected_Ticker))
+    return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
 def get_ticker_with_bigger_moves(exchange, tickers):
     limit = 4
@@ -339,6 +318,7 @@ def get_lowest_difference_to_maximum(excheange, tickers):
     return lowest_difference_to_maximum
 
 
+#************************************ BUY Functions
 def is_buy_decision(exchange, ticker, attempt):
     logger.info("2. ******** Check for Buy Decision, Ticker: {}, #{}".format(ticker, attempt))
     data = get_data(exchange, ticker, "1m", limit=120)
@@ -387,6 +367,16 @@ def is_buy_decision(exchange, ticker, attempt):
     return is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff
 
 
+def buy_order(exchange, ticker, price, funding):
+    logger.info("3. ******** Buy Decision, Ticker: {}, Price: {}, Funding: {}".format(ticker, price, funding))
+    precision = get_precision(exchange, ticker)
+    size = convert_to_precision(funding / price, precision)
+    order = exchange.create_buy_order(ticker, size, price)
+    logger.info("   buy order id : {}".format(ticker, order["id"]))
+    return order
+
+
+#************************************ SELL Functions
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss):
     logger.info("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(ticker, isInitial, size, highest_value, max_loss))
     data = get_data(exchange, ticker, "1m", limit=720)
@@ -419,97 +409,45 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
         logger.info("   No new sell trigger")
     return highest_value, order
 
-def plot(data):
-    plt.figure(figsize=(14, 7))
-    plt.plot(data['close'], label='close Price', color='black')
-    plt.scatter(data.index, data['min'], label='Local Minima', color='green', marker='^', alpha=1)
-    plt.scatter(data.index, data['max'], label='Local Maxima', color='red', marker='v', alpha=1)
-    plt.plot(data.index, data['ema_9'], label='EMA 9', color='red', alpha=1)
-    plt.plot(data.index, data['ema_20'], label='EMA 20', color='blue', alpha=1)
-    minima = data.dropna(subset=['min'])
-    maxima = data.dropna(subset=['max'])
-    for i in range(len(minima) - 1):
-        plt.plot([minima.index[i], minima.index[i + 1]], [minima['min'].iloc[i], minima['min'].iloc[i + 1]], label='Support Line', color='green', linestyle='--')
-    
-    for i in range(len(maxima) - 1):
-        plt.plot([maxima.index[i], maxima.index[i + 1]], [maxima['max'].iloc[i], maxima['max'].iloc[i + 1]], label='Resistance Line', color='red', linestyle='--')
 
-    plt.title('Stock Support and Resistance Levels')
-    plt.show()
+def sell_order(exchange, ticker, size, stopLossPrice):
+    exchange.cancel_orders(ticker)
+    logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
+    order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
+    logger.info("   sell order id : {}".format(order))
+    return order
 
 
-def get_candidate(exchange):
-    logger.info("1. ******** Check for New Candidate ********")
-    tickers, market_movement = get_tickers(exchange)
-    major_move = get_ticker_with_bigger_moves(exchange, tickers)
-    expected_results = get_top_ticker_expected_results(exchange, major_move)
-    close_to_high = get_close_to_high(exchange, major_move)
-    relevant_tickers = expected_results + close_to_high
-    logger.info("   {}".format(relevant_tickers))
-    increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
-    buy_signals = get_ticker_with_aroon_buy_signals(exchange, relevant_tickers)
-    selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
-    logger.info("   market movment: {}".format(market_movement))
-    logger.info("   Selected: {}".format(selected_Ticker))
-    return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
 
-
-def still_has_postion(size, price):
-    value = (size * price) > valid_position_amount
-    logger.info("   still has position: {}".format(value))
-    return value
-
-
-def write_to_db(market=None, market_factor=None, base_currency=None, selected_ticker=None, funding=None, major_move=None, increase_volume=None, buy_signal=None, close_to_maximum=None, is_buy=None, current_close=None, last_max=None, previous_max=None, vwap=None,macd=None, macd_signal=None, macd_diff=None, buy_order_id=None, sell_order_id=None):
-    if (major_move and len(major_move) > 0): 
-        major_move=';'.join(map(str, major_move))
-    else:
-        major_move=None
-    if (increase_volume and len(increase_volume) > 0 ): 
-        increase_volume=';'.join(map(str, increase_volume))
-    else:
-        increase_volume=None
-    if (buy_signal and len(buy_signal) > 0): 
-        buy_signal=';'.join(map(str, buy_signal))
-    else:
-        buy_signal=None
-    database.insert_screener(get_time(), market, market_factor, base_currency, selected_ticker, funding, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)    
 
 
 def run_trader():
 
     exchange = Exchange("bitget")
-
     running = True
-
     asset_with_balance, price = find_asset_with_balance(exchange)
 
     while running:
-
         usd_balance = get_base_currency_balance(exchange)
-
         if not asset_with_balance:
             selected_Ticker, market_movement, major_move, increased_volume, buy_signals, lowest_distance_to_max = get_candidate(exchange)
-            write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
+            helper.write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
             buy_decision = True
         else:
             selected_Ticker = asset_with_balance
-            write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
-            
+            helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
 
         if selected_Ticker:
-
             buy_attempts = 1
-
             #observe selected Ticker
             buy_decision = False
            
             while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
                 is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker , buy_attempts)
-                write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
+                helper.write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
                 if not is_buy:
                     buy_attempts += 1
-                    wait("short")
+                    helper.wait("short")
                 else:
                     price = current_close
                     buy_decision = True
@@ -518,10 +456,11 @@ def run_trader():
 
                 #buy sleected Ticker
                 if not asset_with_balance:
-                    _, market_movement = get_tickers(exchange)
+                    tickers = get_tickers(exchange)
+                    market_movement = get_market_movement(tickers)
                     funding = get_funding(usd_balance, market_movement)
-                    order = buy_order(exchange, usd_balance, selected_Ticker, price, funding)
-                    write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=order['id'])
+                    order = buy_order(exchange, selected_Ticker, price, funding)
+                    helper.write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=order['id'])
 
                 #adjust sell order
                 adjust_sell_trigger = True
@@ -532,29 +471,24 @@ def run_trader():
 
                 highest_value = price
                 while adjust_sell_trigger:
-                    _, market_movement = get_tickers(exchange)
+                    tickers = get_tickers(exchange)
+                    market_movement = get_market_movement(tickers)
                     _, max_loss = get_market_factor(market_movement)
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
                         if order:
-                            write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
-
+                            helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
                         isInitial = False
-          
-                        wait("short")
+                        helper.wait("short")
                     else:
                         logger.info("Asset has been sold!")
                         adjust_sell_trigger = False
                         asset_with_balance = None
                         buy_decision = False
-
-
         else:  
             logger.info("No Asset selected!")
-            wait("long")
-
-
+            helper.wait("long")
 
 if __name__ == "__main__":
     run_trader()
