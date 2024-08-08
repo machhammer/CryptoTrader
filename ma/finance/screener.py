@@ -128,7 +128,7 @@ def get_funding(usd, market_movement):
     funding = usd * fund_ratio
     if funding < minimum_funding:
         funding = minimum_funding
-    logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
+    logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, fund_ratio, funding))
     return funding
 
 
