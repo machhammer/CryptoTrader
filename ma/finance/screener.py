@@ -103,6 +103,10 @@ def get_tickers(exchange):
     tickers = pd.DataFrame(tickers)
     tickers = tickers.T
     tickers = tickers[tickers["symbol"].str.endswith("/" + base_currency)].head(amount_coins)
+    return tickers
+
+
+def get_tickers_as_list(tickers):
     tickers = tickers["symbol"].to_list()
     random.shuffle(tickers)
     return tickers
@@ -113,12 +117,15 @@ def get_market_movement(tickers):
     market_movement = tickers["percentage"].median()
     if not exchange_name == "bitget":
         market_movement *= 100
+    return market_movement
+
+
 
 
 #************************************ Funding based on market movment
 def get_funding(usd, market_movement):
-    mf, _ = get_market_factor(market_movement)
-    funding = usd * mf
+    fund_ratio, _ = get_market_factor(market_movement)
+    funding = usd * fund_ratio
     if funding < minimum_funding:
         funding = minimum_funding
     logger.info("{} {} * Market Factor {} = Funding {}".format(base_currency, usd, mf, funding))
@@ -211,6 +218,7 @@ def get_candidate(exchange):
     logger.info("1. ******** Check for New Candidate ********")
     tickers = get_tickers(exchange)
     market_movement = get_market_movement(tickers)
+    tickers = get_tickers_as_list(tickers)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     expected_results = get_top_ticker_expected_results(exchange, major_move)
     close_to_high = get_close_to_high(exchange, major_move)
@@ -456,8 +464,7 @@ def run_trader():
 
                 #buy sleected Ticker
                 if not asset_with_balance:
-                    tickers = get_tickers(exchange)
-                    market_movement = get_market_movement(tickers)
+                    market_movement = get_market_movement(get_tickers(exchange))
                     funding = get_funding(usd_balance, market_movement)
                     order = buy_order(exchange, selected_Ticker, price, funding)
                     helper.write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=order['id'])
