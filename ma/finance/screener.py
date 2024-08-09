@@ -473,8 +473,8 @@ def run_trader():
                 if not asset_with_balance:
                     market_movement = get_market_movement(get_tickers(exchange))
                     funding = get_funding(usd_balance, market_movement)
-                    buy_order = buy_order(exchange, selected_Ticker, price, funding)
-                    logger.info(buy_order)
+                    buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
+                    logger.info(buy_order_info)
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if isinstance(price, float):
                         take_profit_price = price * (1 + (take_profit_in_percent/100))
