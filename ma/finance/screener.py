@@ -313,10 +313,10 @@ def get_close_to_high(exchange, tickers):
     return close_to_high
 
 
-def get_lowest_difference_to_maximum(excheange, tickers):
+def get_lowest_difference_to_maximum(exchange, tickers):
     lowest_difference_to_maximum = None
     for ticker in tickers:
-        data = get_data(excheange, ticker, "1m", limit=90)
+        data = get_data(exchange, ticker, "1m", limit=90)
         data = add_min_max(data)
         local_max = data['max'].max()
         current_close = data.iloc[-1, 4]
@@ -443,11 +443,11 @@ def run_trader():
         usd_balance = get_base_currency_balance(exchange)
         if not asset_with_balance:
             selected_Ticker, market_movement, major_move, increased_volume, buy_signals, lowest_distance_to_max = get_candidate(exchange)
-            helper.write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
+            #helper.write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
             buy_decision = True
         else:
             selected_Ticker = asset_with_balance
-            helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
+            #helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
 
         if selected_Ticker:
             buy_attempts = 1
@@ -456,13 +456,16 @@ def run_trader():
            
             while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
                 is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker , buy_attempts)
-                helper.write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
+                #helper.write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
                 if not is_buy:
                     buy_attempts += 1
                     helper.wait("short")
                 else:
                     price = current_close
                     buy_decision = True
+                if not get_lowest_difference_to_maximum(exchange, [selected_Ticker]):
+                    buy_attempts = buy_attempts_nr
+
             
             if buy_decision or asset_with_balance:
 
@@ -477,7 +480,7 @@ def run_trader():
                         take_profit_price = price * (1 + (take_profit_in_percent/100))
                         sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
                         logger.info(sell_order)
-                    helper.write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=buy_order['id'])
+                    #helper.write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=buy_order['id'])
 
                 #adjust sell order
                 adjust_sell_trigger = True
@@ -494,8 +497,8 @@ def run_trader():
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
-                        if order:
-                            helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
+                        #if order:
+                        #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
                         isInitial = False
                         helper.wait("short")
                     else:
