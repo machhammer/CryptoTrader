@@ -59,7 +59,7 @@ def get_data(exchange, ticker, interval, limit):
 
 #************************************ Balance of base currency
 def get_base_currency_balance(exchange):
-    usd = exchange.fetch_balance()[base_currency]["free"]
+    usd = exchange.fetch_balance()[base_currency]["total"]
     return usd
 
 
@@ -67,11 +67,11 @@ def get_base_currency_balance(exchange):
 def find_asset_with_balance(exchange):
     asset_with_balance = None
     price = None
-    current_assets = exchange.fetch_balance()["free"]
+    current_assets = exchange.fetch_balance()["total"]
     for asset in current_assets:
         if not asset in ignored_coins:
             found_price = exchange.fetch_ticker(asset + "/" + base_currency)["last"]
-            balance = exchange.fetch_balance()[asset]["free"]
+            balance = exchange.fetch_balance()[asset]["total"]
             if (balance * found_price) > valid_position_amount:
                 logger.info("Found asset with balance: {}".format(asset))
                 asset_with_balance = asset + "/" + base_currency
@@ -84,7 +84,7 @@ def get_Ticker_balance(exchange, ticker):
     ticker = ticker.replace("/" + base_currency, "")
     ticker_balance = 0
     try:
-        ticker_balance = exchange.fetch_balance()[ticker]["free"]
+        ticker_balance = exchange.fetch_balance()[ticker]["total"]
     except:
         logger.info("   Ticker not in Wallet")
     logger.info("   Ticker Balance: {}".format(ticker_balance))
@@ -447,6 +447,11 @@ def run_trader():
             buy_decision = True
         else:
             selected_Ticker = asset_with_balance
+            size = get_Ticker_balance(exchange, selected_Ticker)
+            if isinstance(price, float):
+                take_profit_price = price * (1 + (take_profit_in_percent/100))
+                sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
+                logger.info(sell_order)
             #helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
 
         if selected_Ticker:
