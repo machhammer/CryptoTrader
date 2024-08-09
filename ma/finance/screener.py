@@ -139,10 +139,10 @@ def get_market_factor(pos_neg_mean):
     max_loss = 0
     if pos_neg_mean > 4:
         fund_ratio = 0.9
-        max_loss = 0.04
+        max_loss = 0.05
     elif pos_neg_mean > 3:
         fund_ratio = 0.9
-        max_loss = 0.03
+        max_loss = 0.04
     elif pos_neg_mean >1 and pos_neg_mean <=3:
         fund_ratio = 0.75
         max_loss = 0.03
@@ -154,7 +154,7 @@ def get_market_factor(pos_neg_mean):
         max_loss = 0.02
     else:
         fund_ratio = 0.1
-        max_loss = 0.015
+        max_loss = 0.02
     logger.info("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))    
     return fund_ratio, max_loss
 
@@ -421,7 +421,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
 
 def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
     logger.info("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
-    order = exchange.create_stop_loss_order(ticker, size, takeProfitPrice)
+    order = exchange.create_take_profit_order(ticker, size, takeProfitPrice)
     logger.info("   sell TP order id : {}".format(order))
 
 

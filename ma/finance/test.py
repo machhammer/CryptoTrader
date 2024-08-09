@@ -204,17 +204,17 @@ def get_variance(ticker):
     
 
 def test_bitget_stoploss(ticker):
-    exchange.create_stop_loss_order(ticker, 262.2, 0.026605)
+    exchange.create_stop_loss_order(ticker, 3242.0, 0.0077928)
 
 def test_balance(ticker):
     ticker_balance = exchange.fetch_balance()[ticker]["free"]
     print(ticker_balance)
 
 def test_take_profit_order(ticker):
-    order = exchange.create_take_profit_order(ticker, 24.81, 0.46155)
+    order = exchange.create_take_profit_order(ticker, 3242, 0.0077928)
     print(order)
 
 
 if __name__ == "__main__":
     
-    test_take_profit_order("HIFI/USDT")
+    test_take_profit_order("VT/USDT")
