@@ -31,6 +31,7 @@ ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG"]
 amount_coins = 1000
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
+take_profit_in_percent = 2
 buy_attempts_nr = 120
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
@@ -410,15 +411,18 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
     return highest_value, order
 
 
+def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
+    logger.info("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
+    order = exchange.create_stop_loss_order(ticker, size, takeProfitPrice)
+    logger.info("   sell TP order id : {}".format(order))
+
+
 def sell_order(exchange, ticker, size, stopLossPrice):
     exchange.cancel_orders(ticker)
     logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
     logger.info("   sell order id : {}".format(order))
     return order
-
-
-
 
 
 def run_trader():
@@ -459,8 +463,14 @@ def run_trader():
                     tickers = get_tickers(exchange)
                     market_movement = get_market_movement(tickers)
                     funding = get_funding(usd_balance, market_movement)
-                    order = buy_order(exchange, selected_Ticker, price, funding)
-                    helper.write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=order['id'])
+                    buy_order = buy_order(exchange, selected_Ticker, price, funding)
+                    logger.info(buy_order)
+                    size = get_Ticker_balance(exchange, selected_Ticker)
+                    if isinstance(price, float):
+                        take_profit_price = price * (1 + (take_profit_in_percent/100))
+                        sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
+                        logger.info(sell_order)
+                    helper.write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=buy_order['id'])
 
                 #adjust sell order
                 adjust_sell_trigger = True

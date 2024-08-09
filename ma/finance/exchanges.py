@@ -187,7 +187,6 @@ class Exchange():
             client = self.bitget_native()
             asset = asset.split("/")
             asset = asset[0] + asset[1] + "_SPBL"
-            data = client.spot_cancel_batch_orders
             data = client.spot_place_plan_order(asset, side="sell", triggerPrice=stopLossPrice, size=size, triggerType="market_price", orderType="market")
             orderId = data
         else:
@@ -196,6 +195,14 @@ class Exchange():
             else:
                 raise Exception("Exchange is None.")
         return orderId
+
+
+    def create_take_profit_order(self, asset, size, price):
+        if self.exchange is not None:
+            order = self.exchange.create_order(asset, 'limit', 'sell', size, price)
+        else:
+            raise Exception("Exchange is None.")
+        return order
 
 
     def create_buy_order(self, asset, size, price):

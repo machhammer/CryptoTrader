@@ -193,13 +193,15 @@ def get_ticker(ticker):
 def get_variance(ticker):
     data = load_data(ticker)
     data['change'] = data['Close'].pct_change()
-    print(data)
-    #var = data['change'].std()
-    #print(data['change'].mean())
-    #print(var)
-    print(data['change'].min())
-    print(data['change'].max())
+    
+    data = data[data["change"] < 0]
 
+    min = data['change'].min()
+    max = data['change'].max()
+    
+    print(min)
+    print(max)
+    
 
 def test_bitget_stoploss(ticker):
     exchange.create_stop_loss_order(ticker, 262.2, 0.026605)
@@ -208,14 +210,11 @@ def test_balance(ticker):
     ticker_balance = exchange.fetch_balance()[ticker]["free"]
     print(ticker_balance)
 
-def test_order_book():
-    orderbook = exchange.exchange.fetch_order_book ("ZAI/USDT")
-    bid = orderbook['bids'][0][0] if len (orderbook['bids']) > 0 else None
-    ask = orderbook['asks'][0][0] if len (orderbook['asks']) > 0 else None
-    spread = (ask - bid) if (bid and ask) else None
-    print (exchange.exchange.id, 'market price', { 'bid': bid, 'ask': ask, 'spread': spread })
+def test_take_profit_order(ticker):
+    order = exchange.create_take_profit_order(ticker, 24.81, 0.46155)
+    print(order)
 
 
 if __name__ == "__main__":
     
-   test_order_book()
+    test_take_profit_order("HIFI/USDT")
