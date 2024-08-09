@@ -139,7 +139,7 @@ def get_market_factor(pos_neg_mean):
     max_loss = 0
     if pos_neg_mean > 4:
         fund_ratio = 0.9
-        max_loss = 0.03
+        max_loss = 0.04
     elif pos_neg_mean > 3:
         fund_ratio = 0.9
         max_loss = 0.03
