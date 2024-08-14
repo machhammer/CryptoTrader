@@ -386,7 +386,7 @@ def buy_order(exchange, ticker, price, funding):
     size = convert_to_precision(funding / price, amount_precision)
     order = exchange.create_buy_order(ticker, size, price)
     logger.info("   buy: {}, order id : {}".format(ticker, order['info']['orderId']))
-    return order, price, size
+    return order
 
 
 #************************************ SELL Functions
@@ -424,6 +424,9 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
 
 
 def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
+    amount_precision, price_precision = get_precision(exchange, ticker)
+    takeProfitPrice = convert_to_precision(takeProfitPrice, price_precision)
+    size = convert_to_precision(size, amount_precision)
     logger.info("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
     order = exchange.create_take_profit_order(ticker, size, takeProfitPrice)
     logger.info("   sell TP order id : {}".format(order))
@@ -431,6 +434,9 @@ def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
 
 def sell_order(exchange, ticker, size, stopLossPrice):
     exchange.cancel_orders(ticker)
+    amount_precision, price_precision = get_precision(exchange, ticker)
+    stopLossPrice = convert_to_precision(stopLossPrice, price_precision)
+    size = convert_to_precision(size, amount_precision)
     logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
     logger.info("   sell order id : {}".format(order))
@@ -481,9 +487,9 @@ def run_trader():
                 if not asset_with_balance:
                     market_movement = get_market_movement(get_tickers(exchange))
                     funding = get_funding(usd_balance, market_movement)
-                    buy_order_info, price, size = buy_order(exchange, selected_Ticker, price, funding)
+                    buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
                     logger.info(buy_order_info)
-                    #size = get_Ticker_balance(exchange, selected_Ticker)   /// NOT NEEDED?
+                    size = get_Ticker_balance(exchange, selected_Ticker)   /// NOT NEEDED?
                     if isinstance(price, float):
                         take_profit_price = price * (1 + (take_profit_in_percent/100))
                         sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
