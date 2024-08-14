@@ -453,7 +453,8 @@ def run_trader():
                     take_profit_price = price * (1 + (take_profit_in_percent/100))
                     sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
                     logger.info(sell_order)
-            except:
+            except Exception as e:
+                print(e)
                 logger.info("Take Profit Sell Order exists.")
             #helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
 
@@ -473,7 +474,6 @@ def run_trader():
                     buy_decision = True
                 if not get_lowest_difference_to_maximum(exchange, [selected_Ticker]):
                     buy_attempts = buy_attempts_nr
-
             
             if buy_decision or asset_with_balance:
 
@@ -517,6 +517,7 @@ def run_trader():
         else:  
             logger.info("No Asset selected!")
             helper.wait("long")
+
 
 if __name__ == "__main__":
     run_trader()

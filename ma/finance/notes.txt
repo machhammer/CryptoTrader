@@ -1,0 +1,34 @@
+
+0. Check for Balances
+    if no balance goto 1
+    if balance:
+
+        get buy price (get_order_history)
+        if side='buy'
+        - fillPrice
+        - status: 'full_fill'
+        - cTime
+        - fillQuantity
+
+        check for take profit order (get_plan_order)
+        if side='sell'
+        - takeProfit:   triggerPrice > fillPric3
+        - StopLsoss:    triggerPrice < fillPrice
+
+        if not takeProfit:
+        - create plann order fillQuanty + 2%
+
+        if not StopLoss:
+        - create plann order Highest Value - 2%
+        
+
+
+
+1. get Candidate
+
+2. Observe
+
+3. buy
+
+4. Sell
+

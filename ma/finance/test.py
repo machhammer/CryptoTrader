@@ -15,6 +15,8 @@ from ta.volume import VolumeWeightedAveragePrice
 
 from exchanges import Exchange
 
+from datetime import datetime
+
 import pprint
 
 pd.set_option('display.max_rows', None)
@@ -183,8 +185,8 @@ def get_precision(ticker):
 def convert_to_precision(size, precision):
     return math.floor(size/precision) * precision
 
-def get_orders():
-    pprint.pprint(exchange.exchange.fetch_order(id='4611686087313874522'))
+def test_get_orders(id, asset):
+    pprint.pprint(exchange.fetch_order(id, asset))
     
 
 def get_ticker(ticker):
@@ -214,7 +216,40 @@ def test_take_profit_order(ticker):
     order = exchange.create_take_profit_order(ticker, 3242, 0.0077928)
     print(order)
 
+def test_bitget_native_get_orders(asset):
+    client = exchange.bitget_native()
+    asset = asset.split("/")
+    asset = asset[0] + asset[1] + "_SPBL"
+    
+    #records = client.spot_get_order_history(asset)
+    #for record in records['data']:
+    #    print(record)
+    
+    print(" ***** plan orders ***** ")
+    records = client.spot_get_plan_orders(asset)
+    print(records)
+    for record in records['data']['orderList']:
+        print(record)
+    
+        
+def test_bitget_native_profit_order(asset):
+    client = exchange.bitget_native()
+    asset = asset.split("/")
+    asset = asset[0] + asset[1] + "_SPBL"
+    response = client.spot_place_plan_order(asset, "sell", 0.9, 3242, triggerType="market_price", orderType="market", timeInForceValue="normal")
+    print(response)
+    
+def test_bitget_native_stop_loss_order(asset):
+    client = exchange.bitget_native()
+    asset = asset.split("/")
+    asset = asset[0] + asset[1] + "_SPBL"
+    response = client.spot_place_plan_order(asset, "sell", 0.005, 3242, triggerType="market_price", orderType="market", timeInForceValue="normal")
+    print(response)
+
+
 
 if __name__ == "__main__":
     
-    test_take_profit_order("VT/USDT")
+    #test_bitget_native_stop_loss_order("VT/USDT")
+    test_bitget_native_get_orders("VT/USDT")
+    #test_bitget_native_profit_order("VT/USDT")

@@ -182,26 +182,30 @@ class Exchange():
         
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
-        orderId = None
         if self.name == 'bitget':
             client = self.bitget_native()
             asset = asset.split("/")
             asset = asset[0] + asset[1] + "_SPBL"
-            data = client.spot_place_plan_order(asset, side="sell", triggerPrice=stopLossPrice, size=size, triggerType="market_price", orderType="market")
-            orderId = data
+            order = client.spot_place_plan_order(asset, side="sell", triggerPrice=stopLossPrice, size=size, triggerType="market_price", orderType="market", timeInForceValue="normal")
         else:
             if self.exchange is not None:
-                self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
+                order = self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
             else:
                 raise Exception("Exchange is None.")
-        return orderId
+        return order
 
 
-    def create_take_profit_order(self, asset, size, price):
-        if self.exchange is not None:
-            order = self.exchange.create_order(asset, 'limit', 'sell', size, price)
+    def create_take_profit_order(self, asset, size, takeProfitPrice):
+        if self.name == 'bitget':
+            client = self.bitget_native()
+            asset = asset.split("/")
+            asset = asset[0] + asset[1] + "_SPBL"
+            order = client.spot_place_plan_order(asset, side="sell", triggerPrice=takeProfitPrice, size=size, triggerType="market_price", orderType="market", timeInForceValue="normal")
         else:
-            raise Exception("Exchange is None.")
+            if self.exchange is not None:
+                order = self.exchange.create_order(asset, 'limit', 'sell', size, takeProfitPrice)
+            else:
+                raise Exception("Exchange is None.")
         return order
 
 
@@ -230,8 +234,8 @@ class Exchange():
         else:
             raise Exception("Exchange is None.")
 
-    def fetch_orders(self, asset):
+    def fetch_order(self, id, asset):
         if self.exchange is not None:
-            return self.exchange.fetch_orders(asset)
+            return self.exchange.fetch_order(id, asset)
         else:
             raise Exception("Exchange is None.")
