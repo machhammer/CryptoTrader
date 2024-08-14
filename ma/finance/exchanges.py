@@ -178,6 +178,7 @@ class Exchange():
             client = self.bitget_native()
             asset = asset.split("/")
             asset = asset[0] + asset[1] + "_SPBL"
+            
             client.spot_cance_order(asset, orderId)
         else:
             if self.exchange is not None:

@@ -436,6 +436,9 @@ def sell_order(exchange, ticker, size, stopLossPrice):
     logger.info("   sell order id : {}".format(order))
     return order
 
+def cancel_order(exchange, ticker, orderId):
+    exchange.cancel_order(ticker, orderId)
+    logger.info("   cancel Order - Ticker: {}, Order Id: {}, stopLossPrice: {}".format(ticker, orderId))
 
 
 def run_trader():
@@ -485,7 +488,6 @@ def run_trader():
                         take_profit_price = price * (1 + (take_profit_in_percent/100))
                         sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
                         logger.info(sell_order)
-                    #helper.write_to_db(selected_ticker=selected_Ticker, funding=funding, buy_order_id=buy_order['id'])
 
                 #adjust sell order
                 adjust_sell_trigger = True
@@ -505,7 +507,7 @@ def run_trader():
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
                         if order:
                             print(order)
-                            if current_order_id: exchange.cancel_order(selected_Ticker, current_order_id)
+                            if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
                             current_order_id = order['data']['orderId']
                         #if order:
                         #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
