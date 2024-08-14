@@ -489,7 +489,7 @@ def run_trader():
                     funding = get_funding(usd_balance, market_movement)
                     buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
                     logger.info(buy_order_info)
-                    size = get_Ticker_balance(exchange, selected_Ticker)   /// NOT NEEDED?
+                    size = get_Ticker_balance(exchange, selected_Ticker)
                     if isinstance(price, float):
                         take_profit_price = price * (1 + (take_profit_in_percent/100))
                         sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
