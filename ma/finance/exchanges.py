@@ -173,6 +173,11 @@ class Exchange():
             self.log_error("fetch_my_trades")
         return result
 
+    def cancel_order(self, orderId):
+        if self.exchange is not None:
+            self.exchange.cancel_order(orderId)
+        else:
+            raise Exception("Exchange is None.")
 
     def cancel_orders(self, asset):
         if self.exchange is not None:
@@ -180,13 +185,16 @@ class Exchange():
         else:
             raise Exception("Exchange is None.")
         
+    def bitget_native_create_plan_order(self, asset, quantity, triggerPrice):
+        client = self.bitget_native()
+        asset = asset.split("/")
+        asset = asset[0] + asset[1] + "_SPBL"
+        order = client.spot_place_plan_order(asset, side="sell", triggerPrice=triggerPrice, size=quantity, triggerType="market_price", orderType="market", timeInForceValue="normal")
+        return order
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
         if self.name == 'bitget':
-            client = self.bitget_native()
-            asset = asset.split("/")
-            asset = asset[0] + asset[1] + "_SPBL"
-            order = client.spot_place_plan_order(asset, side="sell", triggerPrice=stopLossPrice, size=size, triggerType="market_price", orderType="market", timeInForceValue="normal")
+            self.bitget_native_create_plan_order(asset, size, stopLossPrice)
         else:
             if self.exchange is not None:
                 order = self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
@@ -197,10 +205,7 @@ class Exchange():
 
     def create_take_profit_order(self, asset, size, takeProfitPrice):
         if self.name == 'bitget':
-            client = self.bitget_native()
-            asset = asset.split("/")
-            asset = asset[0] + asset[1] + "_SPBL"
-            order = client.spot_place_plan_order(asset, side="sell", triggerPrice=takeProfitPrice, size=size, triggerType="market_price", orderType="market", timeInForceValue="normal")
+            self.bitget_native_create_plan_order(asset, size, takeProfitPrice)
         else:
             if self.exchange is not None:
                 order = self.exchange.create_order(asset, 'limit', 'sell', size, takeProfitPrice)

@@ -162,16 +162,19 @@ def get_market_factor(pos_neg_mean):
 #************************************ get precision for specific ticker
 def get_precision(exchange, ticker):
     markets = exchange.exchange.load_markets()
-    value = float((markets[ticker]['precision']['amount'])) 
-    logger.info("   get_precision - ticker: {}, value: {}".format(ticker, value))
-    return value
+    amount = float((markets[ticker]['precision']['amount'])) 
+    price = float((markets[ticker]['precision']['price'])) 
+    logger.info("   get_precision - ticker: {}, amount: {}, price: {}".format(ticker, amount, price))
+    return amount, price
 
 
 #************************************ get convert price fitting to precision
-def convert_to_precision(size, precision):
-    value = math.floor(size/precision) * precision
-    logger.info("   convert_to_precision - size: {}, precision: {}, value: {}".format(size, precision, value)) 
-    return math.floor(size/precision) * precision
+def convert_to_precision(value, precision):
+    rounded = math.floor(value/precision) * precision
+    numbers = len(str(precision))-2
+    rounded = round(rounded, numbers)
+    logger.info("   convert_to_precision - size: {}, precision: {}, value: {}".format(value, precision, rounded)) 
+    return rounded
 
 
 
@@ -378,8 +381,9 @@ def is_buy_decision(exchange, ticker, attempt):
 
 def buy_order(exchange, ticker, price, funding):
     logger.info("3. ******** Buy Decision, Ticker: {}, Price: {}, Funding: {}".format(ticker, price, funding))
-    precision = get_precision(exchange, ticker)
-    size = convert_to_precision(funding / price, precision)
+    amount_precision, price_precision = get_precision(exchange, ticker)
+    price = convert_to_precision(price, price_precision)
+    size = convert_to_precision(funding / price, amount_precision)
     order = exchange.create_buy_order(ticker, size, price)
     logger.info("   buy order id : {}".format(ticker, order["id"]))
     return order
@@ -431,6 +435,7 @@ def sell_order(exchange, ticker, size, stopLossPrice):
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
     logger.info("   sell order id : {}".format(order))
     return order
+
 
 
 def run_trader():
@@ -498,6 +503,7 @@ def run_trader():
                     isInitial = True
 
                 highest_value = price
+                current_order_id = None
                 while adjust_sell_trigger:
                     tickers = get_tickers(exchange)
                     market_movement = get_market_movement(tickers)
@@ -505,6 +511,9 @@ def run_trader():
                     size = get_Ticker_balance(exchange, selected_Ticker)
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
+                        if order:
+                            current_order_id = order['orderId']
+                            exchange.cancel_order(current_order_id)
                         #if order:
                         #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
                         isInitial = False

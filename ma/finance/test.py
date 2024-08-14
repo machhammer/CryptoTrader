@@ -221,9 +221,9 @@ def test_bitget_native_get_orders(asset):
     asset = asset.split("/")
     asset = asset[0] + asset[1] + "_SPBL"
     
-    #records = client.spot_get_order_history(asset)
-    #for record in records['data']:
-    #    print(record)
+    records = client.spot_get_order_history(asset)
+    for record in records['data']:
+        print(record)
     
     print(" ***** plan orders ***** ")
     records = client.spot_get_plan_orders(asset)
@@ -232,24 +232,38 @@ def test_bitget_native_get_orders(asset):
         print(record)
     
         
-def test_bitget_native_profit_order(asset):
+def test_bitget_native_create_plan_order(asset, size, takeProfitPrice):
+    amount_precision, price_precision = test_get_precision(asset)
+    size = test_convert_to_precision(size, amount_precision)
+    takeProfitPrice = test_convert_to_precision(takeProfitPrice, price_precision)
     client = exchange.bitget_native()
     asset = asset.split("/")
     asset = asset[0] + asset[1] + "_SPBL"
-    response = client.spot_place_plan_order(asset, "sell", 0.9, 3242, triggerType="market_price", orderType="market", timeInForceValue="normal")
+    response = client.spot_place_plan_order(asset, "sell", takeProfitPrice, size, triggerType="market_price", orderType="market", timeInForceValue="normal")
     print(response)
     
-def test_bitget_native_stop_loss_order(asset):
-    client = exchange.bitget_native()
-    asset = asset.split("/")
-    asset = asset[0] + asset[1] + "_SPBL"
-    response = client.spot_place_plan_order(asset, "sell", 0.005, 3242, triggerType="market_price", orderType="market", timeInForceValue="normal")
-    print(response)
 
+def test_convert_to_precision(value, precision):
+    rounded = math.floor(value/precision) * precision
+    numbers = len(str(precision))-2
+    rounded = round(rounded, numbers)
+    print(rounded)
+
+    return rounded
+
+
+def test_get_precision(ticker):
+    markets = exchange.exchange.load_markets()
+    amount = float((markets[ticker]['precision']['amount'])) 
+    price = float((markets[ticker]['precision']['price'])) 
+    return amount, price
 
 
 if __name__ == "__main__":
     
-    #test_bitget_native_stop_loss_order("VT/USDT")
-    test_bitget_native_get_orders("VT/USDT")
-    #test_bitget_native_profit_order("VT/USDT")
+
+    
+    
+    test_bitget_native_create_plan_order("BANANA/USDT", 0.3345, 45.0000)
+
+    test_bitget_native_get_orders("BANANA/USDT")
