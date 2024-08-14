@@ -173,11 +173,17 @@ class Exchange():
             self.log_error("fetch_my_trades")
         return result
 
-    def cancel_order(self, orderId):
-        if self.exchange is not None:
-            self.exchange.cancel_order(orderId)
+    def cancel_order(self, asset, orderId):
+        if self.name == 'bitget':
+            client = self.bitget_native()
+            asset = asset.split("/")
+            asset = asset[0] + asset[1] + "_SPBL"
+            client.spot_cance_order(asset, orderId)
         else:
-            raise Exception("Exchange is None.")
+            if self.exchange is not None:
+                self.exchange.cancel_order(orderId)
+            else:
+                raise Exception("Exchange is None.")
 
     def cancel_orders(self, asset):
         if self.exchange is not None:
