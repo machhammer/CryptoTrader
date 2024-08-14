@@ -512,8 +512,8 @@ def run_trader():
                     if still_has_postion(size, highest_value):
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
                         if order:
+                            if current_order_id: exchange.cancel_order(current_order_id)
                             current_order_id = order['orderId']
-                            exchange.cancel_order(current_order_id)
                         #if order:
                         #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
                         isInitial = False

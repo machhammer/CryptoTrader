@@ -205,7 +205,7 @@ class Exchange():
 
     def create_take_profit_order(self, asset, size, takeProfitPrice):
         if self.name == 'bitget':
-            self.bitget_native_create_plan_order(asset, size, takeProfitPrice)
+            order = self.bitget_native_create_plan_order(asset, size, takeProfitPrice)
         else:
             if self.exchange is not None:
                 order = self.exchange.create_order(asset, 'limit', 'sell', size, takeProfitPrice)

@@ -261,9 +261,4 @@ def test_get_precision(ticker):
 
 if __name__ == "__main__":
     
-
-    
-    
-    test_bitget_native_create_plan_order("BANANA/USDT", 0.3345, 45.0000)
-
-    test_bitget_native_get_orders("BANANA/USDT")
+    get_variance("HTX/USDT")

@@ -32,3 +32,9 @@
 
 4. Sell
 
+
+
+keine guten:
+HTX,
+PUSH
+BTG
