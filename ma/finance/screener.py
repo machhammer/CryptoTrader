@@ -385,8 +385,8 @@ def buy_order(exchange, ticker, price, funding):
     price = convert_to_precision(price, price_precision)
     size = convert_to_precision(funding / price, amount_precision)
     order = exchange.create_buy_order(ticker, size, price)
-    logger.info("   buy order id : {}".format(ticker, order["id"]))
-    return order
+    logger.info("   buy: {}, order id : {}".format(ticker, order['info']['orderId']))
+    return order, price, size
 
 
 #************************************ SELL Functions
@@ -481,9 +481,9 @@ def run_trader():
                 if not asset_with_balance:
                     market_movement = get_market_movement(get_tickers(exchange))
                     funding = get_funding(usd_balance, market_movement)
-                    buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
+                    buy_order_info, price, size = buy_order(exchange, selected_Ticker, price, funding)
                     logger.info(buy_order_info)
-                    size = get_Ticker_balance(exchange, selected_Ticker)
+                    #size = get_Ticker_balance(exchange, selected_Ticker)   /// NOT NEEDED?
                     if isinstance(price, float):
                         take_profit_price = price * (1 + (take_profit_in_percent/100))
                         sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)

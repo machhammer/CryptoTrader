@@ -263,10 +263,10 @@ def test_get_precision(ticker):
 if __name__ == "__main__":
     
     
-    #test_bitget_native_create_plan_order("KEY/USDT", 2136, 0.0045)
+    test_bitget_native_create_plan_order("KEY/USDT", 623.86, 0.01624656)
 
-    test_bitget_native_get_orders("KEY/USDT")
+    #test_bitget_native_get_orders("KEY/USDT")
 
-    d = {'code': '00000', 'msg': 'success', 'requestTime': 1723649701640, 'data': {'orderId': '1207639866311512064', 'clientOrderId': '1207639866286346240'}}
+    d = {'info': {'orderId': '1207652704698408960', 'clientOid': '9d212b63-3802-4388-9212-199d6079eb3f'}, 'id': '1207652704698408960', 'clientOrderId': '9d212b63-3802-4388-9212-199d6079eb3f', 'timestamp': None, 'datetime': None, 'lastTradeTimestamp': None, 'lastUpdateTimestamp': None, 'symbol': 'VSC/USDT', 'type': None, 'side': None, 'price': None, 'amount': None, 'cost': None, 'average': None, 'filled': None, 'remaining': None, 'timeInForce': None, 'postOnly': None, 'reduceOnly': None, 'stopPrice': None, 'triggerPrice': None, 'takeProfitPrice': None, 'stopLossPrice': None, 'status': None, 'fee': None, 'trades': [], 'fees': []}
 
-    print(d['data']['orderId'])
+    print(d['info']['orderId'])
