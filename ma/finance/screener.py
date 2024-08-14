@@ -438,7 +438,7 @@ def sell_order(exchange, ticker, size, stopLossPrice):
 
 def cancel_order(exchange, ticker, orderId):
     exchange.cancel_order(ticker, orderId)
-    logger.info("   cancel Order - Ticker: {}, Order Id: {}, stopLossPrice: {}".format(ticker, orderId))
+    logger.info("   cancel Order - Ticker: {}, Order Id: {}".format(ticker, orderId))
 
 
 def run_trader():

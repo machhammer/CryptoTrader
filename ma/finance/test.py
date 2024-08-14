@@ -263,7 +263,7 @@ def test_get_precision(ticker):
 if __name__ == "__main__":
     
     
-    test_bitget_native_create_plan_order("KEY/USDT", 623.86, 0.01624656)
+    test_bitget_native_create_plan_order("VSC/USDT", 623.86, 0.01624656)
 
     #test_bitget_native_get_orders("KEY/USDT")
 
