@@ -514,7 +514,7 @@ def run_trader():
                         print(order)
                         if order:
                             if current_order_id: exchange.cancel_order(current_order_id)
-                            #current_order_id = order['orderId']
+                            current_order_id = order['data']['orderId']
                         #if order:
                         #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
                         isInitial = False

@@ -259,21 +259,14 @@ def test_get_precision(ticker):
     return amount, price
 
 
-def initialize_existing_position():
-
-    
-
-
-    return price, highest_value, 
-
 
 if __name__ == "__main__":
-    
-
     
     
     #test_bitget_native_create_plan_order("KEY/USDT", 2136, 0.0045)
 
     test_bitget_native_get_orders("KEY/USDT")
 
-    
+    d = {'code': '00000', 'msg': 'success', 'requestTime': 1723649701640, 'data': {'orderId': '1207639866311512064', 'clientOrderId': '1207639866286346240'}}
+
+    print(d['data']['orderId'])
