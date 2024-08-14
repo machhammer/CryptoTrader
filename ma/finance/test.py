@@ -259,6 +259,21 @@ def test_get_precision(ticker):
     return amount, price
 
 
+def initialize_existing_position():
+
+    
+
+
+    return price, highest_value, 
+
+
 if __name__ == "__main__":
     
-    get_variance("HTX/USDT")
+
+    
+    
+    #test_bitget_native_create_plan_order("KEY/USDT", 2136, 0.0045)
+
+    test_bitget_native_get_orders("KEY/USDT")
+
+    
