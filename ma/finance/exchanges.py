@@ -194,7 +194,7 @@ class Exchange():
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
         if self.name == 'bitget':
-            self.bitget_native_create_plan_order(asset, size, stopLossPrice)
+            order = self.bitget_native_create_plan_order(asset, size, stopLossPrice)
         else:
             if self.exchange is not None:
                 order = self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
