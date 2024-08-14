@@ -452,15 +452,7 @@ def run_trader():
             buy_decision = True
         else:
             selected_Ticker = asset_with_balance
-            try:
-                size = get_Ticker_balance(exchange, selected_Ticker)
-                if isinstance(price, float):
-                    take_profit_price = price * (1 + (take_profit_in_percent/100))
-                    sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
-                    logger.info(sell_order)
-            except Exception as e:
-                print(e)
-                logger.info("Take Profit Sell Order exists.")
+            size = get_Ticker_balance(exchange, selected_Ticker)
             #helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
 
         if selected_Ticker:
@@ -513,7 +505,7 @@ def run_trader():
                         highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
                         if order:
                             print(order)
-                            if current_order_id: exchange.cancel_order(current_order_id)
+                            if current_order_id: exchange.cancel_order(selected_Ticker, current_order_id)
                             current_order_id = order['data']['orderId']
                         #if order:
                         #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
