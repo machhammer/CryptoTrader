@@ -281,13 +281,10 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
 
 def get_ticker_with_increased_volume(exchange, tickers):
     increased_volumes = []
-    print("increased volume")
     for ticker in tickers:
         data = get_data(exchange, ticker, "1d", limit=10)
         last_mean = data.head(9)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
-        print(ticker)
-        print(current_mean / last_mean)
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
     logger.info("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
@@ -499,20 +496,27 @@ def run_trader():
                 
                 if buy_decision or asset_with_balance:
 
+                    adjust_sell_trigger = False
+
                     #buy sleected Ticker
                     if not asset_with_balance:
                         market_movement = get_market_movement(get_tickers(exchange))
                         funding = get_funding(usd_balance, market_movement)
-                        buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
-                        logger.info(buy_order_info)
-                        size = get_Ticker_balance(exchange, selected_Ticker)
-                        if isinstance(price, float):
-                            take_profit_price = price * (1 + (take_profit_in_percent/100))
-                            sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
-                            logger.info(sell_order)
+                        try:
+                            buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
+                            logger.info(buy_order_info)
+                            adjust_sell_trigger = True
+                        except Exception as e:
+                            logger.info("Error buying: {}".format(e))
 
-                    #adjust sell order
-                    adjust_sell_trigger = True
+                        if adjust_sell_trigger:
+                            size = get_Ticker_balance(exchange, selected_Ticker)
+                            if isinstance(price, float):
+                                take_profit_price = price * (1 + (take_profit_in_percent/100))
+                                sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
+                                logger.info(sell_order)
+
+                    #adjust sell order phase
                     if asset_with_balance:
                         isInitial = False
                     else:
@@ -528,7 +532,6 @@ def run_trader():
                         if still_has_postion(size, highest_value):
                             highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
                             if order:
-                                print(order)
                                 if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
                                 current_order_id = order['data']['orderId']
                             #if order:
