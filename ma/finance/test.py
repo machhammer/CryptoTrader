@@ -21,8 +21,8 @@ import pprint
 
 pd.set_option('display.max_rows', None)
 
-#exchange = Exchange("bitget")
-exchange = None
+exchange = Exchange("bitget")
+
 
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
@@ -246,9 +246,9 @@ def test_bitget_native_create_plan_order(asset, size, takeProfitPrice):
 
 def test_convert_to_precision(value, precision):
     rounded = math.floor(value/precision) * precision
-    numbers = len(str(precision))-2
-    rounded = round(rounded, numbers)
-    print(rounded)
+    #numbers = len(str(precision))-2
+    #rounded = round(rounded, numbers)
+    #print(rounded)
 
     return rounded
 
@@ -260,20 +260,12 @@ def test_get_precision(ticker):
     return amount, price
 
 
-def get_wait_time_until(from_time: time, to_time: time):
-                
-        print("start hour: ", from_time.hour)
-        print("end hour: ", to_time.hour)
-
-        now = datetime.now()
-        
-        if now.hour < 
-        
-        run = now.hour >= from_time.hour and now.hour <= to_time.hour
-
-        return run
 
 
 if __name__ == "__main__":
 
-    print(get_wait_time_until(time(hour=15), time(hour=1)))
+    amount_precision, price_precision = test_get_precision("AMP/USDT")
+    print(amount_precision)
+    print(price_precision)
+
+    print(test_convert_to_precision(0.00412284, price_precision))

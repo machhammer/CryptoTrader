@@ -175,8 +175,8 @@ def get_precision(exchange, ticker):
 #************************************ get convert price fitting to precision
 def convert_to_precision(value, precision):
     rounded = math.floor(value/precision) * precision
-    numbers = len(str(precision))-2
-    rounded = round(rounded, numbers)
+    #numbers = len(str(precision))-2
+    #rounded = round(rounded, numbers)
     logger.info("   convert_to_precision - size: {}, precision: {}, value: {}".format(value, precision, rounded)) 
     return rounded
 
