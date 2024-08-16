@@ -1,7 +1,7 @@
 import time
 import logging
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, time, timedelta
 import persistance as database
 import matplotlib.pyplot as plt
 
@@ -36,9 +36,19 @@ class Helper():
 
 
     def get_wait_time_1(self):
-            seconds = datetime.now().second
-            wait_time = (self.wait_time_next_buy_selection_seconds - (seconds % self.wait_time_next_buy_selection_seconds))
-            return wait_time
+        seconds = datetime.now().second
+        wait_time = (self.wait_time_next_buy_selection_seconds - (seconds % self.wait_time_next_buy_selection_seconds))
+        return wait_time
+
+
+    def in_business_hours(self, from_time: time, to_time: time):    
+        now = datetime.now()
+        if to_time < from_time:
+            raise Exception("case end < start not implemeted!")
+        run = now.hour >= from_time.hour and now.hour <= to_time.hour
+        return run
+                
+
 
 
     def get_time(self):

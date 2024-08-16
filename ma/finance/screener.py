@@ -4,6 +4,7 @@ import pandas as pd
 import random
 import math
 import logging
+from datetime import time
 from tqdm import tqdm
 from ta.trend import AroonIndicator, EMAIndicator, MACD
 from ta.volume import VolumeWeightedAveragePrice
@@ -40,6 +41,9 @@ difference_to_maximum_max = -2
 valid_position_amount = 2
 #difference_to_resistance_min = 0.01
 minimum_funding = 10
+
+start_trading_at = time(hour=3)
+stop_trading_at = time(hour=22)
 
 
 helper = Helper(logger, wait_time_next_asset_selection_minutes, wait_time_next_buy_selection_seconds)
@@ -442,6 +446,15 @@ def sell_order(exchange, ticker, size, stopLossPrice):
     logger.info("   sell order id : {}".format(order))
     return order
 
+def sell_now(exchange, ticker, size):
+    exchange.cancel_orders(ticker)
+    amount_precision, price_precision = get_precision(exchange, ticker)
+    size = convert_to_precision(size, amount_precision)
+    order = exchange.create_sell_order(ticker, size)
+    logger.info("   sell inmediately - Ticker: {}".format(ticker))
+    return order
+
+
 def cancel_order(exchange, ticker, orderId):
     exchange.cancel_order(ticker, orderId)
     logger.info("   cancel Order - Ticker: {}, Order Id: {}".format(ticker, orderId))
@@ -451,81 +464,92 @@ def run_trader():
 
     exchange = Exchange("bitget")
     running = True
+    in_business = True
     asset_with_balance, price = find_asset_with_balance(exchange)
 
     while running:
-        usd_balance = get_base_currency_balance(exchange)
-        if not asset_with_balance:
-            selected_Ticker, market_movement, major_move, increased_volume, buy_signals, lowest_distance_to_max = get_candidate(exchange)
-            #helper.write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
-            buy_decision = True
-        else:
-            selected_Ticker = asset_with_balance
-            size = get_Ticker_balance(exchange, selected_Ticker)
-            #helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
+        if helper.in_business_hours(start_trading_at, stop_trading_at):
+            in_business = True
+            usd_balance = get_base_currency_balance(exchange)
+            if not asset_with_balance:
+                selected_Ticker, market_movement, major_move, increased_volume, buy_signals, lowest_distance_to_max = get_candidate(exchange)
+                #helper.write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
+                buy_decision = True
+            else:
+                selected_Ticker = asset_with_balance
+                size = get_Ticker_balance(exchange, selected_Ticker)
+                #helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
 
-        if selected_Ticker:
-            buy_attempts = 1
-            #observe selected Ticker
-            buy_decision = False
-           
-            while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
-                is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker , buy_attempts)
-                #helper.write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
-                if not is_buy:
-                    buy_attempts += 1
-                    helper.wait("short")
-                else:
-                    price = current_close
-                    buy_decision = True
-                if not get_lowest_difference_to_maximum(exchange, [selected_Ticker]):
-                    buy_attempts = buy_attempts_nr
+            if selected_Ticker:
+                buy_attempts = 1
+                #observe selected Ticker
+                buy_decision = False
             
-            if buy_decision or asset_with_balance:
-
-                #buy sleected Ticker
-                if not asset_with_balance:
-                    market_movement = get_market_movement(get_tickers(exchange))
-                    funding = get_funding(usd_balance, market_movement)
-                    buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
-                    logger.info(buy_order_info)
-                    size = get_Ticker_balance(exchange, selected_Ticker)
-                    if isinstance(price, float):
-                        take_profit_price = price * (1 + (take_profit_in_percent/100))
-                        sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
-                        logger.info(sell_order)
-
-                #adjust sell order
-                adjust_sell_trigger = True
-                if asset_with_balance:
-                    isInitial = False
-                else:
-                    isInitial = True
-
-                highest_value = price
-                current_order_id = None
-                while adjust_sell_trigger:
-                    tickers = get_tickers(exchange)
-                    market_movement = get_market_movement(tickers)
-                    _, max_loss = get_market_factor(market_movement)
-                    size = get_Ticker_balance(exchange, selected_Ticker)
-                    if still_has_postion(size, highest_value):
-                        highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
-                        if order:
-                            print(order)
-                            if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
-                            current_order_id = order['data']['orderId']
-                        #if order:
-                        #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
-                        isInitial = False
+                while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
+                    is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker , buy_attempts)
+                    #helper.write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
+                    if not is_buy:
+                        buy_attempts += 1
                         helper.wait("short")
                     else:
-                        logger.info("Asset has been sold!")
-                        adjust_sell_trigger = False
-                        asset_with_balance = None
-                        buy_decision = False
-        else:  
-            logger.info("No Asset selected!")
+                        price = current_close
+                        buy_decision = True
+                    if not get_lowest_difference_to_maximum(exchange, [selected_Ticker]):
+                        buy_attempts = buy_attempts_nr
+                
+                if buy_decision or asset_with_balance:
+
+                    #buy sleected Ticker
+                    if not asset_with_balance:
+                        market_movement = get_market_movement(get_tickers(exchange))
+                        funding = get_funding(usd_balance, market_movement)
+                        buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
+                        logger.info(buy_order_info)
+                        size = get_Ticker_balance(exchange, selected_Ticker)
+                        if isinstance(price, float):
+                            take_profit_price = price * (1 + (take_profit_in_percent/100))
+                            sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
+                            logger.info(sell_order)
+
+                    #adjust sell order
+                    adjust_sell_trigger = True
+                    if asset_with_balance:
+                        isInitial = False
+                    else:
+                        isInitial = True
+
+                    highest_value = price
+                    current_order_id = None
+                    while adjust_sell_trigger:
+                        tickers = get_tickers(exchange)
+                        market_movement = get_market_movement(tickers)
+                        _, max_loss = get_market_factor(market_movement)
+                        size = get_Ticker_balance(exchange, selected_Ticker)
+                        if still_has_postion(size, highest_value):
+                            highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
+                            if order:
+                                print(order)
+                                if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
+                                current_order_id = order['data']['orderId']
+                            #if order:
+                            #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
+                            isInitial = False
+                            helper.wait("short")
+                        else:
+                            logger.info("Asset has been sold!")
+                            adjust_sell_trigger = False
+                            asset_with_balance = None
+                            buy_decision = False
+            else:  
+                logger.info("No Asset selected!")
+                helper.wait("long")
+        else:
+            if in_business:
+                asset_with_balance, price = find_asset_with_balance(exchange)
+                size = get_Ticker_balance(exchange, selected_Ticker)
+                sell_now(exchange, asset_with_balance, size)
+                in_business = False
+
             helper.wait("long")
 
 

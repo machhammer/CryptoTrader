@@ -1,3 +1,4 @@
+Start at **:**
 
 0. Check for Balances
     if no balance goto 1
@@ -20,17 +21,28 @@
 
         if not StopLoss:
         - create plann order Highest Value - 2%
-        
+    Goto 4.
 
 
+Repeat
+            
 
-1. get Candidate
+    1. get Candidate
 
-2. Observe
+    2. Observe (max 30 min)
 
-3. buy
+    3. buy
+        - BUY position
+        - Put Take profit
+        - Put new Stop Loss
+    
+    4. Sell
+        Check for higher high:
+            - Put new Stop Loss
 
-4. Sell
+Until **:**
+
+Clear position
 
 
 
@@ -38,3 +50,21 @@ keine guten:
 HTX,
 PUSH
 BTG
+
+
+
+
+now     start   end     run
+
+23      4       22      no
+0       4       22      no
+4       4       22      yes
+8       4       22      yes
+
+23      22      4       yes
+0       22      4       yes
+3       22      4       yes
+7       22      4       no
+
+
+1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24  1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23  24

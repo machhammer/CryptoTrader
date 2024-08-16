@@ -7,7 +7,7 @@ import pause
 import matplotlib.pyplot as plt
 
 from scipy.signal import argrelextrema
-from datetime import datetime
+from datetime import datetime, time, timedelta
 
 from ta.trend import EMAIndicator
 from ta.trend import MACD
@@ -21,7 +21,8 @@ import pprint
 
 pd.set_option('display.max_rows', None)
 
-exchange = Exchange("bitget")
+#exchange = Exchange("bitget")
+exchange = None
 
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
@@ -259,14 +260,20 @@ def test_get_precision(ticker):
     return amount, price
 
 
+def get_wait_time_until(from_time: time, to_time: time):
+                
+        print("start hour: ", from_time.hour)
+        print("end hour: ", to_time.hour)
+
+        now = datetime.now()
+        
+        if now.hour < 
+        
+        run = now.hour >= from_time.hour and now.hour <= to_time.hour
+
+        return run
+
 
 if __name__ == "__main__":
-    
-    
-    test_bitget_native_create_plan_order("VSC/USDT", 623.86, 0.01624656)
 
-    #test_bitget_native_get_orders("KEY/USDT")
-
-    d = {'info': {'orderId': '1207652704698408960', 'clientOid': '9d212b63-3802-4388-9212-199d6079eb3f'}, 'id': '1207652704698408960', 'clientOrderId': '9d212b63-3802-4388-9212-199d6079eb3f', 'timestamp': None, 'datetime': None, 'lastTradeTimestamp': None, 'lastUpdateTimestamp': None, 'symbol': 'VSC/USDT', 'type': None, 'side': None, 'price': None, 'amount': None, 'cost': None, 'average': None, 'filled': None, 'remaining': None, 'timeInForce': None, 'postOnly': None, 'reduceOnly': None, 'stopPrice': None, 'triggerPrice': None, 'takeProfitPrice': None, 'stopLossPrice': None, 'status': None, 'fee': None, 'trades': [], 'fees': []}
-
-    print(d['info']['orderId'])
+    print(get_wait_time_until(time(hour=15), time(hour=1)))
