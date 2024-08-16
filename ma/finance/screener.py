@@ -549,7 +549,7 @@ def run_trader():
         else:
             if in_business:
                 asset_with_balance, price = find_asset_with_balance(exchange)
-                size = get_Ticker_balance(exchange, selected_Ticker)
+                size = get_Ticker_balance(exchange, asset_with_balance)
                 sell_now(exchange, asset_with_balance, size)
                 in_business = False
 
