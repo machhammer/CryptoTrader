@@ -496,7 +496,7 @@ def run_trader():
                 
                 if buy_decision or asset_with_balance:
 
-                    adjust_sell_trigger = False
+                    adjust_sell_trigger = True
 
                     #buy sleected Ticker
                     if not asset_with_balance:
@@ -505,8 +505,8 @@ def run_trader():
                         try:
                             buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
                             logger.info(buy_order_info)
-                            adjust_sell_trigger = True
                         except Exception as e:
+                            adjust_sell_trigger = False
                             logger.info("Error buying: {}".format(e))
 
                         if adjust_sell_trigger:
