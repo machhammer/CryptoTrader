@@ -29,7 +29,7 @@ logger.setLevel(logging.INFO)
 exchange_name = "bitget"
 base_currency = "USDT"
 ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG", "BGB"]
-amount_coins = 1000
+amount_coins = 10
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
 take_profit_in_percent = 2
@@ -40,7 +40,7 @@ volume_increase_threshold = 1
 difference_to_maximum_max = -2
 valid_position_amount = 2
 #difference_to_resistance_min = 0.01
-minimum_funding = 10
+minimum_funding = 1000
 
 start_trading_at = time(hour=3)
 stop_trading_at = time(hour=22)

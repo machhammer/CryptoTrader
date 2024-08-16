@@ -1,7 +1,7 @@
 import time
 import logging
 import pandas as pd
-from datetime import datetime, time, timedelta
+from datetime import datetime
 import persistance as database
 import matplotlib.pyplot as plt
 
