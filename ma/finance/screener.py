@@ -523,24 +523,30 @@ def run_trader():
                     highest_value = price
                     current_order_id = None
                     while adjust_sell_trigger:
-                        tickers = get_tickers(exchange)
-                        market_movement = get_market_movement(tickers)
-                        _, max_loss = get_market_factor(market_movement)
-                        size = get_Ticker_balance(exchange, selected_Ticker)
-                        if still_has_postion(size, highest_value):
-                            highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
-                            if order:
-                                if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
-                                current_order_id = order['data']['orderId']
-                            #if order:
-                            #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
-                            isInitial = False
-                            helper.wait("short")
+                        if helper.in_business_hours(start_trading_at, stop_trading_at):
+                            tickers = get_tickers(exchange)
+                            market_movement = get_market_movement(tickers)
+                            _, max_loss = get_market_factor(market_movement)
+                            size = get_Ticker_balance(exchange, selected_Ticker)
+                            if still_has_postion(size, highest_value):
+                                highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
+                                if order:
+                                    if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
+                                    current_order_id = order['data']['orderId']
+                                #if order:
+                                #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
+                                isInitial = False
+                                helper.wait("short")
+                            else:
+                                logger.info("Asset has been sold!")
+                                adjust_sell_trigger = False
+                                asset_with_balance = None
+                                buy_decision = False
                         else:
-                            logger.info("Asset has been sold!")
-                            adjust_sell_trigger = False
-                            asset_with_balance = None
-                            buy_decision = False
+                            asset_with_balance, price = find_asset_with_balance(exchange)
+                            size = get_Ticker_balance(exchange, asset_with_balance)
+                            sell_now(exchange, asset_with_balance, size)
+                            in_business = False
             else:  
                 logger.info("No Asset selected!")
                 helper.wait("long")
