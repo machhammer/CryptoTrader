@@ -459,7 +459,7 @@ def run_trader():
 
     exchange = Exchange("bitget")
     running = True
-    in_business = True
+    in_business = False
     asset_with_balance, price = find_asset_with_balance(exchange)
 
     while running:
