@@ -45,7 +45,7 @@ class Helper():
         now = datetime.now()
         if to_time < from_time:
             raise Exception("case end < start not implemeted!")
-        run = now.hour >= from_time.hour and now.hour <= to_time.hour
+        run = now.hour >= from_time.hour and now.hour < to_time.hour
         return run
                 
 
