@@ -547,6 +547,7 @@ def run_trader():
                             size = get_Ticker_balance(exchange, asset_with_balance)
                             sell_now(exchange, asset_with_balance, size)
                             in_business = False
+                            adjust_sell_trigger = False
             else:  
                 logger.info("No Asset selected!")
                 helper.wait("long")
