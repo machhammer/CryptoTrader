@@ -42,7 +42,7 @@ valid_position_amount = 2
 #difference_to_resistance_min = 0.01
 minimum_funding = 10
 
-start_trading_at = time(hour=3)
+start_trading_at = time(hour=4)
 stop_trading_at = time(hour=22)
 
 
