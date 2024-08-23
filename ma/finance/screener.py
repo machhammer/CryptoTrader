@@ -419,7 +419,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
                 resistance_found = True
     else:
         logger.info("   No new sell trigger")
-    return highest_value, order
+    return highest_value, current_value, order
 
 
 def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
@@ -489,6 +489,7 @@ def run_trader():
                     else:
                         price = current_close
                         buy_decision = True
+                        helper.write_trading_info_to_db(selected_Ticker, "buy", current_close, market_movement)
                     if not get_lowest_difference_to_maximum(exchange, [selected_Ticker]):
                         buy_attempts = buy_attempts_nr
                 
@@ -529,7 +530,7 @@ def run_trader():
                             _, max_loss = get_market_factor(market_movement)
                             size = get_Ticker_balance(exchange, selected_Ticker)
                             if still_has_postion(size, highest_value):
-                                highest_value, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
+                                highest_value, price, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
                                 if order:
                                     if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
                                     current_order_id = order['data']['orderId']
@@ -542,6 +543,7 @@ def run_trader():
                                 adjust_sell_trigger = False
                                 asset_with_balance = None
                                 buy_decision = False
+                                helper.write_trading_info_to_db(selected_Ticker, "sell", price, market_movement)
                         else:
                             asset_with_balance, price = find_asset_with_balance(exchange)
                             size = get_Ticker_balance(exchange, asset_with_balance)

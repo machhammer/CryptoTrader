@@ -106,4 +106,7 @@ class Helper():
         database.insert_screener(self.get_time(), market, market_factor, base_currency, selected_ticker, funding, major_move, increase_volume, buy_signal, close_to_maximum, is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff, buy_order_id, sell_order_id)    
 
 
+    def write_trading_info_to_db(self, asset, side, price, market_movement):
+        database.insert_trading_info_table(self.get_time(), asset, side, price, market_movement)
+
 

@@ -103,6 +103,30 @@ def initialize_trader_table():
     connection.cursor().execute(create_table)
 
 
+def initialize_trading_info_table():
+    connection = connect()
+    create_table ="CREATE or REPLACE TABLE trading_info " \
+            "( "\
+                "timestamp TIMESTAMP, "\
+                "asset VARCHAR(15), "\
+                "side VARCHAR(4), "\
+                "price FLOAT, "\
+                "market_movement FLOAT "\
+            ")"
+    connection.cursor().execute(create_table)
+
+def insert_trading_info_table(timestamp, asset, side, price, market_movement):
+    connection = connect()
+    insert_record = "INSERT INTO trading_info " \
+        "(timestamp, asset, side, price, market_movement) "\
+        "VALUES ('{}', '{}', '{}', {}, {})".format(timestamp, asset, side, price, market_movement)
+    connection.cursor().execute(insert_record)
+    connection.commit()
+    connection.close()
+
+
+
+
 def initialize_transaction_table():
     connection = connect()
     create_table ="CREATE or REPLACE TABLE transactions " \
@@ -217,6 +241,5 @@ def insert_optimizer_results_transactions(connection, timestamp, coin, sma, aroo
 
 
 if __name__ == "__main__":
-    initialize_screener_table()
-
+    initialize_trading_info_table()
 
