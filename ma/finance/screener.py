@@ -235,7 +235,7 @@ def get_candidate(exchange):
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     logger.info("   market movment: {}".format(market_movement))
     logger.info("   Selected: {}".format(selected_Ticker))
-    return selected_Ticker, market_movement, major_move, increased_volume, buy_signals, selected_Ticker
+    return selected_Ticker, market_movement
 
 def get_ticker_with_bigger_moves(exchange, tickers):
     limit = 4
@@ -375,7 +375,7 @@ def is_buy_decision(exchange, ticker, attempt):
 
     logger.info("   macd check - buy: {}".format(is_buy))
 
-    return is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff
+    return is_buy, current_close
 
 
 def buy_order(exchange, ticker, price, funding):
@@ -460,82 +460,80 @@ def run_trader():
     exchange = Exchange("bitget")
     running = True
     in_business = False
-    asset_with_balance, price = find_asset_with_balance(exchange)
 
+    market_movement = None
+    current_price = None
+    size = None
+    selected_new_asset = None
+    existing_asset = None
+    
+    existing_asset, current_price = find_asset_with_balance(exchange)
+    
     while running:
         if helper.in_business_hours(start_trading_at, stop_trading_at):
             in_business = True
             usd_balance = get_base_currency_balance(exchange)
-            if not asset_with_balance:
-                selected_Ticker, market_movement, major_move, increased_volume, buy_signals, lowest_distance_to_max = get_candidate(exchange)
-                #helper.write_to_db(market=market_movement, base_currency=base_currency, selected_ticker=selected_Ticker, major_move=major_move, increase_volume=increased_volume, buy_signal=buy_signals, close_to_maximum=lowest_distance_to_max)
+            if not existing_asset:
+                selected_new_asset, market_movement = get_candidate(exchange)
                 buy_decision = True
-            else:
-                selected_Ticker = asset_with_balance
-                size = get_Ticker_balance(exchange, selected_Ticker)
-                #helper.write_to_db(base_currency=base_currency, selected_ticker=selected_Ticker)
 
-            if selected_Ticker:
+            if selected_new_asset or existing_asset:
                 buy_attempts = 1
                 #observe selected Ticker
                 buy_decision = False
             
-                while (not buy_decision and buy_attempts <= buy_attempts_nr and not asset_with_balance):
-                    is_buy, current_close, last_max, previous_max, vwap, macd, macd_signal, macd_diff = is_buy_decision(exchange, selected_Ticker , buy_attempts)
-                    #helper.write_to_db(selected_ticker=selected_Ticker, is_buy=is_buy, current_close=current_close, last_max=last_max, previous_max=previous_max, vwap=vwap, macd=macd, macd_signal=macd_signal, macd_diff=macd_diff)
+                while (not buy_decision and buy_attempts <= buy_attempts_nr and not existing_asset):
+                    is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
                     if not is_buy:
                         buy_attempts += 1
                         helper.wait("short")
                     else:
-                        price = current_close
                         buy_decision = True
-                        helper.write_trading_info_to_db(selected_Ticker, "buy", current_close, market_movement)
-                    if not get_lowest_difference_to_maximum(exchange, [selected_Ticker]):
+                    if not get_lowest_difference_to_maximum(exchange, [selected_new_asset]):
                         buy_attempts = buy_attempts_nr
                 
-                if buy_decision or asset_with_balance:
+                if buy_decision or existing_asset:
 
                     adjust_sell_trigger = True
 
                     #buy sleected Ticker
-                    if not asset_with_balance:
+                    if not existing_asset:
                         market_movement = get_market_movement(get_tickers(exchange))
                         funding = get_funding(usd_balance, market_movement)
                         try:
-                            buy_order_info = buy_order(exchange, selected_Ticker, price, funding)
+                            # BUY Order
+                            buy_order_info = buy_order(exchange, selected_new_asset, current_price, funding)
+                            helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
                             logger.info(buy_order_info)
+                            size = get_Ticker_balance(exchange, selected_new_asset)
+                            # Take Profit Order
+                            if isinstance(current_price, float):
+                                take_profit_price = current_price * (1 + (take_profit_in_percent/100))
+                                sell_order = sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
+                                logger.info(sell_order)
+                            existing_asset = selected_new_asset
                         except Exception as e:
                             adjust_sell_trigger = False
                             logger.info("Error buying: {}".format(e))
 
-                        if adjust_sell_trigger:
-                            size = get_Ticker_balance(exchange, selected_Ticker)
-                            if isinstance(price, float):
-                                take_profit_price = price * (1 + (take_profit_in_percent/100))
-                                sell_order = sell_order_take_profit(exchange, selected_Ticker, size, take_profit_price)
-                                logger.info(sell_order)
-
-                    #adjust sell order phase
-                    if asset_with_balance:
-                        isInitial = False
-                    else:
+                    if selected_new_asset:
                         isInitial = True
+                    else:
+                        isInitial = False
 
-                    highest_value = price
+                    highest_value = current_price
                     current_order_id = None
                     while adjust_sell_trigger:
                         if helper.in_business_hours(start_trading_at, stop_trading_at):
                             tickers = get_tickers(exchange)
                             market_movement = get_market_movement(tickers)
                             _, max_loss = get_market_factor(market_movement)
-                            size = get_Ticker_balance(exchange, selected_Ticker)
+                            size = get_Ticker_balance(exchange, existing_asset)
                             if still_has_postion(size, highest_value):
-                                highest_value, price, order = set_sell_trigger(exchange, isInitial, selected_Ticker, size, highest_value, max_loss)
+                                highest_value, price, order = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss)
                                 if order:
-                                    if current_order_id: cancel_order(exchange, selected_Ticker, current_order_id)
+                                    if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
                                     current_order_id = order['data']['orderId']
-                                #if order:
-                                #    helper.write_to_db(selected_ticker=selected_Ticker, sell_order_id=0)
                                 isInitial = False
                                 helper.wait("short")
                             else:
@@ -543,11 +541,12 @@ def run_trader():
                                 adjust_sell_trigger = False
                                 asset_with_balance = None
                                 buy_decision = False
-                                helper.write_trading_info_to_db(selected_Ticker, "sell", price, market_movement)
+                                helper.write_trading_info_to_db(existing_asset, "sell", price, market_movement)
                         else:
-                            asset_with_balance, price = find_asset_with_balance(exchange)
+                            asset_with_balance, current_price = find_asset_with_balance(exchange)
                             size = get_Ticker_balance(exchange, asset_with_balance)
                             sell_now(exchange, asset_with_balance, size)
+                            helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                             in_business = False
                             adjust_sell_trigger = False
             else:  
