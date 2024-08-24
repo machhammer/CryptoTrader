@@ -544,8 +544,8 @@ def run_trader():
                                 helper.write_trading_info_to_db(existing_asset, "sell", price, market_movement)
                         else:
                             existing_asset, current_price = find_asset_with_balance(exchange)
-                            size = get_Ticker_balance(exchange, asset_with_balance)
-                            sell_now(exchange, asset_with_balance, size)
+                            size = get_Ticker_balance(exchange, existing_asset)
+                            sell_now(exchange, existing_asset, size)
                             helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                             in_business = False
                             adjust_sell_trigger = False
@@ -554,9 +554,9 @@ def run_trader():
                 helper.wait("long")
         else:
             if in_business:
-                asset_with_balance, price = find_asset_with_balance(exchange)
-                size = get_Ticker_balance(exchange, asset_with_balance)
-                sell_now(exchange, asset_with_balance, size)
+                existing_asset, price = find_asset_with_balance(exchange)
+                size = get_Ticker_balance(exchange, existing_asset)
+                sell_now(exchange, existing_asset, size)
                 in_business = False
 
             helper.wait("long")
