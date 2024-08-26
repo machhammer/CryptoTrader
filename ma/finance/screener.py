@@ -540,8 +540,8 @@ def run_trader():
                                 logger.info("Asset has been sold!")
                                 adjust_sell_trigger = False
                                 buy_decision = False
-                                existing_asset = None
                                 helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
+                                existing_asset = None
                         else:
                             existing_asset, current_price = find_asset_with_balance(exchange)
                             size = get_Ticker_balance(exchange, existing_asset)
