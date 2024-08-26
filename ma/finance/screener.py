@@ -530,7 +530,7 @@ def run_trader():
                             _, max_loss = get_market_factor(market_movement)
                             size = get_Ticker_balance(exchange, existing_asset)
                             if still_has_postion(size, highest_value):
-                                highest_value, price, order = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss)
+                                highest_value, current_price, order = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss)
                                 if order:
                                     if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
                                     current_order_id = order['data']['orderId']
@@ -541,7 +541,7 @@ def run_trader():
                                 adjust_sell_trigger = False
                                 buy_decision = False
                                 existing_asset = None
-                                helper.write_trading_info_to_db(existing_asset, "sell", price, market_movement)
+                                helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                         else:
                             existing_asset, current_price = find_asset_with_balance(exchange)
                             size = get_Ticker_balance(exchange, existing_asset)
@@ -554,7 +554,7 @@ def run_trader():
                 helper.wait("long")
         else:
             if in_business:
-                existing_asset, price = find_asset_with_balance(exchange)
+                existing_asset, current_price = find_asset_with_balance(exchange)
                 size = get_Ticker_balance(exchange, existing_asset)
                 sell_now(exchange, existing_asset, size)
                 in_business = False
