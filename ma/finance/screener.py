@@ -490,7 +490,7 @@ def run_trader():
                     else:
                         buy_decision = True
                     if not get_lowest_difference_to_maximum(exchange, [selected_new_asset]):
-                        buy_attempts = buy_attempts_nr
+                        buy_attempts = buy_attempts_nr + 1
                 
                 if buy_decision or existing_asset:
 
