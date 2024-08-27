@@ -48,8 +48,10 @@ class Helper():
         run = now.hour >= from_time.hour and now.hour < to_time.hour
         return run
                 
-
-
+    def in_buying_period(self, by_time: time):    
+        now = datetime.now()
+        run = now.hour < by_time.hour
+        return run
 
     def get_time(self):
         return datetime.now().strftime('%Y-%m-%d %H:%M:%S')

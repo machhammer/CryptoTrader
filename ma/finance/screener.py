@@ -44,6 +44,7 @@ minimum_funding = 10
 
 start_trading_at = time(hour=4)
 stop_trading_at = time(hour=22)
+stop_buying_at = time(hour=21)
 
 
 helper = Helper(logger, wait_time_next_asset_selection_minutes, wait_time_next_buy_selection_seconds)
@@ -466,16 +467,23 @@ def run_trader():
     size = None
     selected_new_asset = None
     existing_asset = None
-    
+    previous_asset = None
+    start_price = None
+    end_price = None
+
     existing_asset, current_price = find_asset_with_balance(exchange)
     
     while running:
-        if helper.in_business_hours(start_trading_at, stop_trading_at):
+        if helper.in_business_hours(start_trading_at, stop_trading_at) and helper.in_buying_period(stop_buying_at):
             in_business = True
             usd_balance = get_base_currency_balance(exchange)
-            if not existing_asset:
-                selected_new_asset, market_movement = get_candidate(exchange)
-                buy_decision = True
+            
+            if start_price and end_price and start_price < end_price:
+                selected_new_asset = previous_asset
+            else:
+                if not existing_asset:
+                    selected_new_asset, market_movement = get_candidate(exchange)
+                    buy_decision = True
 
             if selected_new_asset or existing_asset:
                 buy_attempts = 1
@@ -503,6 +511,7 @@ def run_trader():
                         try:
                             # BUY Order
                             buy_order_info = buy_order(exchange, selected_new_asset, current_price, funding)
+                            start_price = current_price
                             helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
                             logger.info(buy_order_info)
                             size = get_Ticker_balance(exchange, selected_new_asset)
@@ -540,6 +549,8 @@ def run_trader():
                                 logger.info("Asset has been sold!")
                                 adjust_sell_trigger = False
                                 buy_decision = False
+                                end_price = current_price
+                                previous_asset = existing_asset
                                 helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                                 existing_asset = None
                         else:
@@ -549,6 +560,7 @@ def run_trader():
                             helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                             in_business = False
                             adjust_sell_trigger = False
+                            existing_asset = None
             else:  
                 logger.info("No Asset selected!")
                 helper.wait("long")
@@ -557,7 +569,9 @@ def run_trader():
                 existing_asset, current_price = find_asset_with_balance(exchange)
                 size = get_Ticker_balance(exchange, existing_asset)
                 sell_now(exchange, existing_asset, size)
+                helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                 in_business = False
+                existing_asset = None
 
             helper.wait("long")
 
