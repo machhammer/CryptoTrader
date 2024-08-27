@@ -32,7 +32,7 @@ ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG", "BGB"]
 amount_coins = 1000
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
-take_profit_in_percent = 2
+take_profit_in_percent = 3
 buy_attempts_nr = 30
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
@@ -480,6 +480,9 @@ def run_trader():
             
             if start_price and end_price and start_price < end_price:
                 selected_new_asset = previous_asset
+                previous_asset = None
+                start_price = None
+                end_price = None
             else:
                 if not existing_asset:
                     selected_new_asset, market_movement = get_candidate(exchange)
