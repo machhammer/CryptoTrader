@@ -331,12 +331,14 @@ def get_lowest_difference_to_maximum(exchange, tickers):
     return lowest_difference_to_maximum
 
 def get_with_sufficient_variance(exchange, ticker):
-    data = get_data(exchange, ticker, "1m", limit=5)
-    data = data.duplicated(subset=["close"])
-    data = data.loc[lambda x : x == True]
-    len_data = len(data)
-    logger.info("   variance: {}".format(len_data))
-    if len_data>0:
+    duplicate_data = 99
+    if ticker:
+        data = get_data(exchange, ticker, "1m", limit=5)
+        data = data.duplicated(subset=["close"])
+        data = data.loc[lambda x : x == True]
+        duplicate_data = len(data)
+        logger.info("   variance: {}".format(duplicate_data))
+    if duplicate_data>0:
         return None
     else:
         return ticker
