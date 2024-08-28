@@ -234,6 +234,7 @@ def get_candidate(exchange):
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, relevant_tickers)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
+    selected_Ticker = get_with_sufficient_variance(exchange, selected_Ticker)
     logger.info("   market movment: {}".format(market_movement))
     logger.info("   Selected: {}".format(selected_Ticker))
     return selected_Ticker, market_movement
@@ -328,6 +329,18 @@ def get_lowest_difference_to_maximum(exchange, tickers):
             lowest_difference_to_maximum = ticker
     logger.info("   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
     return lowest_difference_to_maximum
+
+def get_with_sufficient_variance(exchange, ticker):
+    data = get_data(exchange, ticker, "1m", limit=5)
+    data = data.duplicated(subset=["close"])
+    data = data.loc[lambda x : x == True]
+    len_data = len(data)
+    logger.info("   variance: {}".format(len_data))
+    if len_data>0:
+        return None
+    else:
+        return ticker
+
 
 
 #************************************ BUY Functions
@@ -513,16 +526,14 @@ def run_trader():
                         funding = get_funding(usd_balance, market_movement)
                         try:
                             # BUY Order
-                            buy_order_info = buy_order(exchange, selected_new_asset, current_price, funding)
+                            buy_order(exchange, selected_new_asset, current_price, funding)
                             start_price = current_price
                             helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
-                            logger.info(buy_order_info)
                             size = get_Ticker_balance(exchange, selected_new_asset)
                             # Take Profit Order
                             if isinstance(current_price, float):
                                 take_profit_price = current_price * (1 + (take_profit_in_percent/100))
-                                sell_order = sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
-                                logger.info(sell_order)
+                                sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
                             existing_asset = selected_new_asset
                         except Exception as e:
                             adjust_sell_trigger = False

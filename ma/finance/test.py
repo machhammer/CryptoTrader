@@ -27,7 +27,7 @@ exchange = Exchange("bitget")
 # Laden der historischen Daten für eine Aktie
 def load_data(ticker):
     bars = exchange.fetch_ohlcv(
-        ticker, "5m", limit=72
+        ticker, "1m", limit=5
     )
     data = pd.DataFrame(
         bars[:], columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
@@ -260,12 +260,17 @@ def test_get_precision(ticker):
     return amount, price
 
 
+def test_duplicates(ticker):
+    data = load_data(ticker)
+    print(data)
+    data = data.duplicated(subset=["Close"])
+    print(data)
+    data = data.loc[lambda x : x == True]
+    print(data)
+    print(len(data))
 
 
 if __name__ == "__main__":
 
-    amount_precision, price_precision = test_get_precision("AMP/USDT")
-    print(amount_precision)
-    print(price_precision)
-
-    print(test_convert_to_precision(0.00412284, price_precision))
+    test_duplicates("HIGH/USDT")
+    

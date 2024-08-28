@@ -1,1 +1,1 @@
-SELECT * FROM trader ORDER BY timestamp DESC
+SELECT * FROM trading_info ORDER BY timestamp DESC
