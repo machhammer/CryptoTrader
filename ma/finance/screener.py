@@ -583,11 +583,12 @@ def run_trader():
         else:
             if in_business:
                 existing_asset, current_price = find_asset_with_balance(exchange)
-                size = get_Ticker_balance(exchange, existing_asset)
-                sell_now(exchange, existing_asset, size)
-                helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
-                in_business = False
-                existing_asset = None
+                if existing_asset:
+                    size = get_Ticker_balance(exchange, existing_asset)
+                    sell_now(exchange, existing_asset, size)
+                    helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
+                    in_business = False
+                    existing_asset = None
 
             helper.wait("long")
 
