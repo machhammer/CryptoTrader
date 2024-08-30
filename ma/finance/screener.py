@@ -509,6 +509,7 @@ def run_trader():
             else:
                 if not existing_asset:
                     selected_new_asset, market_movement = get_candidate(exchange)
+                    logger.info("Selected: {}".format(selected_new_asset))
                     buy_decision = True
 
             if selected_new_asset or existing_asset:
