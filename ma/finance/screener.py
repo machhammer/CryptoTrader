@@ -572,7 +572,7 @@ def run_trader():
                                 isInitial = False
                                 helper.wait("short")
                             else:
-                                logger.debug("Asset has been sold!")
+                                logger.info("Asset has been sold!")
                                 adjust_sell_trigger = False
                                 buy_decision = False
                                 end_price = current_price
@@ -591,7 +591,7 @@ def run_trader():
                             end_price = None
                             start_price = None
             else:  
-                logger.debug("No Asset selected!")
+                logger.info("No Asset selected!")
                 helper.wait("long")
         else:
             if in_business:
