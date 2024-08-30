@@ -41,6 +41,10 @@ class Helper():
         return wait_time
 
 
+    def wait_1_hour(self):
+        time.sleep( 60 * 60 )
+
+
     def in_business_hours(self, from_time: time, to_time: time):    
         now = datetime.now()
         if to_time < from_time:
