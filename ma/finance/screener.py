@@ -401,7 +401,7 @@ def buy_order(exchange, ticker, price, funding):
     price = convert_to_precision(price, price_precision)
     size = convert_to_precision(funding / price, amount_precision)
     order = exchange.create_buy_order(ticker, size, price)
-    logger.info("   buy: {}, order id : {}".format(ticker, order['info']['orderId']))
+    logger.info("   buy: {}, price : {}".format(ticker, price))
     return order
 
 
@@ -497,19 +497,20 @@ def run_trader():
             usd_balance = get_base_currency_balance(exchange)
             
             if start_price and end_price:
-                if start_price < end_price:
-                    selected_new_asset = previous_asset
-                else:
-                    logger.info("Sold with loss, waiting 1 hour!")
-                    helper.wait_1_hour()
-                    logger.info("Continue ...")
+                if isinstance(start_price, float) and isinstance(end_price, float):
+                    if start_price < end_price:
+                        selected_new_asset = previous_asset
+                    else:
+                        logger.info("Sold with loss, waiting 1 hour!")
+                        helper.wait_1_hour()
+                        logger.info("Continue ...")
                 previous_asset = None
                 start_price = None
                 end_price = None
             else:
                 if not existing_asset:
                     selected_new_asset, market_movement = get_candidate(exchange)
-                    logger.info("Selected: {}".format(selected_new_asset))
+                    if selected_new_asset: logger.info("Selected: {}".format(selected_new_asset))
                     buy_decision = True
 
             if selected_new_asset or existing_asset:
