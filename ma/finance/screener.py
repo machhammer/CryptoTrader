@@ -491,6 +491,8 @@ def run_trader():
     
     while running:
         if helper.in_business_hours(start_trading_at, stop_trading_at) and helper.in_buying_period(stop_buying_at):
+            if not in_business:
+                logger.info("Start traiding!")
             in_business = True
             usd_balance = get_base_currency_balance(exchange)
             
@@ -576,6 +578,7 @@ def run_trader():
                                 helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                                 existing_asset = None
                         else:
+                            logger.info("Stopping for today!")
                             existing_asset, current_price = find_asset_with_balance(exchange)
                             size = get_Ticker_balance(exchange, existing_asset)
                             sell_now(exchange, existing_asset, size)
@@ -590,6 +593,7 @@ def run_trader():
                 helper.wait("long")
         else:
             if in_business:
+                logger.info("Stopping for today!")
                 existing_asset, current_price = find_asset_with_balance(exchange)
                 if existing_asset:
                     size = get_Ticker_balance(exchange, existing_asset)
