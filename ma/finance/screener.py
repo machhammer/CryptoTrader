@@ -595,13 +595,13 @@ def run_trader():
                 helper.wait("long")
         else:
             if in_business:
+                in_business = False
                 logger.info("Stopping for today!")
                 existing_asset, current_price = find_asset_with_balance(exchange)
                 if existing_asset:
                     size = get_Ticker_balance(exchange, existing_asset)
                     sell_now(exchange, existing_asset, size)
                     helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
-                    in_business = False
                     existing_asset = None
                     start_price = None
                     end_price = None
