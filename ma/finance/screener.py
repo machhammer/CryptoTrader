@@ -498,7 +498,9 @@ def run_trader():
                 if start_price < end_price:
                     selected_new_asset = previous_asset
                 else:
+                    logger.info("Sold with loss, waiting 1 hour!")
                     helper.wait_1_hour()
+                    logger.info("Continue ...")
                 previous_asset = None
                 start_price = None
                 end_price = None
