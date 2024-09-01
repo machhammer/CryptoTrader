@@ -496,20 +496,19 @@ def run_trader():
             usd_balance = get_base_currency_balance(exchange)
             
             if start_price and end_price:
-                start_price = None
-                end_price = None
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
                     selected_new_asset = previous_asset
                     winning_buy_count += 1
                     if winning_buy_count >= 2: helper.wait_5_minutes()
-                    previous_asset = None
-                    start_price = None
-                    end_price = None
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price >= end_price:
+                    selected_new_asset = None
+                    existing_asset = None
                     winning_buy_count = 0
-                    previous_asset = None
                     helper.wait_1_hour()
-                    logger.info("Sold with loss. Waitin 1 hour!")
+                    logger.info("Sold with loss. Waiting 1 hour!")
+                previous_asset = None
+                start_price = None
+                end_price = None
             else:
                 if not existing_asset:
                     selected_new_asset, market_movement = get_candidate(exchange)
@@ -591,6 +590,7 @@ def run_trader():
                             existing_asset = None
             else:  
                 logger.info("No Asset selected!")
+                winning_buy_count = 0
                 helper.wait("long")
         else:
             if in_business:
