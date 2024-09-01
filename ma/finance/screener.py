@@ -495,11 +495,21 @@ def run_trader():
             in_business = True
             usd_balance = get_base_currency_balance(exchange)
             
-            if start_price and end_price and start_price < end_price:
-                selected_new_asset = previous_asset
-                previous_asset = None
+            if start_price and end_price:
                 start_price = None
                 end_price = None
+                if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
+                    selected_new_asset = previous_asset
+                    winning_buy_count += 1
+                    if winning_buy_count >= 2: helper.wait_5_minutes()
+                    previous_asset = None
+                    start_price = None
+                    end_price = None
+                if isinstance(start_price, float) and isinstance(end_price, float) and start_price >= end_price:
+                    winning_buy_count = 0
+                    previous_asset = None
+                    helper.wait_1_hour()
+                    logger.info("Sold with loss. Waitin 1 hour!")
             else:
                 if not existing_asset:
                     selected_new_asset, market_movement = get_candidate(exchange)
@@ -540,7 +550,7 @@ def run_trader():
                                 sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
                             existing_asset = selected_new_asset
                         except Exception as e:
-                               adjust_sell_trigger = False
+                            adjust_sell_trigger = False
                             logger.info("Error buying: {}".format(e))
 
                     if selected_new_asset:

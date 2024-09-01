@@ -1,3 +1,4 @@
+from calendar import weekday
 import time
 import logging
 import pandas as pd
@@ -40,15 +41,21 @@ class Helper():
         wait_time = (self.wait_time_next_buy_selection_seconds - (seconds % self.wait_time_next_buy_selection_seconds))
         return wait_time
 
+    def wait_1_hour(self):
+        time.sleep (60 * 60)
 
-    def in_business_hours(self, from_time: time, to_time: time):    
+    def wait_5_minutes(self):
+        time.sleep (5 * 60)
+
+
+    def in_business_hours(self, from_time, to_time):    
         now = datetime.now()
         if to_time < from_time:
             raise Exception("case end < start not implemeted!")
-        run = now.hour >= from_time.hour and now.hour < to_time.hour
+        run = now.hour >= from_time.hour and now.hour < to_time.hour and now.weekday() < 6
         return run
                 
-    def in_buying_period(self, by_time: time):    
+    def in_buying_period(self, by_time):
         now = datetime.now()
         run = now.hour < by_time.hour
         return run
