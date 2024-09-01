@@ -41,6 +41,7 @@ difference_to_maximum_max = -2
 valid_position_amount = 2
 #difference_to_resistance_min = 0.01
 minimum_funding = 10
+winning_buy_nr = 2
 
 start_trading_at = time(hour=4)
 stop_trading_at = time(hour=22)
@@ -485,6 +486,7 @@ def run_trader():
     previous_asset = None
     start_price = None
     end_price = None
+    winning_buy_count = 0
 
     existing_asset, current_price = find_asset_with_balance(exchange)
     
@@ -538,7 +540,7 @@ def run_trader():
                                 sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
                             existing_asset = selected_new_asset
                         except Exception as e:
-                            adjust_sell_trigger = False
+                               adjust_sell_trigger = False
                             logger.info("Error buying: {}".format(e))
 
                     if selected_new_asset:
