@@ -402,7 +402,7 @@ def buy_order(exchange, ticker, price, funding):
     size = convert_to_precision(funding / price, amount_precision)
     order = exchange.create_buy_order(ticker, size, price)
     logger.info("   buy: {}, order id : {}".format(ticker, order['info']['orderId']))
-    return order
+    return order, price, size
 
 
 #************************************ SELL Functions
@@ -539,10 +539,10 @@ def run_trader():
                         funding = get_funding(usd_balance, market_movement)
                         try:
                             # BUY Order
-                            buy_order(exchange, selected_new_asset, current_price, funding)
+                            _, _, size = buy_order(exchange, selected_new_asset, current_price, funding)
                             start_price = current_price
                             helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
-                            size = get_Ticker_balance(exchange, selected_new_asset)
+                            #size = get_Ticker_balance(exchange, selected_new_asset)
                             # Take Profit Order
                             if isinstance(current_price, float):
                                 take_profit_price = current_price * (1 + (take_profit_in_percent/100))
