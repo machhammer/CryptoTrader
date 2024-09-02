@@ -47,6 +47,10 @@ class Helper():
     def wait_5_minutes(self):
         time.sleep (5 * 60)
 
+    def wait_5_seconds(self):
+        time.sleep (5)
+
+
 
     def in_business_hours(self, from_time, to_time):    
         now = datetime.now()
