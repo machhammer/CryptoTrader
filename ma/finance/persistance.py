@@ -46,6 +46,16 @@ def initialize_manager_table():
             ")"
     connection.cursor().execute(create_table)
 
+def initialize_balance_table():
+    connection = connect()
+    create_table ="CREATE or REPLACE TABLE balance " \
+            "( "\
+                "timestamp TIMESTAMP, "\
+                "base_currency VARCHAR(5), "\
+                "balance FLOAT "\
+            ")"
+    connection.cursor().execute(create_table)
+
 
 def initialize_screener_table():
     connection = connect()
@@ -221,6 +231,18 @@ def insert_transaction(timestamp, coin, type, amount, price):
     connection.commit()
     connection.close()
 
+
+def insert_balance(timestamp, base_currency, balance):
+    connection = connect()
+    insert_record = "INSERT INTO transactions " \
+        "(timestamp, base_currency, balance) "\
+        "VALUES ('{}', '{}', {})".format(timestamp, base_currency, balance)
+    connection.cursor().execute(insert_record)
+    connection.commit()
+    connection.close()
+
+
+
 def generate_optimizer_results(coin, data):
     initialize_optimizer_results_table()
     connection = connect()
@@ -241,5 +263,5 @@ def insert_optimizer_results_transactions(connection, timestamp, coin, sma, aroo
 
 
 if __name__ == "__main__":
-    initialize_trading_info_table()
+    initialize_balance_table()
 

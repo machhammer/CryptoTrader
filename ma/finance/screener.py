@@ -401,7 +401,7 @@ def buy_order(exchange, ticker, price, funding):
     price = convert_to_precision(price, price_precision)
     size = convert_to_precision(funding / price, amount_precision)
     order = exchange.create_buy_order(ticker, size, price)
-    logger.info("   buy: {}, order id : {}".format(ticker, order['info']['orderId']))
+    logger.info("   buy: {}, size: {}, price: {}".format(ticker, size, price))
     return order, price, size
 
 
@@ -424,7 +424,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
                 resistance = min_column.iloc[row]
                 diff = (current_value - resistance) / current_value
                 if (diff >= max_loss):
-                    logger.info("   set new sell triger: {}".format(resistance))
+                    logger.debug("   set new sell triger: {}".format(resistance))
                     order = sell_order(exchange, ticker, size, resistance)
                     resistance_found = True
                 else:
@@ -445,7 +445,7 @@ def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
     size = convert_to_precision(size, amount_precision)
     logger.info("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
     order = exchange.create_take_profit_order(ticker, size, takeProfitPrice)
-    logger.info("   sell TP order id : {}".format(order))
+    logger.debug("   sell TP order id : {}".format(order))
 
 
 def sell_order(exchange, ticker, size, stopLossPrice):
@@ -455,7 +455,7 @@ def sell_order(exchange, ticker, size, stopLossPrice):
     size = convert_to_precision(size, amount_precision)
     logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
-    logger.info("   sell order id : {}".format(order))
+    logger.debug("   sell order id : {}".format(order))
     return order
 
 def sell_now(exchange, ticker, size):
@@ -468,7 +468,8 @@ def sell_now(exchange, ticker, size):
 
 
 def cancel_order(exchange, ticker, orderId):
-    exchange.cancel_order(ticker, orderId)
+    order = exchange.cancel_order(ticker, orderId)
+    logger.info("   cancel Order: {}".format(order))
     logger.info("   cancel Order - Ticker: {}, Order Id: {}".format(ticker, orderId))
 
 
@@ -590,7 +591,6 @@ def run_trader():
                             size = get_Ticker_balance(exchange, existing_asset)
                             sell_now(exchange, existing_asset, size)
                             helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
-                            in_business = False
                             adjust_sell_trigger = False
                             existing_asset = None
             else:  
@@ -599,13 +599,15 @@ def run_trader():
                 helper.wait("long")
         else:
             if in_business:
+                in_business = False
                 existing_asset, current_price = find_asset_with_balance(exchange)
                 if existing_asset:
                     size = get_Ticker_balance(exchange, existing_asset)
                     sell_now(exchange, existing_asset, size)
                     helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
-                    in_business = False
                     existing_asset = None
+                balance = get_base_currency_balance(exchange)
+                helper.write_balance_to_db(base_currency, balance)
 
             helper.wait("long")
 

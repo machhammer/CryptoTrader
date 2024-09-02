@@ -122,4 +122,8 @@ class Helper():
     def write_trading_info_to_db(self, asset, side, price, market_movement):
         database.insert_trading_info_table(self.get_time(), asset, side, price, market_movement)
 
+    def write_balance_to_db(self, base_currency, balance):
+        database.insert_balance(self.get_time(), base_currency, balance)
+    
+
 
