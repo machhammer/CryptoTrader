@@ -499,6 +499,7 @@ def run_trader():
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
                     selected_new_asset = previous_asset
                     winning_buy_count += 1
+                    logger.info("Sold with proft #{}".format(winning_buy_count))
                     if winning_buy_count >= 2: helper.wait_5_minutes()
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price >= end_price:
                     selected_new_asset = None
