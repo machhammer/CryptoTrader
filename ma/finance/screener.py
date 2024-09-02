@@ -237,7 +237,7 @@ def get_candidate(exchange):
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     selected_Ticker = get_with_sufficient_variance(exchange, selected_Ticker)
     logger.debug("   market movment: {}".format(market_movement))
-    logger.info("   Selected: {}".format(selected_Ticker))
+    if selected_Ticker: logger.info("   Selected: {}".format(selected_Ticker))
     return selected_Ticker, market_movement
 
 def get_ticker_with_bigger_moves(exchange, tickers):
@@ -473,6 +473,8 @@ def cancel_order(exchange, ticker, orderId):
 
 
 def run_trader():
+
+    logger.info("Trader started!")
 
     exchange = Exchange("bitget")
     running = True
