@@ -263,5 +263,5 @@ def insert_optimizer_results_transactions(connection, timestamp, coin, sma, aroo
 
 
 if __name__ == "__main__":
-    insert_balance(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'USDT', 20.58438188)
+    insert_balance(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'USDT', 19.23748255)
 
