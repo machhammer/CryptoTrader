@@ -19,6 +19,8 @@ from datetime import datetime
 
 import pprint
 
+import bitget.v2.mix.order_api 
+
 pd.set_option('display.max_rows', None)
 
 exchange = Exchange("bitget")
@@ -268,6 +270,8 @@ def test_duplicates(ticker):
     data = data.loc[lambda x : x == True]
     print(data)
     print(len(data))
+
+
 
 
 if __name__ == "__main__":

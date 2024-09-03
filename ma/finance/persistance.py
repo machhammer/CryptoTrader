@@ -234,7 +234,7 @@ def insert_transaction(timestamp, coin, type, amount, price):
 
 def insert_balance(timestamp, base_currency, balance):
     connection = connect()
-    insert_record = "INSERT INTO transactions " \
+    insert_record = "INSERT INTO balance " \
         "(timestamp, base_currency, balance) "\
         "VALUES ('{}', '{}', {})".format(timestamp, base_currency, balance)
     connection.cursor().execute(insert_record)
@@ -263,5 +263,5 @@ def insert_optimizer_results_transactions(connection, timestamp, coin, sma, aroo
 
 
 if __name__ == "__main__":
-    initialize_balance_table()
+    insert_balance(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'USDT', 20.58438188)
 
