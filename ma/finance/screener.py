@@ -503,13 +503,13 @@ def run_trader():
                     selected_new_asset = previous_asset
                     winning_buy_count += 1
                     logger.info("Sold with proft #{}".format(winning_buy_count))
-                    if winning_buy_count >= 2: helper.wait_5_minutes()
+                    if winning_buy_count >= 2: helper.wait_minutes(5)
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price >= end_price:
                     selected_new_asset = None
                     existing_asset = None
                     winning_buy_count = 0
                     logger.info("Sold with loss. Waiting 1 hour!")
-                    helper.wait_1_hour()
+                    helper.wait_hours(1)
 
                 previous_asset = None
                 start_price = None
@@ -545,7 +545,7 @@ def run_trader():
                         try:
                             # BUY Order
                             buy_order(exchange, selected_new_asset, current_price, funding)
-                            helper.wait_5_seconds()
+                            helper.wait_seconds(5)
                             start_price = current_price
                             helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
                             size = get_Ticker_balance(exchange, selected_new_asset)

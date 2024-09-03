@@ -41,14 +41,14 @@ class Helper():
         wait_time = (self.wait_time_next_buy_selection_seconds - (seconds % self.wait_time_next_buy_selection_seconds))
         return wait_time
 
-    def wait_1_hour(self):
-        time.sleep (60 * 60)
+    def wait_hours(self, hours):
+        time.sleep (hours * 60 * 60)
 
-    def wait_5_minutes(self):
-        time.sleep (5 * 60)
+    def wait_minutes(self, minutes):
+        time.sleep (minutes * 60)
 
-    def wait_5_seconds(self):
-        time.sleep (5)
+    def wait_seconds(self, seconds):
+        time.sleep (seconds)
 
 
 
