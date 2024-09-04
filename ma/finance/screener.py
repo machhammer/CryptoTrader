@@ -157,10 +157,10 @@ def get_market_factor(pos_neg_mean):
         max_loss = 0.025
     elif pos_neg_mean >-2 and pos_neg_mean <=0:
         fund_ratio = 0.25
-        max_loss = 0.02
+        max_loss = 0.03
     else:
         fund_ratio = 0.1
-        max_loss = 0.02
+        max_loss = 0.03
     logger.debug("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))    
     return fund_ratio, max_loss
 
