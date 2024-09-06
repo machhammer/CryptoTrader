@@ -1,1 +1,0 @@
-SELECT * FROM trading_info ORDER BY timestamp DESC
