@@ -1,0 +1,9 @@
+ccxt
+python-bitget
+numpy
+pandas
+tqdm
+ta
+scipy
+mariadb
+matplotlib
