@@ -229,7 +229,9 @@ def get_candidate(exchange):
     tickers = get_tickers_as_list(tickers)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     expected_results = get_top_ticker_expected_results(exchange, major_move)
+    logger.info("   expected_results: {}".format(expected_results))
     close_to_high = get_close_to_high(exchange, major_move)
+    logger.info("   close_to_high: {}".format(close_to_high))
     relevant_tickers = expected_results + close_to_high
     logger.debug("   {}".format(relevant_tickers))
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
