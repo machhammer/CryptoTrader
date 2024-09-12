@@ -43,9 +43,9 @@ valid_position_amount = 2
 minimum_funding = 10
 winning_buy_nr = 2
 
-start_trading_at = time(hour=7)
+start_trading_at = time(hour=4)
 stop_trading_at = time(hour=22)
-stop_buying_at = time(hour=20)
+stop_buying_at = time(hour=18)
 
 
 helper = Helper(logger, wait_time_next_asset_selection_minutes, wait_time_next_buy_selection_seconds)
@@ -528,6 +528,7 @@ def run_trader():
             
                 while (not buy_decision and buy_attempts <= buy_attempts_nr and not existing_asset):
                     is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
+                    helper.wait_minutes(5)
                     if not is_buy:
                         buy_attempts += 1
                         helper.wait("short")
