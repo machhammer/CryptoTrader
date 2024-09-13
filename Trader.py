@@ -561,7 +561,7 @@ def run_trader():
                             if isinstance(current_price, float):
                                 take_profit_price = current_price * (1 + (take_profit_in_percent/100))
                                 sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
-                                helper.write_trading_info_to_db(existing_asset, "tp", take_profit_price, market_movement)
+                                helper.write_trading_info_to_db(selected_new_asset, "tp", take_profit_price, market_movement)
                             existing_asset = selected_new_asset
                         except Exception as e:
                             adjust_sell_trigger = False
