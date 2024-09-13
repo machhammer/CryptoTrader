@@ -408,13 +408,13 @@ def buy_order(exchange, ticker, price, funding):
 #************************************ SELL Functions
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss, previous_resistance):
     logger.debug("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(ticker, isInitial, size, highest_value, max_loss))
-    logger.info("previous resistance: {}".format(previous_resistance))
+    logger.info("set sell previous resistance: {}".format(previous_resistance))
     data = get_data(exchange, ticker, "1m", limit=720)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
     current_value = data.iloc[-1, 4]
     order = None
-    resistance = 0
+    resistance = None
     logger.debug("   highest value: {}, current value: {}".format(highest_value, current_value))
     if isInitial or (highest_value < current_value):
         highest_value = current_value
@@ -585,7 +585,11 @@ def run_trader():
                             _, max_loss = get_market_factor(market_movement)
                             size = get_Ticker_balance(exchange, existing_asset)
                             if still_has_postion(size, highest_value):
-                                highest_value, current_price, order, previous_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
+                                highest_value, current_price, order, new_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
+                                logger.info("trader previous resistance: {}, new_resistance: {}".format(previous_resistance, new_resistance))
+                                logger.info("Error buying: {}".format(e))
+                                if new_resistance:
+                                    previous_resistance = new_resistance
                                 if order:
                                     if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
                                     current_order_id = order['data']['orderId']
