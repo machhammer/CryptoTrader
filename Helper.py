@@ -56,7 +56,7 @@ class Helper():
         now = datetime.now()
         if to_time < from_time:
             raise Exception("case end < start not implemeted!")
-        run = now.hour >= from_time.hour and now.hour < to_time.hour and now.weekday() < 6
+        run = now.hour >= from_time.hour and now.hour < to_time.hour #and now.weekday() < 6
         return run
                 
     def in_buying_period(self, by_time):

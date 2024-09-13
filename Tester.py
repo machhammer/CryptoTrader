@@ -1,3 +1,4 @@
+from math import isnan, nan
 from Exchange import Exchange
 import random
 import pandas as pd
@@ -27,16 +28,17 @@ def get_data(exchange, ticker, interval, limit):
 
 def get_ticker_with_increased_volume(exchange, tickers):
     increased_volumes = []
+    print("Ticker;Current Mean;Last Mean;Quot")
     for ticker in tickers:
         data = get_data(exchange, ticker, "4h", limit=12)
-        print(data)
         last_mean = data.head(11)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
         #print(ticker, current_mean, last_mean, current_mean / last_mean)
-        quot = current_mean / last_mean
-        print("Ticker: {}, \t\tcurrent mean: {}, \t\t\tlast_mean: {}, \t\tquit: {}".format(ticker, current_mean, last_mean, quot))
-        if (current_mean / last_mean) >= 1:
-            increased_volumes.append(ticker)
+        if not pd.isna(current_mean) and not pd.isna(last_mean) and last_mean != 0:
+            quot = current_mean / last_mean
+            if (current_mean / last_mean) >= 1.5:
+                print("{};{};{};{}".format(ticker, current_mean, last_mean, quot))
+                increased_volumes.append(ticker)
     return increased_volumes
 
 
@@ -44,10 +46,10 @@ if __name__ == "__main__":
     
     exchange = Exchange("bitget")
 
-    #tickers = get_tickers(exchange)
-    #tickers = get_tickers_as_list(tickers)
+    tickers = get_tickers(exchange)
+    tickers = get_tickers_as_list(tickers)
 
-    print(get_ticker_with_increased_volume(exchange, ['DGI/USDT']))
+    print(get_ticker_with_increased_volume(exchange, tickers))
 
     
     

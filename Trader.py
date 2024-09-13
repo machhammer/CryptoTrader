@@ -406,13 +406,14 @@ def buy_order(exchange, ticker, price, funding):
 
 
 #************************************ SELL Functions
-def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss):
+def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss, previous_resistance):
     logger.debug("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(ticker, isInitial, size, highest_value, max_loss))
     data = get_data(exchange, ticker, "1m", limit=720)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
     current_value = data.iloc[-1, 4]
     order = None
+    resistance = None
     logger.debug("   highest value: {}, current value: {}".format(highest_value, current_value))
     if isInitial or (highest_value < current_value):
         highest_value = current_value
@@ -422,21 +423,25 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss)
         while not resistance_found:
             if row >= (-1) * len(min_column):
                 resistance = min_column.iloc[row]
-                diff = (current_value - resistance) / current_value
-                if (diff >= max_loss):
-                    logger.debug("   set new sell triger: {}".format(resistance))
-                    order = sell_order(exchange, ticker, size, resistance)
-                    resistance_found = True
-                else:
-                    row -= 1
+                if previous_resistance and resistance > previous_resistance:
+                    diff = (current_value - resistance) / current_value
+                    if (diff >= max_loss):
+                        logger.debug("   set new sell triger: {}".format(resistance))
+                        order = sell_order(exchange, ticker, size, resistance)
+                        helper.write_trading_info_to_db(ticker, "sl", resistance, 0)
+                        resistance_found = True
+                    else:
+                        row -= 1
             else:
                 resistance = min_column.iloc[(-1) * len(min_column)]
-                logger.info("   set new sell triger: {}".format(resistance))
-                order = sell_order(exchange, ticker, size, resistance)
-                resistance_found = True
+                if previous_resistance and resistance > previous_resistance:
+                    logger.info("   set new sell triger: {}".format(resistance))
+                    order = sell_order(exchange, ticker, size, resistance)
+                    helper.write_trading_info_to_db(ticker, "sl", resistance, 0)
+                    resistance_found = True
     else:
         logger.debug("   No new sell trigger")
-    return highest_value, current_value, order
+    return highest_value, current_value, order, resistance
 
 
 def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
@@ -554,6 +559,7 @@ def run_trader():
                             if isinstance(current_price, float):
                                 take_profit_price = current_price * (1 + (take_profit_in_percent/100))
                                 sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
+                                helper.write_trading_info_to_db(existing_asset, "tp", take_profit_price, market_movement)
                             existing_asset = selected_new_asset
                         except Exception as e:
                             adjust_sell_trigger = False
@@ -566,6 +572,7 @@ def run_trader():
 
                     highest_value = current_price
                     current_order_id = None
+                    previous_resistance = 0
                     while adjust_sell_trigger:
                         if helper.in_business_hours(start_trading_at, stop_trading_at):
                             tickers = get_tickers(exchange)
@@ -573,7 +580,7 @@ def run_trader():
                             _, max_loss = get_market_factor(market_movement)
                             size = get_Ticker_balance(exchange, existing_asset)
                             if still_has_postion(size, highest_value):
-                                highest_value, current_price, order = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss)
+                                highest_value, current_price, order, previous_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
                                 if order:
                                     if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
                                     current_order_id = order['data']['orderId']
@@ -607,6 +614,8 @@ def run_trader():
                     sell_now(exchange, existing_asset, size)
                     helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                     existing_asset = None
+                start_price = None
+                end_price = None
                 balance = get_base_currency_balance(exchange)
                 helper.write_balance_to_db(base_currency, balance)
 
