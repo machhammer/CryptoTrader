@@ -235,7 +235,7 @@ def get_candidate(exchange):
     relevant_tickers = expected_results + close_to_high
     logger.debug("   {}".format(relevant_tickers))
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
-    buy_signals = get_ticker_with_aroon_buy_signals(exchange, relevant_tickers)
+    buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     selected_Ticker = get_with_sufficient_variance(exchange, selected_Ticker)
     logger.debug("   market movment: {}".format(market_movement))
@@ -265,7 +265,7 @@ def get_ticker_with_bigger_moves(exchange, tickers):
             next(progress_bar)
         except:
             pass
-    logger.debug("   ticker with bigger moves: {}".format(len(bigger_moves)))
+    logger.info("   ticker with bigger moves: {}".format(len(bigger_moves)))
     return bigger_moves
 
 
@@ -278,19 +278,19 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
         logger.debug(data.tail(3)["aroon_up"])
         if (100 in data.tail(3)["aroon_up"].to_list()):
             buy_signals.append(ticker)
-    logger.debug("   ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
+    logger.info("   ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
     return buy_signals
 
 
 def get_ticker_with_increased_volume(exchange, tickers):
     increased_volumes = []
     for ticker in tickers:
-        data = get_data(exchange, ticker, "1d", limit=10)
+        data = get_data(exchange, ticker, "1h", limit=24)
         last_mean = data.head(9)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
-    logger.debug("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
+    logger.info("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
     return increased_volumes
 
 
@@ -305,7 +305,7 @@ def get_top_ticker_expected_results(exchange, tickers):
     df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
     df = df.sort_values(by='min')   
     df = df.tail(5)['ticker'].to_list()
-    logger.debug("   ticker_with_expected_results: {}".format(len(df)))
+    logger.info("   ticker_with_expected_results: {}".format(len(df)))
     return df
 
 
@@ -316,7 +316,7 @@ def get_close_to_high(exchange, tickers):
         max = data['close'].max()
         if data.iloc[-1, 4] >= max:
             close_to_high.append(ticker)
-    logger.debug("   ticker_close_to_high: {}".format(len(close_to_high)))
+    logger.info("   ticker_close_to_high: {}".format(len(close_to_high)))
     return close_to_high
 
 
@@ -330,7 +330,7 @@ def get_lowest_difference_to_maximum(exchange, tickers):
         ratio = ((current_close - local_max) * 100) / local_max
         if ratio > difference_to_maximum_max:
             lowest_difference_to_maximum = ticker
-    logger.debug("   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
+    logger.info("   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
     return lowest_difference_to_maximum
 
 def get_with_sufficient_variance(exchange, ticker):
@@ -340,7 +340,7 @@ def get_with_sufficient_variance(exchange, ticker):
         data = data.duplicated(subset=["close"])
         data = data.loc[lambda x : x == True]
         duplicate_data = len(data)
-        logger.debug("   variance: {}".format(duplicate_data))
+        logger.info("   variance: {}".format(duplicate_data))
     if duplicate_data>0:
         return None
     else:

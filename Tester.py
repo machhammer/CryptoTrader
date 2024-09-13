@@ -28,12 +28,13 @@ def get_data(exchange, ticker, interval, limit):
 
 def get_ticker_with_increased_volume(exchange, tickers):
     increased_volumes = []
+    limit = 24
     print("Ticker;Current Mean;Last Mean;Quot")
     for ticker in tickers:
-        data = get_data(exchange, ticker, "4h", limit=12)
-        last_mean = data.head(11)["volume"].mean()
+        data = get_data(exchange, ticker, "1h", limit)
+        last_mean = data.head(limit-1)["volume"].mean()
         current_mean = data.tail(1)["volume"].mean()
-        #print(ticker, current_mean, last_mean, current_mean / last_mean)
+        print(ticker, current_mean, last_mean, current_mean / last_mean)
         if not pd.isna(current_mean) and not pd.isna(last_mean) and last_mean != 0:
             quot = current_mean / last_mean
             if (current_mean / last_mean) >= 1.5:
@@ -46,10 +47,10 @@ if __name__ == "__main__":
     
     exchange = Exchange("bitget")
 
-    tickers = get_tickers(exchange)
-    tickers = get_tickers_as_list(tickers)
+    #tickers = get_tickers(exchange)
+    #tickers = get_tickers_as_list(tickers)
 
-    print(get_ticker_with_increased_volume(exchange, tickers))
+    print(get_ticker_with_increased_volume(exchange, ['PORTO/USDT', 'APT/USDT', 'CAKE/USDT', 'NYM/USDT', 'ICX/USDT', 'APT/USDT', 'CAKE/USDT', 'NYM/USDT', 'ICX/USDT']))
 
     
     
