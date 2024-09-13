@@ -423,22 +423,22 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss,
         while not resistance_found:
             if row >= (-1) * len(min_column):
                 resistance = min_column.iloc[row]
-                if previous_resistance and resistance > previous_resistance:
-                    diff = (current_value - resistance) / current_value
-                    if (diff >= max_loss):
+                diff = (current_value - resistance) / current_value
+                if (diff >= max_loss):
+                    if resistance > previous_resistance:
                         logger.debug("   set new sell triger: {}".format(resistance))
                         order = sell_order(exchange, ticker, size, resistance)
                         helper.write_trading_info_to_db(ticker, "sl", resistance, 0)
-                        resistance_found = True
-                    else:
-                        row -= 1
+                    resistance_found = True
+                else:
+                    row -= 1
             else:
                 resistance = min_column.iloc[(-1) * len(min_column)]
-                if previous_resistance and resistance > previous_resistance:
+                if resistance > previous_resistance:
                     logger.info("   set new sell triger: {}".format(resistance))
                     order = sell_order(exchange, ticker, size, resistance)
                     helper.write_trading_info_to_db(ticker, "sl", resistance, 0)
-                    resistance_found = True
+                resistance_found = True
     else:
         logger.debug("   No new sell trigger")
     return highest_value, current_value, order, resistance
