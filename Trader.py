@@ -408,12 +408,13 @@ def buy_order(exchange, ticker, price, funding):
 #************************************ SELL Functions
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss, previous_resistance):
     logger.debug("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(ticker, isInitial, size, highest_value, max_loss))
+    logger.info("previous resistance: {}".format(previous_resistance))
     data = get_data(exchange, ticker, "1m", limit=720)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
     current_value = data.iloc[-1, 4]
     order = None
-    resistance = None
+    resistance = 0
     logger.debug("   highest value: {}, current value: {}".format(highest_value, current_value))
     if isInitial or (highest_value < current_value):
         highest_value = current_value
