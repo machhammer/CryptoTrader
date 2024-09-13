@@ -50,7 +50,7 @@ if __name__ == "__main__":
     #tickers = get_tickers(exchange)
     #tickers = get_tickers_as_list(tickers)
 
-    print(get_ticker_with_increased_volume(exchange, ['PORTO/USDT', 'APT/USDT', 'CAKE/USDT', 'NYM/USDT', 'ICX/USDT', 'APT/USDT', 'CAKE/USDT', 'NYM/USDT', 'ICX/USDT']))
+    print(get_ticker_with_increased_volume(exchange, ['MOTHER/USDT', 'CHESS/USDT', 'UBXS/USDT', 'EFIL/USDT', 'HAM/USDT', 'POL/USDT', 'TEL/USDT', 'FISH/USDT', 'ZKJ/USDT', 'CVX/USDT', 'OLAS/USDT', 'PIXEL/USDT', 'DFC/USDT', 'AZERO/USDT']))
 
     
     

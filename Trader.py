@@ -528,10 +528,12 @@ def run_trader():
                 buy_attempts = 1
                 #observe selected Ticker
                 buy_decision = False
-            
                 while (not buy_decision and buy_attempts <= buy_attempts_nr and not existing_asset):
                     is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
-                    helper.wait_minutes(5)
+                    if is_buy:
+                        helper.wait_minutes(1)
+                        is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
+                    
                     if not is_buy:
                         buy_attempts += 1
                         helper.wait("short")
