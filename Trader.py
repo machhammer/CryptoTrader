@@ -370,7 +370,7 @@ def is_buy_decision(exchange, ticker, attempt):
         is_buy = True
     else:
         is_buy = False
-    logger.debug("   Resistance check - buy: {}".format(is_buy))
+    logger.info("   Resistance check - buy: {}".format(is_buy))
 
     vwap = data.iloc[-1, 10]
     if is_buy:
@@ -379,8 +379,7 @@ def is_buy_decision(exchange, ticker, attempt):
                 is_buy = True
             else:
                 is_buy = False
-
-    logger.debug("   vwap check - buy: {}".format(is_buy))
+        logger.info("   vwap check - buy: {}".format(is_buy))
 
     macd = data.iloc[-1, 11]
     macd_diff = data.iloc[-1, 12]
@@ -391,8 +390,7 @@ def is_buy_decision(exchange, ticker, attempt):
                 is_buy = True
             else:
                 is_buy = False
-
-    logger.debug("   macd check - buy: {}".format(is_buy))
+        logger.info("   macd check - buy: {}".format(is_buy))
 
     return is_buy, current_close
 
