@@ -587,7 +587,6 @@ def run_trader():
                             if still_has_postion(size, highest_value):
                                 highest_value, current_price, order, new_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
                                 logger.info("trader previous resistance: {}, new_resistance: {}".format(previous_resistance, new_resistance))
-                                logger.info("Error buying: {}".format(e))
                                 if new_resistance:
                                     previous_resistance = new_resistance
                                 if order:
