@@ -43,7 +43,7 @@ valid_position_amount = 2
 minimum_funding = 10
 winning_buy_nr = 2
 
-start_trading_at = time(hour=4)
+start_trading_at = time(hour=3)
 stop_trading_at = time(hour=23)
 stop_buying_at = time(hour=19)
 
