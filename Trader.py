@@ -285,9 +285,9 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
 def get_ticker_with_increased_volume(exchange, tickers):
     increased_volumes = []
     for ticker in tickers:
-        data = get_data(exchange, ticker, "1h", limit=24)
-        last_mean = data.head(9)["volume"].mean()
-        current_mean = data.tail(1)["volume"].mean()
+        data = get_data(exchange, ticker, "15m", limit=28)
+        last_mean = data.head(24)["volume"].mean()
+        current_mean = data.tail(4)["volume"].mean()
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
     logger.info("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
@@ -371,6 +371,15 @@ def is_buy_decision(exchange, ticker, attempt):
     else:
         is_buy = False
     logger.info("   Resistance check - buy: {}".format(is_buy))
+
+    aroon_up = data.iloc[-1, 8]
+    if is_buy:
+        if isinstance(aroon_up, float):
+            if aroon_up == 100:
+                is_buy = True
+            else:
+                is_buy = False
+    logger.info("   Aroon check - buy: {}".format(is_buy))
 
     vwap = data.iloc[-1, 10]
     if is_buy:
