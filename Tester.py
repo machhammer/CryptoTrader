@@ -143,7 +143,7 @@ if __name__ == "__main__":
     #tickers = get_tickers(exchange)
     #tickers = get_tickers_as_list(tickers)
 
-    print(is_buy_test(exchange, 'VIC/USDT'))
+    print(is_buy_test(exchange, 'COREUM/USDT'))
 
     
     

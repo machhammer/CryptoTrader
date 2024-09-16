@@ -375,7 +375,7 @@ def is_buy_decision(exchange, ticker, attempt):
     aroon_up = data.iloc[-1, 8]
     if is_buy:
         if isinstance(aroon_up, float):
-            if aroon_up == 100:
+            if aroon_up > 90:
                 is_buy = True
             else:
                 is_buy = False
