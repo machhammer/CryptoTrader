@@ -223,7 +223,7 @@ def add_ema(data):
 
 #************************************ get Candidate Functions
 def get_candidate(exchange):
-    logger.debug("1. ******** Check for New Candidate ********")
+    logger.info("1. ******** Check for New Candidate ********")
     tickers = get_tickers(exchange)
     market_movement = get_market_movement(tickers)
     tickers = get_tickers_as_list(tickers)
