@@ -379,7 +379,7 @@ def is_buy_decision(exchange, ticker, attempt):
                 is_buy = True
             else:
                 is_buy = False
-    logger.info("   Aroon check - buy: {}".format(is_buy))
+        logger.info("   Aroon check - buy: {}".format(is_buy))
 
     vwap = data.iloc[-1, 10]
     if is_buy:
@@ -542,10 +542,6 @@ def run_trader():
                 buy_decision = False
                 while (not buy_decision and buy_attempts <= buy_attempts_nr and not existing_asset):
                     is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
-                    if is_buy:
-                        helper.wait_minutes(1)
-                        is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
-                    
                     if not is_buy:
                         buy_attempts += 1
                         helper.wait("short")
