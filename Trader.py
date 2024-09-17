@@ -229,9 +229,9 @@ def get_candidate(exchange):
     tickers = get_tickers_as_list(tickers)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     expected_results = get_top_ticker_expected_results(exchange, major_move)
-    logger.info("   expected_results: {}".format(expected_results))
+    logger.debug("   expected_results: {}".format(expected_results))
     close_to_high = get_close_to_high(exchange, major_move)
-    logger.info("   close_to_high: {}".format(close_to_high))
+    logger.debug("   close_to_high: {}".format(close_to_high))
     relevant_tickers = expected_results + close_to_high
     logger.debug("   {}".format(relevant_tickers))
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
@@ -370,7 +370,7 @@ def is_buy_decision(exchange, ticker, attempt):
         is_buy = True
     else:
         is_buy = False
-    logger.info("   Resistance check - buy: {}".format(is_buy))
+    logger.debug("   Resistance check - buy: {}".format(is_buy))
 
     aroon_up = data.iloc[-1, 8]
     if is_buy:
@@ -379,7 +379,7 @@ def is_buy_decision(exchange, ticker, attempt):
                 is_buy = True
             else:
                 is_buy = False
-        logger.info("   Aroon check - buy: {}".format(is_buy))
+        logger.debug("   Aroon check - buy: {}".format(is_buy))
 
     vwap = data.iloc[-1, 10]
     if is_buy:
@@ -388,7 +388,7 @@ def is_buy_decision(exchange, ticker, attempt):
                 is_buy = True
             else:
                 is_buy = False
-        logger.info("   vwap check - buy: {}".format(is_buy))
+        logger.debug("   vwap check - buy: {}".format(is_buy))
 
     macd = data.iloc[-1, 11]
     macd_diff = data.iloc[-1, 12]
@@ -399,7 +399,7 @@ def is_buy_decision(exchange, ticker, attempt):
                 is_buy = True
             else:
                 is_buy = False
-        logger.info("   macd check - buy: {}".format(is_buy))
+        logger.debug("   macd check - buy: {}".format(is_buy))
 
     return is_buy, current_close
 
@@ -417,7 +417,7 @@ def buy_order(exchange, ticker, price, funding):
 #************************************ SELL Functions
 def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss, previous_resistance):
     logger.debug("4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(ticker, isInitial, size, highest_value, max_loss))
-    logger.info("set sell previous resistance: {}".format(previous_resistance))
+    logger.debug("set sell previous resistance: {}".format(previous_resistance))
     data = get_data(exchange, ticker, "1m", limit=720)
     data = add_min_max(data)
     min_column = data['min'].dropna().drop_duplicates().sort_values()
@@ -445,9 +445,9 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss,
                     row -= 1
             else:
                 resistance = min_column.iloc[(-1) * len(min_column)]
-                logger.info("previous resistance: {}, resistance: {}".format(previous_resistance, resistance))
+                logger.debug("previous resistance: {}, resistance: {}".format(previous_resistance, resistance))
                 if resistance > previous_resistance:
-                    logger.info("   set new sell triger: {}".format(resistance))
+                    logger.debug("   set new sell triger: {}".format(resistance))
                     order = sell_order(exchange, ticker, size, resistance)
                     helper.write_trading_info_to_db(ticker, "sl", resistance, 0)
                 resistance_found = True
@@ -460,23 +460,23 @@ def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
     amount_precision, price_precision = get_precision(exchange, ticker)
     takeProfitPrice = convert_to_precision(takeProfitPrice, price_precision)
     size = convert_to_precision(size, amount_precision)
-    logger.info("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
+    logger.debug("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
     order = exchange.create_take_profit_order(ticker, size, takeProfitPrice)
     logger.debug("   sell TP order id : {}".format(order))
 
 
 def sell_order(exchange, ticker, size, stopLossPrice):
-    exchange.cancel_orders(ticker)
+    #exchange.cancel_orders(ticker)
     amount_precision, price_precision = get_precision(exchange, ticker)
     stopLossPrice = convert_to_precision(stopLossPrice, price_precision)
     size = convert_to_precision(size, amount_precision)
-    logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
+    logger.debug("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
     logger.debug("   sell order id : {}".format(order))
     return order
 
 def sell_now(exchange, ticker, size):
-    exchange.cancel_orders(ticker)
+    #exchange.cancel_orders(ticker)
     amount_precision, price_precision = get_precision(exchange, ticker)
     size = convert_to_precision(size, amount_precision)
     order = exchange.create_sell_order(ticker, size)
@@ -594,9 +594,9 @@ def run_trader():
                                 logger.debug("trader previous resistance: {}, new_resistance: {}".format(previous_resistance, new_resistance))
                                 if new_resistance:
                                     previous_resistance = new_resistance
-                                if order:
-                                    if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
-                                    current_order_id = order['data']['orderId']
+                                #if order:
+                                #    if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
+                                #    current_order_id = order['data']['orderId']
                                 isInitial = False
                                 helper.wait("short")
                             else:
