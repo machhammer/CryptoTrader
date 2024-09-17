@@ -591,7 +591,7 @@ def run_trader():
                             size = get_Ticker_balance(exchange, existing_asset)
                             if still_has_postion(size, highest_value):
                                 highest_value, current_price, order, new_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
-                                logger.info("trader previous resistance: {}, new_resistance: {}".format(previous_resistance, new_resistance))
+                                logger.debug("trader previous resistance: {}, new_resistance: {}".format(previous_resistance, new_resistance))
                                 if new_resistance:
                                     previous_resistance = new_resistance
                                 if order:
@@ -606,6 +606,8 @@ def run_trader():
                                 end_price = current_price
                                 previous_asset = existing_asset
                                 helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
+                                balance = get_base_currency_balance(exchange)
+                                helper.write_balance_to_db(base_currency, balance)
                                 existing_asset = None
                         else:
                             existing_asset, current_price = find_asset_with_balance(exchange)
