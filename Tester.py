@@ -3,6 +3,7 @@ from Exchange import Exchange
 import random
 import numpy as np
 import pandas as pd
+import Database as database
 from ta.trend import AroonIndicator, EMAIndicator, MACD
 from ta.volume import VolumeWeightedAveragePrice
 from scipy.signal import argrelextrema
@@ -138,12 +139,13 @@ def is_buy_test(exchange, ticker):
 
 if __name__ == "__main__":
     
-    exchange = Exchange("bitget")
+    #exchange = Exchange("bitget")
 
     #tickers = get_tickers(exchange)
     #tickers = get_tickers_as_list(tickers)
 
-    print(is_buy_test(exchange, 'COREUM/USDT'))
-
     
+    value = database.execute_select("select balance from balance order by timestamp desc limit 1")
+
+    print(value.iloc[0, 0])
     

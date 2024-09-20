@@ -125,5 +125,7 @@ class Helper():
     def write_balance_to_db(self, base_currency, balance):
         database.insert_balance(self.get_time(), base_currency, balance)
     
+    def read_last_balacne_from_db(self):
+        return database.execute_select("select balance from balance order by timestamp desc limit 1")
 
 

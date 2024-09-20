@@ -39,6 +39,7 @@ move_increase_period_threshold = 1
 volume_increase_threshold = 1
 difference_to_maximum_max = -2
 valid_position_amount = 2
+daily_pnl_target_in_percent = 2
 #difference_to_resistance_min = 0.01
 minimum_funding = 10
 winning_buy_nr = 2
@@ -490,6 +491,16 @@ def cancel_order(exchange, ticker, orderId):
     logger.info("   cancel Order - Ticker: {}, Order Id: {}".format(ticker, orderId))
 
 
+def daily_pnl_target_achieved(current_balance):
+    last_balance = helper.read_last_balacne_from_db()
+    current_pnl = ((current_balance - last_balance)*100) / last_balance
+    logger.info("   current pnl: {}".format(current_pnl))
+    if current_pnl >= daily_pnl_target_in_percent:
+        return True
+    else:
+        return False
+
+
 def run_trader():
 
     logger.info("Trader started!")
@@ -517,9 +528,13 @@ def run_trader():
             
             if start_price and end_price:
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
-                    selected_new_asset = previous_asset
                     winning_buy_count += 1
-                    logger.info("Sold with proft #{}".format(winning_buy_count))
+                    if winning_buy_count <= winning_buy_nr:
+                        selected_new_asset = previous_asset
+                        logger.info("Sold with proft #{}".format(winning_buy_count))
+                    else:
+                        winning_buy_count = 0
+                        selected_new_asset = None
                     helper.wait_minutes(5)
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price >= end_price:
                     selected_new_asset = None
