@@ -436,7 +436,7 @@ def set_sell_trigger(exchange, isInitial, ticker, size, highest_value, max_loss,
                 resistance = min_column.iloc[row]
                 diff = (current_value - resistance) / current_value
                 if (diff >= max_loss):
-                    logger.info("previous resistance: {}, resistance: {}".format(previous_resistance, resistance))
+                    logger.debug("previous resistance: {}, resistance: {}".format(previous_resistance, resistance))
                     if resistance > previous_resistance:
                         logger.debug("   set new sell triger: {}".format(resistance))
                         order = sell_order(exchange, ticker, size, resistance)
@@ -518,123 +518,127 @@ def run_trader():
     start_price = None
     end_price = None
     winning_buy_count = 0
-
+    usd_balance = 0
+    pnl_achieved = False
     existing_asset, current_price = find_asset_with_balance(exchange)
     
     while running:
         if helper.in_business_hours(start_trading_at, stop_trading_at) and helper.in_buying_period(stop_buying_at):
             in_business = True
-            usd_balance = get_base_currency_balance(exchange)
-            pnl_achieved = daily_pnl_target_achieved(usd_balance)
-            if start_price and end_price:
-                if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
-                    winning_buy_count += 1
-                    if winning_buy_count <= winning_buy_nr:
-                        selected_new_asset = previous_asset
-                        logger.info("Sold with proft #{}".format(winning_buy_count))
-                    else:
-                        winning_buy_count = 0
-                        selected_new_asset = None
-                    helper.wait_minutes(5)
-                if isinstance(start_price, float) and isinstance(end_price, float) and start_price >= end_price:
-                    selected_new_asset = None
-                    existing_asset = None
-                    winning_buy_count = 0
-                    logger.info("Sold with loss. Waiting 1 hour!")
-                    helper.wait_hours(1)
-
-                previous_asset = None
-                start_price = None
-                end_price = None
-            else:
-                if not existing_asset:
-                    selected_new_asset, market_movement = get_candidate(exchange)
-                    buy_decision = True
-
-            if selected_new_asset or existing_asset:
-                buy_attempts = 1
-                #observe selected Ticker
-                buy_decision = False
-                while (not buy_decision and buy_attempts <= buy_attempts_nr and not existing_asset):
-                    is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
-                    if not is_buy:
-                        buy_attempts += 1
-                        helper.wait("short")
-                    else:
-                        buy_decision = True
-                    if not get_lowest_difference_to_maximum(exchange, [selected_new_asset]):
-                        buy_attempts = buy_attempts_nr + 1
-                
-                if buy_decision or existing_asset:
-
-                    adjust_sell_trigger = True
-
-                    #buy sleected Ticker
-                    if not existing_asset:
-                        market_movement = get_market_movement(get_tickers(exchange))
-                        funding = get_funding(usd_balance, market_movement)
-                        try:
-                            # BUY Order
-                            buy_order(exchange, selected_new_asset, current_price, funding)
-                            helper.wait_seconds(5)
-                            start_price = current_price
-                            helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
-                            size = get_Ticker_balance(exchange, selected_new_asset)
-                            # Take Profit Order
-                            if isinstance(current_price, float):
-                                take_profit_price = current_price * (1 + (take_profit_in_percent/100))
-                                sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
-                                helper.write_trading_info_to_db(selected_new_asset, "tp", take_profit_price, market_movement)
-                            existing_asset = selected_new_asset
-                        except Exception as e:
-                            adjust_sell_trigger = False
-                            logger.info("Error buying: {}".format(e))
-
-                    if selected_new_asset:
-                        isInitial = True
-                    else:
-                        isInitial = False
-
-                    highest_value = current_price
-                    current_order_id = None
-                    previous_resistance = 0
-                    while adjust_sell_trigger:
-                        if helper.in_business_hours(start_trading_at, stop_trading_at):
-                            tickers = get_tickers(exchange)
-                            market_movement = get_market_movement(tickers)
-                            _, max_loss = get_market_factor(market_movement)
-                            size = get_Ticker_balance(exchange, existing_asset)
-                            if still_has_postion(size, highest_value):
-                                highest_value, current_price, order, new_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
-                                logger.debug("trader previous resistance: {}, new_resistance: {}".format(previous_resistance, new_resistance))
-                                if new_resistance:
-                                    previous_resistance = new_resistance
-                                #if order:
-                                #    if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
-                                #    current_order_id = order['data']['orderId']
-                                isInitial = False
-                                helper.wait("short")
-                            else:
-                                logger.info("Asset has been sold!")
-                                adjust_sell_trigger = False
-                                buy_decision = False
-                                end_price = current_price
-                                previous_asset = existing_asset
-                                helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
-                                balance = get_base_currency_balance(exchange)
-                                helper.write_balance_to_db(base_currency, balance)
-                                existing_asset = None
+            if not existing_asset:
+                usd_balance = get_base_currency_balance(exchange)
+                pnl_achieved = daily_pnl_target_achieved(usd_balance)
+            
+            if not pnl_achieved:
+                if start_price and end_price:
+                    if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
+                        winning_buy_count += 1
+                        if winning_buy_count <= winning_buy_nr:
+                            selected_new_asset = previous_asset
+                            logger.info("Sold with proft #{}".format(winning_buy_count))
                         else:
-                            existing_asset, current_price = find_asset_with_balance(exchange)
-                            size = get_Ticker_balance(exchange, existing_asset)
-                            sell_now(exchange, existing_asset, size)
-                            helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
-                            adjust_sell_trigger = False
-                            existing_asset = None
-            else:  
-                logger.debug("No Asset selected!")
-                winning_buy_count = 0
-                helper.wait("long")
+                            winning_buy_count = 0
+                            selected_new_asset = None
+                        helper.wait_minutes(5)
+                    if isinstance(start_price, float) and isinstance(end_price, float) and start_price >= end_price:
+                        selected_new_asset = None
+                        existing_asset = None
+                        winning_buy_count = 0
+                        logger.info("Sold with loss. Waiting 1 hour!")
+                        helper.wait_hours(1)
+
+                    previous_asset = None
+                    start_price = None
+                    end_price = None
+                else:
+                    if not existing_asset:
+                        selected_new_asset, market_movement = get_candidate(exchange)
+                        buy_decision = True
+
+                if selected_new_asset or existing_asset:
+                    buy_attempts = 1
+                    #observe selected Ticker
+                    buy_decision = False
+                    while (not buy_decision and buy_attempts <= buy_attempts_nr and not existing_asset):
+                        is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
+                        if not is_buy:
+                            buy_attempts += 1
+                            helper.wait("short")
+                        else:
+                            buy_decision = True
+                        if not get_lowest_difference_to_maximum(exchange, [selected_new_asset]):
+                            buy_attempts = buy_attempts_nr + 1
+                    
+                    if buy_decision or existing_asset:
+
+                        adjust_sell_trigger = True
+
+                        #buy sleected Ticker
+                        if not existing_asset:
+                            market_movement = get_market_movement(get_tickers(exchange))
+                            funding = get_funding(usd_balance, market_movement)
+                            try:
+                                # BUY Order
+                                buy_order(exchange, selected_new_asset, current_price, funding)
+                                helper.wait_seconds(5)
+                                start_price = current_price
+                                helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
+                                size = get_Ticker_balance(exchange, selected_new_asset)
+                                # Take Profit Order
+                                if isinstance(current_price, float):
+                                    take_profit_price = current_price * (1 + (take_profit_in_percent/100))
+                                    sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
+                                    helper.write_trading_info_to_db(selected_new_asset, "tp", take_profit_price, market_movement)
+                                existing_asset = selected_new_asset
+                            except Exception as e:
+                                adjust_sell_trigger = False
+                                logger.info("Error buying: {}".format(e))
+
+                        if selected_new_asset:
+                            isInitial = True
+                        else:
+                            isInitial = False
+
+                        highest_value = current_price
+                        current_order_id = None
+                        previous_resistance = 0
+                        while adjust_sell_trigger:
+                            if helper.in_business_hours(start_trading_at, stop_trading_at):
+                                tickers = get_tickers(exchange)
+                                market_movement = get_market_movement(tickers)
+                                _, max_loss = get_market_factor(market_movement)
+                                size = get_Ticker_balance(exchange, existing_asset)
+                                if still_has_postion(size, highest_value):
+                                    highest_value, current_price, order, new_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
+                                    logger.debug("trader previous resistance: {}, new_resistance: {}".format(previous_resistance, new_resistance))
+                                    if new_resistance:
+                                        previous_resistance = new_resistance
+                                    #if order:
+                                    #    if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
+                                    #    current_order_id = order['data']['orderId']
+                                    isInitial = False
+                                    helper.wait("short")
+                                else:
+                                    logger.info("Asset has been sold!")
+                                    adjust_sell_trigger = False
+                                    buy_decision = False
+                                    end_price = current_price
+                                    previous_asset = existing_asset
+                                    helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
+                                    balance = get_base_currency_balance(exchange)
+                                    helper.write_balance_to_db(base_currency, balance)
+                                    existing_asset = None
+                            else:
+                                existing_asset, current_price = find_asset_with_balance(exchange)
+                                size = get_Ticker_balance(exchange, existing_asset)
+                                sell_now(exchange, existing_asset, size)
+                                helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
+                                adjust_sell_trigger = False
+                                existing_asset = None
+                else:  
+                    logger.debug("No Asset selected!")
+                    winning_buy_count = 0
+                    helper.wait("long")
         else:
             if in_business:
                 in_business = False
