@@ -144,8 +144,8 @@ if __name__ == "__main__":
     #tickers = get_tickers(exchange)
     #tickers = get_tickers_as_list(tickers)
 
-    
-    value = database.execute_select("select balance from balance order by timestamp desc limit 1")
+    value = database.execute_select("select balance from balance where DATE(`timestamp`) = CURDATE()-1 order by timestamp desc limit 1")
+
 
     print(value.iloc[0, 0])
     
