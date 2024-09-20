@@ -525,7 +525,7 @@ def run_trader():
         if helper.in_business_hours(start_trading_at, stop_trading_at) and helper.in_buying_period(stop_buying_at):
             in_business = True
             usd_balance = get_base_currency_balance(exchange)
-            
+            pnl_achieved = daily_pnl_target_achieved(usd_balance)
             if start_price and end_price:
                 if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
                     winning_buy_count += 1
