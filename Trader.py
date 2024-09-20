@@ -653,7 +653,7 @@ def run_trader():
                 balance = get_base_currency_balance(exchange)
                 helper.write_balance_to_db(base_currency, balance)
 
-            helper.wait("long")
+        helper.wait("long")
 
 
 if __name__ == "__main__":
