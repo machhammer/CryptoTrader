@@ -494,7 +494,7 @@ def cancel_order(exchange, ticker, orderId):
 def daily_pnl_target_achieved(current_balance):
     last_balance = helper.read_last_balacne_from_db()
     current_pnl = ((current_balance - last_balance)*100) / last_balance
-    logger.info("   current pnl: {}".format(current_pnl))
+    logger.info("   last_balance: {}, current_balance: {}, current pnl: {}".format(last_balance, current_balance, current_pnl))
     if current_pnl >= daily_pnl_target_in_percent:
         return True
     else:
