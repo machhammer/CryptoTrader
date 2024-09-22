@@ -32,6 +32,7 @@ ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG", "BGB"]
 amount_coins = 1000
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
+
 take_profit_in_percent = 1.5
 buy_attempts_nr = 30
 move_increase_threshold = 0.003
@@ -224,7 +225,7 @@ def add_ema(data):
 
 #************************************ get Candidate Functions
 def get_candidate(exchange):
-    logger.info("1. ******** Check for New Candidate ********")
+    logger.debug("1. ******** Check for New Candidate ********")
     tickers = get_tickers(exchange)
     market_movement = get_market_movement(tickers)
     tickers = get_tickers_as_list(tickers)
@@ -266,7 +267,7 @@ def get_ticker_with_bigger_moves(exchange, tickers):
             next(progress_bar)
         except:
             pass
-    logger.info("   ticker with bigger moves: {}".format(len(bigger_moves)))
+    logger.debug("   ticker with bigger moves: {}".format(len(bigger_moves)))
     return bigger_moves
 
 
@@ -279,7 +280,7 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
         logger.debug(data.tail(3)["aroon_up"])
         if (100 in data.tail(3)["aroon_up"].to_list()):
             buy_signals.append(ticker)
-    logger.info("   ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
+    logger.debug("   ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
     return buy_signals
 
 
@@ -291,7 +292,7 @@ def get_ticker_with_increased_volume(exchange, tickers):
         current_mean = data.tail(4)["volume"].mean()
         if (current_mean / last_mean) >= volume_increase_threshold:
             increased_volumes.append(ticker)
-    logger.info("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
+    logger.debug("   ticker_with_increased_volume: {}".format(len(increased_volumes)))
     return increased_volumes
 
 
@@ -306,7 +307,7 @@ def get_top_ticker_expected_results(exchange, tickers):
     df = pd.DataFrame(accepted_expected_results.items(), columns=['ticker', 'min'])
     df = df.sort_values(by='min')   
     df = df.tail(5)['ticker'].to_list()
-    logger.info("   ticker_with_expected_results: {}".format(len(df)))
+    logger.debug("   ticker_with_expected_results: {}".format(len(df)))
     return df
 
 
@@ -317,7 +318,7 @@ def get_close_to_high(exchange, tickers):
         max = data['close'].max()
         if data.iloc[-1, 4] >= max:
             close_to_high.append(ticker)
-    logger.info("   ticker_close_to_high: {}".format(len(close_to_high)))
+    logger.debug("   ticker_close_to_high: {}".format(len(close_to_high)))
     return close_to_high
 
 
@@ -331,7 +332,7 @@ def get_lowest_difference_to_maximum(exchange, tickers):
         ratio = ((current_close - local_max) * 100) / local_max
         if ratio > difference_to_maximum_max:
             lowest_difference_to_maximum = ticker
-    logger.info("   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
+    logger.debug("   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum))
     return lowest_difference_to_maximum
 
 def get_with_sufficient_variance(exchange, ticker):
@@ -341,7 +342,7 @@ def get_with_sufficient_variance(exchange, ticker):
         data = data.duplicated(subset=["close"])
         data = data.loc[lambda x : x == True]
         duplicate_data = len(data)
-        logger.info("   variance: {}".format(duplicate_data))
+        logger.debug("   variance: {}".format(duplicate_data))
     if duplicate_data>0:
         return None
     else:
@@ -461,7 +462,7 @@ def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
     amount_precision, price_precision = get_precision(exchange, ticker)
     takeProfitPrice = convert_to_precision(takeProfitPrice, price_precision)
     size = convert_to_precision(size, amount_precision)
-    logger.debug("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
+    logger.info("   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(ticker, size, takeProfitPrice))
     order = exchange.create_take_profit_order(ticker, size, takeProfitPrice)
     logger.debug("   sell TP order id : {}".format(order))
 
@@ -471,7 +472,7 @@ def sell_order(exchange, ticker, size, stopLossPrice):
     amount_precision, price_precision = get_precision(exchange, ticker)
     stopLossPrice = convert_to_precision(stopLossPrice, price_precision)
     size = convert_to_precision(size, amount_precision)
-    logger.debug("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
+    logger.info("   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(ticker, size, stopLossPrice))
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
     logger.debug("   sell order id : {}".format(order))
     return order
@@ -639,6 +640,8 @@ def run_trader():
                     logger.debug("No Asset selected!")
                     winning_buy_count = 0
                     helper.wait("long")
+            else: 
+                logger.info("PnL achieved. No activities for today!")
         else:
             if in_business:
                 in_business = False
