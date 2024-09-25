@@ -642,6 +642,7 @@ def run_trader():
                     helper.wait("long")
             else: 
                 logger.info("PnL achieved. No activities for today!")
+                helper.wait("long")
         else:
             if in_business:
                 in_business = False
@@ -656,7 +657,7 @@ def run_trader():
                 balance = get_base_currency_balance(exchange)
                 helper.write_balance_to_db(base_currency, balance)
 
-        helper.wait("long")
+            helper.wait("long")
 
 
 if __name__ == "__main__":
