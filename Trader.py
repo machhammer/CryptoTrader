@@ -47,7 +47,7 @@ winning_buy_nr = 2
 
 start_trading_at = time(hour=3)
 stop_trading_at = time(hour=23)
-stop_buying_at = time(hour=19)
+stop_buying_at = time(hour=18)
 
 
 helper = Helper(logger, wait_time_next_asset_selection_minutes, wait_time_next_buy_selection_seconds)
