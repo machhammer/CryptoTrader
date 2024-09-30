@@ -1,4 +1,4 @@
-from math import isnan, nan
+from math import isnan, nan, floor, ceil
 from Exchange import Exchange
 import random
 import numpy as np
@@ -137,15 +137,29 @@ def is_buy_test(exchange, ticker):
                 is_buy = False
 
 
+def get_volatility(exchange, ticker):
+    print(ticker)
+    data = get_data(exchange, ticker, "30m", 48)
+    data = data['close']
+    data_return = data.pct_change() * 100
+    
+
+    print("ceil max: ", ceil(data_return.max()))
+    print("floor min: ", floor(data_return.min()))
+
+    data_volatility = data_return.mean()
+
+    print ("vola: ", data_volatility)
+
+
 if __name__ == "__main__":
     
-    #exchange = Exchange("bitget")
+    exchange = Exchange("bitget")
 
     #tickers = get_tickers(exchange)
     #tickers = get_tickers_as_list(tickers)
 
-    value = database.execute_select("select balance from balance where DATE(`timestamp`) = CURDATE()-1 order by timestamp desc limit 1")
-
-
-    print(value.iloc[0, 0])
+    get_volatility(exchange, 'NEAR/USDT')
+    get_volatility(exchange, 'SOL/USDT')
+    get_volatility(exchange, 'ZETA/USDT')
     
