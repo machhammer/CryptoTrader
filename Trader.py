@@ -37,7 +37,7 @@ take_profit_in_percent = 1.5
 buy_attempts_nr = 30
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
-volume_increase_threshold = 1
+volume_increase_threshold = 1.3
 difference_to_maximum_max = -2
 valid_position_amount = 2
 daily_pnl_target_in_percent = 1.5
@@ -356,7 +356,7 @@ def get_with_sufficient_variance(exchange, ticker):
 #************************************ BUY Functions
 def is_buy_decision(exchange, ticker, attempt):
     logger.debug("2. ******** Check for Buy Decision, Ticker: {}, #{}".format(ticker, attempt))
-    data = get_data(exchange, ticker, "1m", limit=120)
+    data = get_data(exchange, ticker, "1m", limit=180)
     data = add_min_max(data)
     data = add_aroon(data)
     data = add_vwap(data)
