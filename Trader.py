@@ -143,9 +143,9 @@ def get_funding(usd, market_movement):
 
 #************************************ get Factors based on market movement
 def get_market_factor(pos_neg_mean):
-    fund_ratio = 0
+    """ fund_ratio = 0
     max_loss = 0
-    if pos_neg_mean > 4:
+    if pos_neg_mean > 0:
         fund_ratio = 0.9
         max_loss = 0.03
     elif pos_neg_mean > 3:
@@ -163,7 +163,10 @@ def get_market_factor(pos_neg_mean):
     else:
         fund_ratio = 0.1
         max_loss = 0.03
-    logger.debug("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))    
+    logger.debug("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))     """
+    fund_ratio = 0.9
+    max_loss = 0.03
+
     return fund_ratio, max_loss
 
 
