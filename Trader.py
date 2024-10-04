@@ -611,6 +611,8 @@ def run_trader():
                                 tickers = get_tickers(exchange)
                                 market_movement = get_market_movement(tickers)
                                 _, max_loss = get_market_factor(market_movement)
+                                if winning_buy_count >= 1:
+                                    max_loss /= 3
                                 size = get_Ticker_balance(exchange, existing_asset)
                                 if still_has_postion(size, highest_value):
                                     highest_value, current_price, order, new_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
