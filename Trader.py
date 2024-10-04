@@ -40,7 +40,8 @@ move_increase_period_threshold = 1
 volume_increase_threshold = 1.3
 difference_to_maximum_max = -2
 valid_position_amount = 2
-daily_pnl_target_in_percent = 1.5
+daily_pnl_target_in_percent = 1.3
+daily_pnl_max_loss_in_percent = -2
 #difference_to_resistance_min = 0.01
 minimum_funding = 10
 winning_buy_nr = 2
@@ -495,11 +496,17 @@ def cancel_order(exchange, ticker, orderId):
     logger.info("   cancel Order - Ticker: {}, Order Id: {}".format(ticker, orderId))
 
 
-def daily_pnl_target_achieved(current_balance):
-    last_balance = helper.read_last_balacne_from_db().iloc[0, 0]
+def daily_pnl_target_achieved(current_balance, last_balance):
     current_pnl = ((current_balance - last_balance)*100) / last_balance
     logger.info("   last_balance: {}, current_balance: {}, current pnl: {}".format(last_balance, current_balance, current_pnl))
     if current_pnl >= daily_pnl_target_in_percent:
+        return True
+    else:
+        return False
+
+def daily_max_loss_reached(current_balance, last_balance):
+    current_pnl = ((current_balance - last_balance)*100) / last_balance
+    if current_pnl <= daily_pnl_max_loss_in_percent:
         return True
     else:
         return False
@@ -524,6 +531,7 @@ def run_trader():
     winning_buy_count = 0
     usd_balance = 0
     pnl_achieved = False
+    max_loss_reached = False
     existing_asset, current_price = find_asset_with_balance(exchange)
     
     while running:
@@ -531,9 +539,11 @@ def run_trader():
             in_business = True
             if not existing_asset:
                 usd_balance = get_base_currency_balance(exchange)
-                pnl_achieved = daily_pnl_target_achieved(usd_balance)
+                last_balance = helper.read_last_balacne_from_db().iloc[0, 0]
+                pnl_achieved = daily_pnl_target_achieved(usd_balance, last_balance)
+                max_loss_reached = daily_max_loss_reached(usd_balance, last_balance)
             
-            if not pnl_achieved:
+            if not pnl_achieved and not max_loss_reached:
                 if start_price and end_price:
                     if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
                         winning_buy_count += 1
@@ -646,8 +656,12 @@ def run_trader():
                     winning_buy_count = 0
                     helper.wait("long")
             else: 
-                logger.info("PnL achieved. No activities for today!")
-                helper.wait("long")
+                if pnl_achieved:
+                    logger.info("PnL achieved. No activities for today!")
+                    helper.wait("long")
+                if max_loss_reached:
+                    logger.info("Too much loss. No activities for today!")
+                    helper.wait("long")
         else:
             if in_business:
                 in_business = False
