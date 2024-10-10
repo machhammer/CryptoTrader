@@ -37,11 +37,11 @@ take_profit_in_percent = 1.5
 buy_attempts_nr = 30
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
-volume_increase_threshold = 1.3
+volume_increase_threshold = 1.5
 difference_to_maximum_max = -2
 valid_position_amount = 2
 daily_pnl_target_in_percent = 1.3
-daily_pnl_max_loss_in_percent = -6
+daily_pnl_max_loss_in_percent = -1
 #difference_to_resistance_min = 0.01
 minimum_funding = 10
 winning_buy_nr = 2
@@ -166,7 +166,7 @@ def get_market_factor(pos_neg_mean):
         max_loss = 0.03
     logger.debug("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))     """
     fund_ratio = 0.9
-    max_loss = 0.03
+    max_loss = 0.035
 
     return fund_ratio, max_loss
 
