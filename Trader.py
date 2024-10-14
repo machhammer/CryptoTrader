@@ -166,7 +166,7 @@ def get_market_factor(pos_neg_mean):
         max_loss = 0.03
     logger.debug("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))     """
     fund_ratio = 0.9
-    max_loss = 0.035
+    max_loss = 0.01
 
     return fund_ratio, max_loss
 
@@ -622,7 +622,7 @@ def run_trader():
                                 market_movement = get_market_movement(tickers)
                                 _, max_loss = get_market_factor(market_movement)
                                 if winning_buy_count >= 1:
-                                    max_loss = take_profit_in_percent / 100 / 2
+                                    max_loss = take_profit_in_percent / 100 / 3
                                 size = get_Ticker_balance(exchange, existing_asset)
                                 if still_has_postion(size, highest_value):
                                     highest_value, current_price, order, new_resistance = set_sell_trigger(exchange, isInitial, existing_asset, size, highest_value, max_loss, previous_resistance)
