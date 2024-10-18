@@ -126,6 +126,6 @@ class Helper():
         database.insert_balance(self.get_time(), base_currency, balance)
     
     def read_last_balacne_from_db(self):
-        return database.execute_select("SELECT balance FROM balance WHERE timestamp >= CURDATE() - INTERVAL 1 DAY AND timestamp < CURDATE() order by timestamp desc limit 1")
+        return database.execute_select("SELECT balance FROM balance WHERE timestamp >= CURDATE() - INTERVAL 100 DAY AND timestamp < CURDATE() order by timestamp desc limit 1")
 
 
