@@ -166,7 +166,7 @@ def get_market_factor(pos_neg_mean):
         max_loss = 0.03
     logger.debug("   get market factor for market_movement: {}, fund_ratio: {}, max_loss: {}".format(pos_neg_mean, fund_ratio, max_loss))     """
     fund_ratio = 0.9
-    max_loss = 0.01
+    max_loss = 0.035
 
     return fund_ratio, max_loss
 
