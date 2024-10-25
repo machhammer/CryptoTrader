@@ -74,6 +74,27 @@ def insert_trading_info_table(timestamp, asset, side, price, market_movement):
     connection.close()
 
 
+def initialize_coin_select():
+    connection = connect()
+    create_table ="CREATE or REPLACE TABLE coin_select " \
+            "( "\
+                "timestamp TIMESTAMP, "\
+                "asset VARCHAR(15), "\
+                "level VARCHAR(5) "\
+            ")"
+    connection.cursor().execute(create_table)
+
+
+def insert_coin_select_table(timestamp, asset, level):
+    connection = connect()
+    insert_record = "INSERT INTO coin_select " \
+        "(timestamp, asset, level) "\
+        "VALUES ('{}', '{}', '{}')".format(timestamp, asset, level)
+    connection.cursor().execute(insert_record)
+    connection.commit()
+    connection.close()
+
+
 def execute_select(select):
     connection = connect()
     cursor = connection.cursor()
@@ -85,5 +106,5 @@ def execute_select(select):
 
 
 if __name__ == "__main__":
-    insert_balance(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'USDT', 19.23748255)
+    initialize_coin_select()
 
