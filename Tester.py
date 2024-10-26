@@ -134,7 +134,7 @@ def get_candidate(exchange):
     print("sufficient variance: ", sufficient_variance)
     
     diff_to_maximum = get_lowest_difference_to_maximum(exchange, sufficient_variance)
-    write_to_database(now, diff_to_maximum, "sv")
+    write_to_database(now, diff_to_maximum, "df")
     print("lowest to maximum: ", diff_to_maximum)
     
     return diff_to_maximum
@@ -259,7 +259,7 @@ def download_ticker_data(exchange):
 
 if __name__ == "__main__":
 
-    database.initialize_coin_select()
+    #database.initialize_coin_select()
 
     exchange = Exchange("bitget")
     running = True

@@ -79,7 +79,7 @@ def initialize_coin_select():
     create_table ="CREATE or REPLACE TABLE coin_select " \
             "( "\
                 "timestamp TIMESTAMP, "\
-                "asset VARCHAR(15), "\
+                "asset VARCHAR(25), "\
                 "level VARCHAR(5) "\
             ")"
     connection.cursor().execute(create_table)
