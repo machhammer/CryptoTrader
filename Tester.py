@@ -108,34 +108,34 @@ def get_candidate(exchange):
 
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     #write_to_database(now, major_move, "bm")
-    print("major move: ", major_move)
+    #print("major move: ", major_move)
 
     expected_results = get_top_ticker_expected_results(exchange, major_move)
-    print("expected: ", expected_results)
+    #print("expected: ", expected_results)
     
     close_to_high = get_close_to_high(exchange, major_move)
-    print("close to high: ", close_to_high)
+    #print("close to high: ", close_to_high)
     
     relevant_tickers = expected_results + close_to_high
     relevant_tickers = list(set(relevant_tickers))
     #write_to_database(now, relevant_tickers, "rt")
-    print("relevant: ", relevant_tickers)
+    #print("relevant: ", relevant_tickers)
     
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
     write_to_database(now, increased_volume, "iv")
-    print("increased volume: ", increased_volume)
+    #print("increased volume: ", increased_volume)
 
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     write_to_database(now, buy_signals, "bs")
-    print("buy signals: ", buy_signals)
+    #print("buy signals: ", buy_signals)
 
     sufficient_variance = get_with_sufficient_variance(exchange, buy_signals)
     write_to_database(now, sufficient_variance, "sv")
-    print("sufficient variance: ", sufficient_variance)
+    #print("sufficient variance: ", sufficient_variance)
     
     diff_to_maximum = get_lowest_difference_to_maximum(exchange, sufficient_variance)
     write_to_database(now, diff_to_maximum, "df")
-    print("lowest to maximum: ", diff_to_maximum)
+    print("Selected: ", diff_to_maximum)
     
     return diff_to_maximum
 
