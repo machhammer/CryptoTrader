@@ -17,7 +17,7 @@ from Helper import Helper
 difference_to_maximum_max = -2
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
-volume_increase_threshold = 1.3
+volume_increase_threshold = 2
 
 symbol = "ETH/USDT"
 startDate = "2023-10-07 03:00:00+00:00"
@@ -107,7 +107,7 @@ def get_candidate(exchange):
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
-    write_to_database(now, major_move, "bm")
+    #write_to_database(now, major_move, "bm")
     print("major move: ", major_move)
 
     expected_results = get_top_ticker_expected_results(exchange, major_move)
@@ -118,7 +118,7 @@ def get_candidate(exchange):
     
     relevant_tickers = expected_results + close_to_high
     relevant_tickers = list(set(relevant_tickers))
-    write_to_database(now, relevant_tickers, "rt")
+    #write_to_database(now, relevant_tickers, "rt")
     print("relevant: ", relevant_tickers)
     
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
