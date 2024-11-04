@@ -250,9 +250,11 @@ def get_data(exchange, ticker, interval, limit):
 
 def download_ticker_data(exchange):
     tickers = all_selected_tickers()
+    now = datetime.now()
+    posttext = "_" + str(now.year) + str(now.month) + str(now.minute)
     for ticker in tickers:
         data = get_data(exchange, ticker, "1m", 1000)
-        name = ticker.replace("/USDT", "") + ".csv"
+        name = ticker.replace("/USDT", "") + posttext + ".csv"
         print(name)
         data.to_csv(name)
 
