@@ -268,7 +268,7 @@ if __name__ == "__main__":
     #database.initialize_coin_select()
 
     exchange = Exchange("bitget")
-    running = True
+    running = False
 
     while True:
         now = datetime.now()
