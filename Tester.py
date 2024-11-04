@@ -12,6 +12,7 @@ from scipy.signal import argrelextrema
 from datetime import datetime
 import ccxt
 from Helper import Helper
+import os
 
 
 difference_to_maximum_max = -2
@@ -251,12 +252,15 @@ def get_data(exchange, ticker, interval, limit):
 def download_ticker_data(exchange):
     tickers = all_selected_tickers()
     now = datetime.now()
-    posttext = "_" + str(now.year) + str(now.month) + str(now.minute)
+    posttext = "_" + str(now.year) + str(now.month) + str(now.day)
+    cur_dir = os.getcwd()
+    os.chdir('data')
     for ticker in tickers:
         data = get_data(exchange, ticker, "1m", 1000)
         name = ticker.replace("/USDT", "") + posttext + ".csv"
         print(name)
         data.to_csv(name)
+    os.chdir(cur_dir)
 
 
 if __name__ == "__main__":
@@ -270,7 +274,7 @@ if __name__ == "__main__":
         now = datetime.now()
         if now.hour >= 3 and now.hour <= 18:
             running = True
-            print("Selected: ", get_candidate(exchange))
+            get_candidate(exchange)
         if now.hour >= 22:
             if running:
                 download_ticker_data(exchange)
