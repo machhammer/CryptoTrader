@@ -93,7 +93,7 @@ def write_to_database(now, assets, level):
 
 
 def all_selected_tickers():
-    tickers = database.execute_select("select distinct asset from coin_select order by asset")
+    tickers = database.execute_select("select distinct asset from coin_select where DATE_FORMAT(timestamp, '%Y-%m-%d') = CURDATE()")
     return tickers.squeeze().tolist()
 
 
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
     while running:
         now = datetime.now()
-        if now.hour >= 3 and now.hour <= 15:
+        if now.hour >= 3 and now.hour <= 18:
             print("Selected: ", get_candidate(exchange))
             helper.wait("long")
         if now.hour >= 22:
