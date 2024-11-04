@@ -261,19 +261,21 @@ def download_ticker_data(exchange):
 
 if __name__ == "__main__":
 
-    database.initialize_coin_select()
+    #database.initialize_coin_select()
 
     exchange = Exchange("bitget")
     running = True
 
-    while running:
+    while True:
         now = datetime.now()
         if now.hour >= 3 and now.hour <= 18:
+            running = True
             print("Selected: ", get_candidate(exchange))
-            helper.wait("long")
         if now.hour >= 22:
-            download_ticker_data(exchange)
-            running = False
+            if running:
+                download_ticker_data(exchange)
+                running = False
+        helper.wait("long")
 
     
     
