@@ -1,10 +1,11 @@
-from Exchange import Exchange
 import numpy as np
 import pandas as pd
 import random
 import math
 import logging
-from datetime import time
+import argparse
+from Exchange import Exchange, Offline_Exchange
+from datetime import time, datetime
 from tqdm import tqdm
 from ta.trend import AroonIndicator, EMAIndicator, MACD
 from ta.volume import VolumeWeightedAveragePrice
@@ -22,11 +23,11 @@ handler = logging.FileHandler(
 )
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 #************************************ Confiuguration
-exchange_name = "bitget"
+
 base_currency = "USDT"
 ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG", "BGB"]
 amount_coins = 1000
@@ -48,7 +49,7 @@ winning_buy_nr = 2
 
 start_trading_at = time(hour=3)
 stop_trading_at = time(hour=23)
-stop_buying_at = time(hour=18)
+stop_buying_at = time(hour=19)
 
 
 helper = Helper(logger, wait_time_next_asset_selection_minutes, wait_time_next_buy_selection_seconds)
@@ -69,6 +70,7 @@ def get_data(exchange, ticker, interval, limit):
 #************************************ Balance of base currency
 def get_base_currency_balance(exchange):
     usd = exchange.fetch_balance()[base_currency]["total"]
+    logger.debug("Base currency balance: {}".format(usd))
     return usd
 
 
@@ -85,6 +87,10 @@ def find_asset_with_balance(exchange):
                 logger.info("Found asset with balance: {}".format(asset))
                 asset_with_balance = asset + "/" + base_currency
                 price = found_price
+    if asset_with_balance:
+        logger.debug('Asset with balance: '.format(asset_with_balance))
+    else:
+        logger.debug('No asset with balance')
     return asset_with_balance, price
 
 
@@ -125,8 +131,7 @@ def get_tickers_as_list(tickers):
 #************************************ get market movement
 def get_market_movement(tickers):
     market_movement = tickers["percentage"].median()
-    if not exchange_name == "bitget":
-        market_movement *= 100
+
     return market_movement
 
 
@@ -239,7 +244,7 @@ def get_candidate(exchange):
     close_to_high = get_close_to_high(exchange, major_move)
     logger.debug("   close_to_high: {}".format(close_to_high))
     relevant_tickers = expected_results + close_to_high
-    logger.debug("   {}".format(relevant_tickers))
+    logger.debug("   relevant_tickers: {}".format(relevant_tickers))
     increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
     buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
@@ -269,8 +274,8 @@ def get_ticker_with_bigger_moves(exchange, tickers):
                 bigger_moves.append(ticker)
         try:
             next(progress_bar)
-        except:
-            pass
+        except Exception as e:
+            print(e)
     logger.debug("   ticker with bigger moves: {}".format(len(bigger_moves)))
     return bigger_moves
 
@@ -280,8 +285,6 @@ def get_ticker_with_aroon_buy_signals(exchange, tickers):
     for ticker in tickers:
         data = get_data(exchange, ticker, "1m", limit=20)
         data = add_aroon(data)
-        logger.debug(ticker)
-        logger.debug(data.tail(3)["aroon_up"])
         if (100 in data.tail(3)["aroon_up"].to_list()):
             buy_signals.append(ticker)
     logger.debug("   ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
@@ -362,7 +365,7 @@ def is_buy_decision(exchange, ticker, attempt):
     data = add_aroon(data)
     data = add_vwap(data)
     data = add_macd(data)
-    
+    print("---------------------------")
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
     last_max = (max_column.values)[-1]
@@ -512,18 +515,17 @@ def daily_max_loss_reached(current_balance, last_balance):
         return False
 
 
-def run_trader():
+def run_trader(exchange, ignore_profit_loss=False, selected=None, observation_start=None):
 
     logger.info("Trader started!")
 
-    exchange = Exchange("bitget")
     running = True
     in_business = False
 
     market_movement = None
     current_price = None
     size = None
-    selected_new_asset = None
+    selected_new_asset = selected
     existing_asset = None
     previous_asset = None
     start_price = None
@@ -543,7 +545,7 @@ def run_trader():
                 pnl_achieved = daily_pnl_target_achieved(usd_balance, last_balance)
                 max_loss_reached = daily_max_loss_reached(usd_balance, last_balance)
             
-            if not pnl_achieved and not max_loss_reached:
+            if (not pnl_achieved and not max_loss_reached) or not ignore_profit_loss:
                 if start_price and end_price:
                     if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
                         winning_buy_count += 1
@@ -565,7 +567,7 @@ def run_trader():
                     start_price = None
                     end_price = None
                 else:
-                    if not existing_asset:
+                    if not existing_asset and not selected_new_asset:
                         selected_new_asset, market_movement = get_candidate(exchange)
                         buy_decision = True
 
@@ -680,7 +682,23 @@ def run_trader():
 
 
 if __name__ == "__main__":
-    run_trader()
+       
+    parser = argparse.ArgumentParser(description='Crypto Trader application')
+    parser.add_argument('exchange', type=str, help='Exchange')
+    parser.add_argument('exchange_name', type=str, help='Exchange Name')
+    parser.add_argument("--ignore_profit_loss", default=False)
+    parser.add_argument("--selected", default=None)
+    parser.add_argument("--observation_start", default=None) #2024-11-10 12:00
+    parser.add_argument("--logging", default='INFO')
+    args = parser.parse_args()
+    if args.logging=='INFO':
+        logger.setLevel(logging.INFO)
+    elif args.logging=='DEBUG':
+        logger.setLevel(logging.DEBUG)
+    if args.observation_start:
+        observation_start = datetime.strptime(args.observation_start, '%Y-%m-%d %H:%M')
     
+    exchange_class = globals()[args.exchange]
+    exchange = exchange_class(args.exchange_name)
 
-
+    run_trader(exchange, args.ignore_profit_loss, args.selected, args.observation_start)

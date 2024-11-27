@@ -1,11 +1,13 @@
 import ccxt
+from matplotlib.offsetbox import OffsetBox
 import credentials
 from datetime import datetime
 import time
 import traceback
 import asyncio
 from pybitget import Client
-
+import pprint
+import pandas as pd
 
 class Exchange():
 
@@ -30,6 +32,7 @@ class Exchange():
         elif self.name == "bitget":
             self.exchange = self.bitget()
         else: raise Exception("Exchange {} not implemented!".format(self.name))
+        
 
     def cryptocom(self):
         api_key = credentials.provider_2.get("key")
@@ -137,11 +140,11 @@ class Exchange():
             self.log_error("fetch_ticker")
         return result
     
-    def fetch_ohlcv(self, asset, timeframe, limit):
+    def fetch_ohlcv(self, asset, timeframe, limit, since=None):
         result = None
         try:
             if self.exchange is not None:
-                result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
+                result = self.exchange.fetch_ohlcv(asset, timeframe, since=since, limit=limit)
             else:
                 raise Exception("Exchange is None.")
         except Exception as e:
@@ -149,7 +152,7 @@ class Exchange():
             time.sleep(10)
             self.connect()
             if self.exchange is not None:
-                result = self.exchange.fetch_ohlcv(asset, timeframe, limit=limit)
+                result = self.exchange.fetch_ohlcv(asset, timeframe, since=since, limit=limit)
             else:
                 raise Exception("Exchange is None.")
             self.log_error("fetch_ohlcv")
@@ -251,3 +254,61 @@ class Exchange():
             return self.exchange.fetch_order(id, asset)
         else:
             raise Exception("Exchange is None.")
+
+    
+    def fetch_ohlcv_history(self, asset, timeframe, since, limit):
+        if self.exchange is not None:
+            result = self.exchange.fetch_ohlcv(asset, timeframe, since=since, limit=limit)
+        else:
+            raise Exception("Exchange is None.")
+        return result
+
+
+class Offline_Exchange(Exchange):
+
+    order = {'type': None, 'asset': None, 'size': None, 'price':None, 'timestamp': None}
+    
+    buy_order = []
+    sell_oders = []
+
+    balance = {
+        'total': { 
+            'USDT': 100.0
+        },
+        'USDT': { 
+            'total': 100.0
+        },
+    }
+
+    def __init__(self, exchange_name):
+        super().__init__(exchange_name)
+        
+        
+    def fetch_balance(self):
+        return self.balance
+    
+
+    def create_buy_order(self, asset, size, price):
+        self.order = {'type': 'buy', 'asset': asset, 'size':size, 'price':price, 'timestamp': None}
+        self.balance['total'][asset] = size * price
+
+
+    def create_take_profit_order(self, asset, size, takeProfitPrice):
+        self.sell_oders.append({'type': 'buy', 'asset': asset, 'size':size, 'price':takeProfitPrice, 'timestamp': None})
+
+    def create_stop_loss_order(self, asset, size, stopLossPrice):
+        self.sell_oders.append({'type': 'buy', 'asset': asset, 'size':size, 'price':stopLossPrice, 'timestamp': None})
+
+    def convert(self, bars):
+        data = pd.DataFrame(
+            bars[:], columns=["timestamp", "open", "high", "low", "close", "volume"]
+        )
+        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
+        return data
+
+if __name__ == "__main__":
+    dynamic_class = globals()['Offline_Exchange']
+    exchange = dynamic_class("bitget")
+    result = exchange.fetch_ohlcv("NEAR/USDT", "1m", since=1654356700000, limit=200)
+    print(exchange.convert(result))
+    print(len(result))

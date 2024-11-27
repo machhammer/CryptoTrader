@@ -13,7 +13,7 @@ from datetime import datetime
 import ccxt
 from Helper import Helper
 import os
-
+import pprint
 
 difference_to_maximum_max = -2
 move_increase_threshold = 0.003
@@ -140,6 +140,7 @@ def get_candidate(exchange):
     
     return diff_to_maximum
 
+
 def get_ticker_with_bigger_moves(exchange, tickers):
     limit = 4
     bigger_moves = []
@@ -259,12 +260,12 @@ def download_ticker_data(exchange):
         data = get_data(exchange, ticker, "1m", 1000)
         name = ticker.replace("/USDT", "") + posttext + ".csv"
         print(name)
-        data.to_csv(name)
+        data.to_csv(name, index=False)
     os.chdir(cur_dir)
 
 
-if __name__ == "__main__":
-
+def run_tester():
+    
     #database.initialize_coin_select()
 
     exchange = Exchange("bitget")
@@ -281,7 +282,14 @@ if __name__ == "__main__":
                 running = False
         helper.wait("long")
 
-    
-    
 
-    
+
+
+if __name__ == "__main__":
+    #run_tester()
+
+    exchange = Exchange('bitget')
+
+    balance = exchange.exchange.fetch_balance()
+
+    pprint.pprint(balance)
