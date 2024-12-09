@@ -1,5 +1,6 @@
 from calendar import weekday
 import time
+import credentials
 import logging
 import pandas as pd
 from datetime import datetime
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 logger = logging.getLogger("screener")
 
 class Helper():
-     
+  
     def __init__(
         self,
         logger,
@@ -21,14 +22,23 @@ class Helper():
          self.wait_time_next_buy_selection_seconds = wait_time_next_buy_selection_seconds
 
     #************************************ Helper - Wait functions
-    def wait(self, period):
-        if period == "short":
-            wait_time = self.get_wait_time_1()
-        if period == "long":
-            wait_time = self.get_wait_time()
-        logger.debug("wait: {}".format(wait_time))
-        time.sleep(wait_time)
-
+    def wait(self, period, mode):
+        wait_time = 0
+        if mode==credentials.MODE_PROD: 
+            if period == "short":
+                wait_time = self.get_wait_time_1()
+            if period == "long":
+                wait_time = self.get_wait_time()
+            logger.debug("wait: {}".format(wait_time))
+            time.sleep(wait_time)
+        else:
+            if period == "short":
+                wait_time = self.wait_time_next_buy_selection_seconds
+            if period == "long":
+                wait_time = self.wait_time_next_asset_selection_minutes * 60
+            time.sleep(5)
+            logger.debug("wait: {}".format(wait_time))
+        return wait_time
 
     def get_wait_time(self):
             minute = datetime.now().minute
@@ -41,15 +51,19 @@ class Helper():
         wait_time = (self.wait_time_next_buy_selection_seconds - (seconds % self.wait_time_next_buy_selection_seconds))
         return wait_time
 
-    def wait_hours(self, hours):
-        time.sleep (hours * 60 * 60)
+    def wait_hours(self, hours, mode=None):
+        wait_time = hours * 60 * 60
+        if mode==credentials.MODE_PROD: time.sleep (wait_time)
+        return wait_time
 
-    def wait_minutes(self, minutes):
-        time.sleep (minutes * 60)
+    def wait_minutes(self, minutes, mode=None):
+        wait_time = minutes * 60
+        if mode==credentials.MODE_PROD: time.sleep (wait_time)
+        return minutes * 60
 
-    def wait_seconds(self, seconds):
-        time.sleep (seconds)
-
+    def wait_seconds(self, seconds, mode=None):
+        if mode==credentials.MODE_PROD: time.sleep (seconds)
+        return seconds
 
 
     def in_business_hours(self, from_time, to_time):    

@@ -1,25 +1,23 @@
 # Module Imports
 import mariadb
-import sys
 import credentials
 import pandas as pd
-from datetime import datetime
 
 
 def connect():
     # Connect to MariaDB Platform
-    try:
-        conn = mariadb.connect(
-            user=credentials.mariadb.get("user"),
-            password=credentials.mariadb.get("password"),
-            host=credentials.mariadb.get("host"),
-            port=credentials.mariadb.get("port"),
-            database=credentials.mariadb.get("database")
-    )
-    except mariadb.Error as e:
+    #try:
+    conn = mariadb.connect(
+        user=credentials.mariadb.get("user"),
+        password=credentials.mariadb.get("password"),
+        host=credentials.mariadb.get("host"),
+        port=credentials.mariadb.get("port"),
+        database=credentials.mariadb.get("database")
+)
+    #except mariadb.Error as e:
         
-        print(f"Error connecting to MariaDB Platform: {e}")
-        sys.exit(1)
+    #    print(f"Error connecting to MariaDB Platform: {e}")
+    #    sys.exit(1)
 
     # Get Cursor
     

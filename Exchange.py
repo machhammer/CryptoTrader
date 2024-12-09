@@ -1,7 +1,7 @@
 import ccxt
 from matplotlib.offsetbox import OffsetBox
 import credentials
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import traceback
 import asyncio
@@ -13,8 +13,8 @@ class Exchange():
 
     exchange = None
     name = None
-
-
+    
+    
     def __init__(self, name):
         self.name = name
         self.connect()
@@ -22,6 +22,9 @@ class Exchange():
     def log_error(self, proc):
         d = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
         print("Reconnecting from {} at {}".format(proc, d))
+
+    def get_mode(self):
+        return credentials.MODE_PROD
 
     def connect(self):
         print("Connecting to {}.".format(self.name))
@@ -269,7 +272,8 @@ class Offline_Exchange(Exchange):
     order = {'type': None, 'asset': None, 'size': None, 'price':None, 'timestamp': None}
     
     buy_order = []
-    sell_oders = []
+    sell_orders = {}
+
 
     balance = {
         'total': { 
@@ -280,24 +284,73 @@ class Offline_Exchange(Exchange):
         },
     }
 
+    def get_mode(self):
+        return credentials.MODE_TEST
+
+
     def __init__(self, exchange_name):
         super().__init__(exchange_name)
+        self.observation_start = None
         
+    def set_observation_start(self, observation_start):
+        print("set observation start: ", observation_start)
+        self.observation_start = observation_start
         
     def fetch_balance(self):
         return self.balance
     
 
     def create_buy_order(self, asset, size, price):
-        self.order = {'type': 'buy', 'asset': asset, 'size':size, 'price':price, 'timestamp': None}
-        self.balance['total'][asset] = size * price
+        base_currency = asset.split('/')[1]
+        symbol = asset.split('/')[0]
+        if symbol in self.balance['total']:
+            self.balance['total'][symbol] = self.balance['total'][symbol] + size
+            self.balance[symbol]['total'] = self.balance[symbol]['total'] + size
+        else:
+            self.balance['total'][symbol] = size
+            self.balance[symbol] = {'total': size}
+            
+        self.balance['total'][base_currency] = self.balance['total'][base_currency] - (size * price)
+        self.balance[base_currency]['total'] = self.balance[base_currency]['total'] - (size * price)
+        
 
 
     def create_take_profit_order(self, asset, size, takeProfitPrice):
-        self.sell_oders.append({'type': 'buy', 'asset': asset, 'size':size, 'price':takeProfitPrice, 'timestamp': None})
+        self.sell_orders['profit_sell'] = {'asset': asset, 'size':size, 'price':takeProfitPrice, 'timestamp': None}
+        print(self.sell_orders)
+
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
-        self.sell_oders.append({'type': 'buy', 'asset': asset, 'size':size, 'price':stopLossPrice, 'timestamp': None})
+        self.sell_orders['loss_sale'].append({'asset': asset, 'size':size, 'price':stopLossPrice, 'timestamp': None})
+        print(self.sell_orders)
+
+    def check_for_sell(self, data):
+        ts = data[-1][0]
+        if 'profit_sell' in self.sell_orders.keys():
+            if data[-1][2] >= self.sell_orders['profit_sell']['price']:
+                print("profit sell")
+        
+        if 'loss_sell' in self.sell_orders.keys():
+            for order in self.sell_orders['loss_sell']:
+                if data[-1][2] < order['price']:
+                    print("profit sell")
+
+        print(datetime.fromtimestamp(data[-1][0]/1000), data[-1][2], data[-1][3])
+        
+
+    def fetch_ohlcv(self, ticker, interval, limit):
+        if self.observation_start is None:
+            data = super().fetch_ohlcv(ticker, interval, limit)
+        else:
+            value = int(interval[0:len(interval)-1])
+            if interval.endswith("m"): limit = limit * 1
+            if interval.endswith("h"): limit = limit * 60
+            if interval.endswith("d"): limit = limit * 60 * 24
+            since = self.observation_start - timedelta(minutes = limit)
+            since = int(time.mktime(since.timetuple())) * 1000
+            data = super().fetch_ohlcv(ticker, interval, limit, since=since)
+            self.check_for_sell(data)
+        return data
 
     def convert(self, bars):
         data = pd.DataFrame(
@@ -306,9 +359,22 @@ class Offline_Exchange(Exchange):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
         return data
 
+
 if __name__ == "__main__":
+    
+    observation_start = datetime.strptime("2024-11-10 12:00", '%Y-%m-%d %H:%M')
+    
     dynamic_class = globals()['Offline_Exchange']
     exchange = dynamic_class("bitget")
-    result = exchange.fetch_ohlcv("NEAR/USDT", "1m", since=1654356700000, limit=200)
+    exchange.set_observation_start(observation_start)
+
+    result = exchange.fetch_ohlcv("NEAR/USDT", "15m", limit=5)
     print(exchange.convert(result))
-    print(len(result))
+
+    exchange.create_stop_loss_order("NEAR/USDT")
+
+    observation_start = observation_start + timedelta(minutes=15)
+    exchange.set_observation_start(observation_start)
+
+    result = exchange.fetch_ohlcv("NEAR/USDT", "15m", limit=5)
+    print(exchange.convert(result))

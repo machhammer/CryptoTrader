@@ -1,3 +1,4 @@
+from os import write
 import numpy as np
 import pandas as pd
 import random
@@ -5,12 +6,13 @@ import math
 import logging
 import argparse
 from Exchange import Exchange, Offline_Exchange
-from datetime import time, datetime
+from datetime import time, datetime, timedelta
 from tqdm import tqdm
 from ta.trend import AroonIndicator, EMAIndicator, MACD
 from ta.volume import VolumeWeightedAveragePrice
 from scipy.signal import argrelextrema
 from Helper import Helper
+
 
 
 #************************************ Logging
@@ -49,7 +51,7 @@ winning_buy_nr = 2
 
 start_trading_at = time(hour=3)
 stop_trading_at = time(hour=23)
-stop_buying_at = time(hour=19)
+stop_buying_at = time(hour=22)
 
 
 helper = Helper(logger, wait_time_next_asset_selection_minutes, wait_time_next_buy_selection_seconds)
@@ -225,11 +227,11 @@ def add_macd(data):
 
 
 def add_ema(data):
-        indicator_EMA_9 = EMAIndicator(close=data["close"], window=9)
-        data["ema_9"] = indicator_EMA_9.ema_indicator()
-        indicator_EMA_20 = EMAIndicator(close=data["close"], window=20)
-        data["ema_20"] = indicator_EMA_20.ema_indicator()
-        return data
+    indicator_EMA_9 = EMAIndicator(close=data["close"], window=9)
+    data["ema_9"] = indicator_EMA_9.ema_indicator()
+    indicator_EMA_20 = EMAIndicator(close=data["close"], window=20)
+    data["ema_20"] = indicator_EMA_20.ema_indicator()
+    return data
 
 
 #************************************ get Candidate Functions
@@ -365,7 +367,6 @@ def is_buy_decision(exchange, ticker, attempt):
     data = add_aroon(data)
     data = add_vwap(data)
     data = add_macd(data)
-    print("---------------------------")
     max_column = data['max'].dropna().drop_duplicates().sort_values()
     current_close = data.iloc[-1, 4]
     last_max = (max_column.values)[-1]
@@ -515,16 +516,18 @@ def daily_max_loss_reached(current_balance, last_balance):
         return False
 
 
-def run_trader(exchange, ignore_profit_loss=False, selected=None, observation_start=None):
+def run_trader(exchange, mode, ignore_profit_loss=False, selected=None, observation_start=None, write_to_db=True):
 
     logger.info("Trader started!")
-
+    
     running = True
     in_business = False
 
     market_movement = None
     current_price = None
     size = None
+    if not selected is None: 
+        selected + "/" + base_currency
     selected_new_asset = selected
     existing_asset = None
     previous_asset = None
@@ -541,12 +544,15 @@ def run_trader(exchange, ignore_profit_loss=False, selected=None, observation_st
             in_business = True
             if not existing_asset:
                 usd_balance = get_base_currency_balance(exchange)
-                last_balance = helper.read_last_balacne_from_db().iloc[0, 0]
+                if write_to_db:
+                    last_balance = helper.read_last_balacne_from_db().iloc[0, 0]
+                else:
+                    last_balance = 100
                 pnl_achieved = daily_pnl_target_achieved(usd_balance, last_balance)
                 max_loss_reached = daily_max_loss_reached(usd_balance, last_balance)
             
             if (not pnl_achieved and not max_loss_reached) or not ignore_profit_loss:
-                if start_price and end_price:
+                if not start_price is None and not end_price is None:
                     if isinstance(start_price, float) and isinstance(end_price, float) and start_price < end_price:
                         winning_buy_count += 1
                         if winning_buy_count <= winning_buy_nr:
@@ -579,7 +585,10 @@ def run_trader(exchange, ignore_profit_loss=False, selected=None, observation_st
                         is_buy, current_price = is_buy_decision(exchange, selected_new_asset , buy_attempts)
                         if not is_buy:
                             buy_attempts += 1
-                            helper.wait("short")
+                            wait_time = helper.wait("short", mode)
+                            if observation_start:
+                                observation_start = observation_start + timedelta(minutes=wait_time/60)
+                                exchange.set_observation_start(observation_start)
                         else:
                             buy_decision = True
                         if not get_lowest_difference_to_maximum(exchange, [selected_new_asset]):
@@ -598,13 +607,13 @@ def run_trader(exchange, ignore_profit_loss=False, selected=None, observation_st
                                 buy_order(exchange, selected_new_asset, current_price, funding)
                                 helper.wait_seconds(5)
                                 start_price = current_price
-                                helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
+                                if write_to_db: helper.write_trading_info_to_db(selected_new_asset, "buy", current_price, market_movement)
                                 size = get_Ticker_balance(exchange, selected_new_asset)
                                 # Take Profit Order
                                 if isinstance(current_price, float):
                                     take_profit_price = current_price * (1 + (take_profit_in_percent/100))
                                     sell_order_take_profit(exchange, selected_new_asset, size, take_profit_price)
-                                    helper.write_trading_info_to_db(selected_new_asset, "tp", take_profit_price, market_movement)
+                                    if write_to_db: helper.write_trading_info_to_db(selected_new_asset, "tp", take_profit_price, market_movement)
                                 existing_asset = selected_new_asset
                             except Exception as e:
                                 adjust_sell_trigger = False
@@ -635,35 +644,38 @@ def run_trader(exchange, ignore_profit_loss=False, selected=None, observation_st
                                     #    if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
                                     #    current_order_id = order['data']['orderId']
                                     isInitial = False
-                                    helper.wait("short")
+                                    wait_time = helper.wait("short", mode)
+                                    if observation_start:
+                                        observation_start = observation_start + timedelta(minutes=wait_time/60)
+                                        exchange.set_observation_start(observation_start)
                                 else:
                                     logger.info("Asset has been sold!")
                                     adjust_sell_trigger = False
                                     buy_decision = False
                                     end_price = current_price
                                     previous_asset = existing_asset
-                                    helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
+                                    if write_to_db: helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                                     balance = get_base_currency_balance(exchange)
-                                    helper.write_balance_to_db(base_currency, balance)
+                                    if write_to_db: helper.write_balance_to_db(base_currency, balance)
                                     existing_asset = None
                             else:
                                 existing_asset, current_price = find_asset_with_balance(exchange)
                                 size = get_Ticker_balance(exchange, existing_asset)
                                 sell_now(exchange, existing_asset, size)
-                                helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
+                                if write_to_db: helper.write_trading_info_to_db(existing_asset, "sell", current_price, market_movement)
                                 adjust_sell_trigger = False
                                 existing_asset = None
                 else:  
                     logger.debug("No Asset selected!")
                     winning_buy_count = 0
-                    helper.wait("long")
+                    helper.wait("long", mode)
             else: 
                 if pnl_achieved:
                     logger.info("PnL achieved. No activities for today!")
-                    helper.wait("long")
+                    helper.wait("long", mode)
                 if max_loss_reached:
                     logger.info("Too much loss. No activities for today!")
-                    helper.wait("long")
+                    helper.wait("long", mode)
         else:
             if in_business:
                 in_business = False
@@ -676,9 +688,9 @@ def run_trader(exchange, ignore_profit_loss=False, selected=None, observation_st
                 start_price = None
                 end_price = None
                 balance = get_base_currency_balance(exchange)
-                helper.write_balance_to_db(base_currency, balance)
+                if write_to_db: helper.write_balance_to_db(base_currency, balance)
 
-            helper.wait("long")
+            helper.wait("long", mode)
 
 
 if __name__ == "__main__":
@@ -686,19 +698,25 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Crypto Trader application')
     parser.add_argument('exchange', type=str, help='Exchange')
     parser.add_argument('exchange_name', type=str, help='Exchange Name')
-    parser.add_argument("--ignore_profit_loss", default=False)
+    parser.add_argument("--ignore_profit_loss", type=bool, default=False, action=argparse.BooleanOptionalAction)
+    parser.add_argument("--use_db", type=bool, default=False, action=argparse.BooleanOptionalAction)
     parser.add_argument("--selected", default=None)
     parser.add_argument("--observation_start", default=None) #2024-11-10 12:00
     parser.add_argument("--logging", default='INFO')
+    
+    
     args = parser.parse_args()
     if args.logging=='INFO':
         logger.setLevel(logging.INFO)
     elif args.logging=='DEBUG':
         logger.setLevel(logging.DEBUG)
+    observation_start = None
     if args.observation_start:
         observation_start = datetime.strptime(args.observation_start, '%Y-%m-%d %H:%M')
     
     exchange_class = globals()[args.exchange]
     exchange = exchange_class(args.exchange_name)
+    if observation_start:
+        exchange.set_observation_start(observation_start)
 
-    run_trader(exchange, args.ignore_profit_loss, args.selected, args.observation_start)
+    run_trader(exchange, exchange.get_mode(), args.ignore_profit_loss, args.selected, observation_start, args.use_db)
