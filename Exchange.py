@@ -9,18 +9,18 @@ from pybitget import Client
 import pprint
 import pandas as pd
 
-class Exchange():
+
+class Exchange:
 
     exchange = None
     name = None
-    
-    
+
     def __init__(self, name):
         self.name = name
         self.connect()
 
     def log_error(self, proc):
-        d = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        d = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         print("Reconnecting from {} at {}".format(proc, d))
 
     def get_mode(self):
@@ -34,8 +34,8 @@ class Exchange():
             self.exchange = self.coinbase()
         elif self.name == "bitget":
             self.exchange = self.bitget()
-        else: raise Exception("Exchange {} not implemented!".format(self.name))
-        
+        else:
+            raise Exception("Exchange {} not implemented!".format(self.name))
 
     def cryptocom(self):
         api_key = credentials.provider_2.get("key")
@@ -59,8 +59,7 @@ class Exchange():
             {
                 "apiKey": api_key,
                 "secret": api_secret,
-                "password": passphrase
-
+                "password": passphrase,
                 #'verbose': True
             }
         )
@@ -73,7 +72,6 @@ class Exchange():
         client = Client(api_key, api_secret, passphrase=passphrase)
         return client
 
-
     def coinbase(self):
         api_key = credentials.provider_1.get("key")
         api_secret = credentials.provider_1.get("secret")
@@ -85,7 +83,7 @@ class Exchange():
                 #'verbose': True
             }
         )
-    
+
     def fetch_balance(self):
         result = None
         try:
@@ -122,8 +120,6 @@ class Exchange():
                 raise Exception("Exchange is None.")
             self.log_error("fetch_tickers")
         return result
-    
-    
 
     def fetch_ticker(self, asset):
         result = None
@@ -142,12 +138,14 @@ class Exchange():
                 raise Exception("Exchange is None.")
             self.log_error("fetch_ticker")
         return result
-    
+
     def fetch_ohlcv(self, asset, timeframe, limit, since=None):
         result = None
         try:
             if self.exchange is not None:
-                result = self.exchange.fetch_ohlcv(asset, timeframe, since=since, limit=limit)
+                result = self.exchange.fetch_ohlcv(
+                    asset, timeframe, since=since, limit=limit
+                )
             else:
                 raise Exception("Exchange is None.")
         except Exception as e:
@@ -155,7 +153,9 @@ class Exchange():
             time.sleep(10)
             self.connect()
             if self.exchange is not None:
-                result = self.exchange.fetch_ohlcv(asset, timeframe, since=since, limit=limit)
+                result = self.exchange.fetch_ohlcv(
+                    asset, timeframe, since=since, limit=limit
+                )
             else:
                 raise Exception("Exchange is None.")
             self.log_error("fetch_ohlcv")
@@ -180,11 +180,11 @@ class Exchange():
         return result
 
     def cancel_order(self, asset, orderId):
-        if self.name == 'bitget':
+        if self.name == "bitget":
             client = self.bitget_native()
             asset = asset.split("/")
             asset = asset[0] + asset[1] + "_SPBL"
-            
+
             client.spot_cance_order(asset, orderId)
         else:
             if self.exchange is not None:
@@ -197,35 +197,50 @@ class Exchange():
             self.exchange.cancel_all_orders(symbol=asset)
         else:
             raise Exception("Exchange is None.")
-        
+
     def bitget_native_create_plan_order(self, asset, quantity, triggerPrice):
         client = self.bitget_native()
         asset = asset.split("/")
         asset = asset[0] + asset[1] + "_SPBL"
-        order = client.spot_place_plan_order(asset, side="sell", triggerPrice=triggerPrice, size=quantity, triggerType="market_price", orderType="market", timeInForceValue="normal")
+        order = client.spot_place_plan_order(
+            asset,
+            side="sell",
+            triggerPrice=triggerPrice,
+            size=quantity,
+            triggerType="market_price",
+            orderType="market",
+            timeInForceValue="normal",
+        )
         return order
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
-        if self.name == 'bitget':
+        if self.name == "bitget":
             order = self.bitget_native_create_plan_order(asset, size, stopLossPrice)
         else:
             if self.exchange is not None:
-                order = self.exchange.create_order(asset, 'market', 'sell', size, None, {'stopLossPrice': stopLossPrice})
+                order = self.exchange.create_order(
+                    asset,
+                    "market",
+                    "sell",
+                    size,
+                    None,
+                    {"stopLossPrice": stopLossPrice},
+                )
             else:
                 raise Exception("Exchange is None.")
         return order
 
-
     def create_take_profit_order(self, asset, size, takeProfitPrice):
-        if self.name == 'bitget':
+        if self.name == "bitget":
             order = self.bitget_native_create_plan_order(asset, size, takeProfitPrice)
         else:
             if self.exchange is not None:
-                order = self.exchange.create_order(asset, 'limit', 'sell', size, takeProfitPrice)
+                order = self.exchange.create_order(
+                    asset, "limit", "sell", size, takeProfitPrice
+                )
             else:
                 raise Exception("Exchange is None.")
         return order
-
 
     def create_buy_order(self, asset, size, price):
         if self.exchange is not None:
@@ -239,7 +254,7 @@ class Exchange():
             return order
         else:
             raise Exception("Exchange is None.")
-    
+
     def create_sell_order(self, asset, size):
         if self.exchange is not None:
             order = self.exchange.create_order(
@@ -258,10 +273,11 @@ class Exchange():
         else:
             raise Exception("Exchange is None.")
 
-    
     def fetch_ohlcv_history(self, asset, timeframe, since, limit):
         if self.exchange is not None:
-            result = self.exchange.fetch_ohlcv(asset, timeframe, since=since, limit=limit)
+            result = self.exchange.fetch_ohlcv(
+                asset, timeframe, since=since, limit=limit
+            )
         else:
             raise Exception("Exchange is None.")
         return result
@@ -269,84 +285,92 @@ class Exchange():
 
 class Offline_Exchange(Exchange):
 
-    order = {'type': None, 'asset': None, 'size': None, 'price':None, 'timestamp': None}
-    
-    buy_order = []
-    sell_orders = {}
+    order = {
+        "type": None,
+        "asset": None,
+        "size": None,
+        "price": None,
+        "timestamp": None,
+    }
 
+    buy_order = []
+    sell_orders = {"profit_sell": None, "loss_sell": []}
 
     balance = {
-        'total': { 
-            'USDT': 100.0
-        },
-        'USDT': { 
-            'total': 100.0
-        },
+        "total": {"USDT": 100.0},
+        "USDT": {"total": 100.0},
     }
 
     def get_mode(self):
         return credentials.MODE_TEST
 
-
     def __init__(self, exchange_name):
         super().__init__(exchange_name)
         self.observation_start = None
-        
+
     def set_observation_start(self, observation_start):
         print("set observation start: ", observation_start)
         self.observation_start = observation_start
-        
+
     def fetch_balance(self):
         return self.balance
-    
 
     def create_buy_order(self, asset, size, price):
-        base_currency = asset.split('/')[1]
-        symbol = asset.split('/')[0]
-        if symbol in self.balance['total']:
-            self.balance['total'][symbol] = self.balance['total'][symbol] + size
-            self.balance[symbol]['total'] = self.balance[symbol]['total'] + size
+        base_currency = asset.split("/")[1]
+        symbol = asset.split("/")[0]
+        if symbol in self.balance["total"]:
+            self.balance["total"][symbol] = self.balance["total"][symbol] + size
+            self.balance[symbol]["total"] = self.balance[symbol]["total"] + size
         else:
-            self.balance['total'][symbol] = size
-            self.balance[symbol] = {'total': size}
-            
-        self.balance['total'][base_currency] = self.balance['total'][base_currency] - (size * price)
-        self.balance[base_currency]['total'] = self.balance[base_currency]['total'] - (size * price)
-        
+            self.balance["total"][symbol] = size
+            self.balance[symbol] = {"total": size}
 
+        self.balance["total"][base_currency] = self.balance["total"][base_currency] - (
+            size * price
+        )
+        self.balance[base_currency]["total"] = self.balance[base_currency]["total"] - (
+            size * price
+        )
 
     def create_take_profit_order(self, asset, size, takeProfitPrice):
-        self.sell_orders['profit_sell'] = {'asset': asset, 'size':size, 'price':takeProfitPrice, 'timestamp': None}
+        self.sell_orders["profit_sell"] = {
+            "asset": asset,
+            "size": size,
+            "price": takeProfitPrice,
+            "timestamp": None,
+        }
         print(self.sell_orders)
 
-
     def create_stop_loss_order(self, asset, size, stopLossPrice):
-        self.sell_orders['loss_sale'].append({'asset': asset, 'size':size, 'price':stopLossPrice, 'timestamp': None})
+        self.sell_orders["loss_sell"].append(
+            {"asset": asset, "size": size, "price": stopLossPrice, "timestamp": None}
+        )
         print(self.sell_orders)
 
     def check_for_sell(self, data):
-        ts = data[-1][0]
-        if 'profit_sell' in self.sell_orders.keys():
-            if data[-1][2] >= self.sell_orders['profit_sell']['price']:
-                print("profit sell")
-        
-        if 'loss_sell' in self.sell_orders.keys():
-            for order in self.sell_orders['loss_sell']:
-                if data[-1][2] < order['price']:
+        if not data is None and len(data) > 0:
+            ts = data[-1][0]
+            if not self.sell_orders['profit_sell'] is None:
+                if data[-1][2] >= self.sell_orders["profit_sell"]["price"]:
                     print("profit sell")
 
-        print(datetime.fromtimestamp(data[-1][0]/1000), data[-1][2], data[-1][3])
-        
+            for order in self.sell_orders["loss_sell"]:
+                if data[-1][2] < order["price"]:
+                    print("loss sell")
+
 
     def fetch_ohlcv(self, ticker, interval, limit):
         if self.observation_start is None:
             data = super().fetch_ohlcv(ticker, interval, limit)
         else:
-            value = int(interval[0:len(interval)-1])
-            if interval.endswith("m"): limit = limit * 1
-            if interval.endswith("h"): limit = limit * 60
-            if interval.endswith("d"): limit = limit * 60 * 24
-            since = self.observation_start - timedelta(minutes = limit)
+            value = int(interval[0 : len(interval) - 1])
+            if interval.endswith("m"):
+                value = value * limit * 1
+            if interval.endswith("h"):
+                value = value * limit * 60
+            if interval.endswith("d"):
+                value = value * limit * 60 * 24
+            since = self.observation_start - timedelta(minutes=value)
             since = int(time.mktime(since.timetuple())) * 1000
             data = super().fetch_ohlcv(ticker, interval, limit, since=since)
             self.check_for_sell(data)
@@ -361,10 +385,10 @@ class Offline_Exchange(Exchange):
 
 
 if __name__ == "__main__":
-    
-    observation_start = datetime.strptime("2024-11-10 12:00", '%Y-%m-%d %H:%M')
-    
-    dynamic_class = globals()['Offline_Exchange']
+
+    observation_start = datetime.strptime("2024-11-10 12:00", "%Y-%m-%d %H:%M")
+
+    dynamic_class = globals()["Offline_Exchange"]
     exchange = dynamic_class("bitget")
     exchange.set_observation_start(observation_start)
 
