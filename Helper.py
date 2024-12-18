@@ -75,8 +75,8 @@ class Helper:
             time.sleep(seconds)
         return seconds
 
-    def in_business_hours(self, from_time, to_time):
-        now = datetime.now()
+    def in_business_hours(self, from_time, to_time, observation_start):
+        now = observation_start if observation_start else datetime.now()  
         if to_time < from_time:
             raise Exception("case end < start not implemeted!")
         run = (
@@ -84,8 +84,8 @@ class Helper:
         )  # and now.weekday() < 6
         return run
 
-    def in_buying_period(self, by_time):
-        now = datetime.now()
+    def in_buying_period(self, by_time, observation_start):
+        now = observation_start if observation_start else datetime.now()  
         run = now.hour < by_time.hour
         return run
 

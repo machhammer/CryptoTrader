@@ -35,22 +35,22 @@ amount_coins = 1000
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
 
-take_profit_in_percent = 1.5
+take_profit_in_percent = 3
 buy_attempts_nr = 30
 move_increase_threshold = 0.003
 move_increase_period_threshold = 1
-volume_increase_threshold = 1.5
+volume_increase_threshold = 0.5
 difference_to_maximum_max = -2
 valid_position_amount = 2
-daily_pnl_target_in_percent = 1.3
-daily_pnl_max_loss_in_percent = -1
+daily_pnl_target_in_percent = 999999999999999999
+daily_pnl_max_loss_in_percent = -999999999999999999
 # difference_to_resistance_min = 0.01
 minimum_funding = 10
 winning_buy_nr = 2
 
-start_trading_at = time(hour=3)
+start_trading_at = time(hour=1)
 stop_trading_at = time(hour=23)
-stop_buying_at = time(hour=22)
+stop_buying_at = time(hour=21)
 
 
 helper = Helper(
@@ -256,14 +256,14 @@ def get_candidate(exchange):
     market_movement = get_market_movement(tickers)
     tickers = get_tickers_as_list(tickers)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
-    expected_results = get_top_ticker_expected_results(exchange, major_move)
-    logger.debug("   expected_results: {}".format(expected_results))
+    #expected_results = get_top_ticker_expected_results(exchange, major_move)
+    #logger.debug("   expected_results: {}".format(expected_results))
     close_to_high = get_close_to_high(exchange, major_move)
     logger.debug("   close_to_high: {}".format(close_to_high))
-    relevant_tickers = expected_results + close_to_high
+    relevant_tickers = close_to_high
     logger.debug("   relevant_tickers: {}".format(relevant_tickers))
-    increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
-    buy_signals = get_ticker_with_aroon_buy_signals(exchange, increased_volume)
+    #increased_volume = get_ticker_with_increased_volume(exchange, relevant_tickers)
+    buy_signals = get_ticker_with_aroon_buy_signals(exchange, relevant_tickers)
     selected_Ticker = get_lowest_difference_to_maximum(exchange, buy_signals)
     selected_Ticker = get_with_sufficient_variance(exchange, selected_Ticker)
     logger.debug("   market movment: {}".format(market_movement))
@@ -575,6 +575,15 @@ def daily_max_loss_reached(current_balance, last_balance):
         return False
 
 
+def observation_date_offset(observation_start, exchange, offset_in_seconds):
+    if observation_start:
+        observation_start = observation_start + timedelta(
+            minutes=offset_in_seconds / 60
+        )
+        exchange.set_observation_start(observation_start)
+        logger.debug("Observation Time: {}".format(observation_start))
+    return observation_start
+
 def run_trader(
     exchange,
     mode,
@@ -607,8 +616,8 @@ def run_trader(
 
     while running:
         if helper.in_business_hours(
-            start_trading_at, stop_trading_at
-        ) and helper.in_buying_period(stop_buying_at):
+            start_trading_at, stop_trading_at, observation_start
+        ) and helper.in_buying_period(stop_buying_at, observation_start):
             in_business = True
             if not existing_asset:
                 usd_balance = get_base_currency_balance(exchange)
@@ -633,7 +642,8 @@ def run_trader(
                         else:
                             winning_buy_count = 0
                             selected_new_asset = None
-                        helper.wait_minutes(5)
+                        wait_time = helper.wait_minutes(5)
+                        observation_start = observation_date_offset(observation_start, exchange, wait_time)
                     if (
                         isinstance(start_price, float)
                         and isinstance(end_price, float)
@@ -643,8 +653,8 @@ def run_trader(
                         existing_asset = None
                         winning_buy_count = 0
                         logger.info("Sold with loss. Waiting 1 hour!")
-                        helper.wait_hours(1)
-
+                        wait_time = helper.wait_hours(1)
+                        observation_start = observation_date_offset(observation_start, exchange, wait_time)
                     previous_asset = None
                     start_price = None
                     end_price = None
@@ -668,17 +678,14 @@ def run_trader(
                         if not is_buy:
                             buy_attempts += 1
                             wait_time = helper.wait("short", mode)
-                            if observation_start:
-                                observation_start = observation_start + timedelta(
-                                    minutes=wait_time / 60
-                                )
-                                exchange.set_observation_start(observation_start)
+                            observation_start = observation_date_offset(observation_start, exchange, wait_time)
                         else:
                             buy_decision = True
                         if not get_lowest_difference_to_maximum(
                             exchange, [selected_new_asset]
                         ):
                             buy_attempts = buy_attempts_nr + 1
+    
 
                     if buy_decision or existing_asset:
 
@@ -736,7 +743,7 @@ def run_trader(
                         previous_resistance = 0
                         while adjust_sell_trigger:
                             if helper.in_business_hours(
-                                start_trading_at, stop_trading_at
+                                start_trading_at, stop_trading_at, observation_start
                             ):
                                 tickers = get_tickers(exchange)
                                 market_movement = get_market_movement(tickers)
@@ -771,14 +778,7 @@ def run_trader(
                                     #    current_order_id = order['data']['orderId']
                                     isInitial = False
                                     wait_time = helper.wait("short", mode)
-                                    if observation_start:
-                                        observation_start = (
-                                            observation_start
-                                            + timedelta(minutes=wait_time / 60)
-                                        )
-                                        exchange.set_observation_start(
-                                            observation_start
-                                        )
+                                    observation_start = observation_date_offset(observation_start, exchange, wait_time)
                                 else:
                                     logger.info("Asset has been sold!")
                                     adjust_sell_trigger = False
@@ -816,7 +816,8 @@ def run_trader(
                 else:
                     logger.debug("No Asset selected!")
                     winning_buy_count = 0
-                    helper.wait("long", mode)
+                    wait_time = helper.wait("long", mode)
+                    observation_start = observation_date_offset(observation_start, exchange, wait_time)
             else:
                 if pnl_achieved:
                     logger.info("PnL achieved. No activities for today!")
@@ -841,8 +842,10 @@ def run_trader(
                 if write_to_db:
                     helper.write_balance_to_db(base_currency, balance)
 
-            helper.wait("long", mode)
-
+            wait_time = helper.wait("long", mode)
+            observation_start = observation_date_offset(observation_start, exchange, wait_time)
+            
+        selected_new_asset = None
 
 if __name__ == "__main__":
 

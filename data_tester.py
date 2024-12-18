@@ -46,10 +46,9 @@ def get_ohlc(ssh_connection, coin, interval, limit=None):
 
 if __name__ == "__main__":
     
-    exchange_1 = Exchange('test')
     exchange_2 = Exchange('bitget')
 
-    bars = exchange_2.fetch_ohlcv('SOL/USDT', "1m", limit=200)
+    bars = exchange_2.fetch_ohlcv('ALGO/USDT', "1m", limit=180, since=1734323400000)
     print(bars)
     print("---------------------------------")
 
@@ -58,14 +57,7 @@ if __name__ == "__main__":
     )
     data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms")
 
-    data["timestamp"] = data["timestamp"].astype(int64) // 10**6
-
-    data.to_csv('SOL.csv', index=False)
-
-    input = pd.read_csv('SOL.csv')
-
-    print(input.values.tolist())
-
+    print(data)
 
 
 

@@ -293,7 +293,6 @@ class Offline_Exchange(Exchange):
         "timestamp": None,
     }
 
-    buy_order = []
     sell_orders = {"profit_sell": None, "loss_sell": []}
 
     balance = {
@@ -309,8 +308,11 @@ class Offline_Exchange(Exchange):
         self.observation_start = None
 
     def set_observation_start(self, observation_start):
-        print("set observation start: ", observation_start)
+        print(observation_start)
         self.observation_start = observation_start
+
+    def get_observation_start(self):
+        return self.observation_start
 
     def fetch_balance(self):
         return self.balance
@@ -318,6 +320,9 @@ class Offline_Exchange(Exchange):
     def create_buy_order(self, asset, size, price):
         base_currency = asset.split("/")[1]
         symbol = asset.split("/")[0]
+
+        print("** Buy Asset: {},  Size: {}, Price: {})".format(symbol, size, price))
+
         if symbol in self.balance["total"]:
             self.balance["total"][symbol] = self.balance["total"][symbol] + size
             self.balance[symbol]["total"] = self.balance[symbol]["total"] + size
@@ -339,24 +344,46 @@ class Offline_Exchange(Exchange):
             "price": takeProfitPrice,
             "timestamp": None,
         }
-        print(self.sell_orders)
 
     def create_stop_loss_order(self, asset, size, stopLossPrice):
         self.sell_orders["loss_sell"].append(
             {"asset": asset, "size": size, "price": stopLossPrice, "timestamp": None}
         )
-        print(self.sell_orders)
 
-    def check_for_sell(self, data):
-        if not data is None and len(data) > 0:
-            ts = data[-1][0]
-            if not self.sell_orders['profit_sell'] is None:
-                if data[-1][2] >= self.sell_orders["profit_sell"]["price"]:
-                    print("profit sell")
+    def check_for_sell(self, asset, data):
+        base_currency = asset.split("/")[1]
+        symbol = asset.split("/")[0]
+        if symbol in self.balance['total'].keys() and self.balance['total'][symbol]>0:
+            if not data is None and len(data) > 0:
+                ts = data[-1][0]
+                date = datetime.fromtimestamp(ts/1000)
+                if not self.sell_orders['profit_sell'] is None:
+                    if data[-1][2] >= self.sell_orders["profit_sell"]["price"]:
+                        print("** Profit sell - Date: {}, Asset: {}, Price: {}, Order: {}".format(date, asset, data[-1][2], self.sell_orders["profit_sell"]["price"]))
+                        self.sell(date, symbol, base_currency, self.sell_orders["profit_sell"]["price"])
 
-            for order in self.sell_orders["loss_sell"]:
-                if data[-1][2] < order["price"]:
-                    print("loss sell")
+                for order in self.sell_orders["loss_sell"]:
+                    if data[-1][2] < order["price"]:
+                        print("** Loss sell - Date: {}, Asset: {}, Price: {}, Order: {}".format(date, asset, data[-1][2], self.sell_orders["loss_sell"]))
+                        self.sell(date, symbol, base_currency, data[-1][2])
+                        break
+
+    def sell(self, date, symbol, base_currency, price):
+        
+        print ("** Sell: {}".format(date))
+        print("** Current Balance: {} + (amount: {} * price: {})".format(round(self.balance["total"][base_currency], 2), self.balance["total"][symbol], price))
+        
+        self.balance["total"][base_currency] = self.balance["total"][base_currency] + self.balance["total"][symbol] * price
+        self.balance[base_currency]["total"] = self.balance[base_currency]["total"] + self.balance["total"][symbol] * price
+        
+        print("New Balance: {}".format(round(self.balance["total"][base_currency], 2)))
+        
+        self.balance["total"][symbol] = 0
+        self.balance[symbol]["total"] = 0
+        self.sell_orders = {"profit_sell": None, "loss_sell": []}
+
+        df = pd.json_normalize(self.balance)
+        df.to_csv('balance' + '-' + datetime.now().strftime("%Y-%m-%d") + '.csv', index=False)
 
 
     def fetch_ohlcv(self, ticker, interval, limit):
@@ -373,7 +400,7 @@ class Offline_Exchange(Exchange):
             since = self.observation_start - timedelta(minutes=value)
             since = int(time.mktime(since.timetuple())) * 1000
             data = super().fetch_ohlcv(ticker, interval, limit, since=since)
-            self.check_for_sell(data)
+            self.check_for_sell(ticker, data)
         return data
 
     def convert(self, bars):
