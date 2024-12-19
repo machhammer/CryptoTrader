@@ -383,7 +383,7 @@ class Offline_Exchange(Exchange):
         self.sell_orders = {"profit_sell": None, "loss_sell": []}
 
         df = pd.json_normalize(self.balance)
-        df.to_csv('balance' + '-' + datetime.now().strftime("%Y-%m-%d") + '.csv', index=False)
+        df.to_csv('balance' + '-' + self.observation_start.strftime("%Y-%m-%d") + '.csv', index=False)
 
 
     def fetch_ohlcv(self, ticker, interval, limit):
