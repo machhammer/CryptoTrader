@@ -368,6 +368,13 @@ class Offline_Exchange(Exchange):
                         self.sell(date, symbol, base_currency, data[-1][2])
                         break
 
+    def create_sell_order(self, asset, size):
+        base_currency = asset.split("/")[1]
+        symbol = asset.split("/")[0]
+        data = fetch_ohlcv(self, ticker, "1m", 1)
+        price = data[-1][2]
+        sell(self.obeservation_start, symbol, base_currency, price)
+
     def sell(self, date, symbol, base_currency, price):
         
         print ("** Sell: {}".format(date))
