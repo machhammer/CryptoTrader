@@ -371,9 +371,9 @@ class Offline_Exchange(Exchange):
     def create_sell_order(self, asset, size):
         base_currency = asset.split("/")[1]
         symbol = asset.split("/")[0]
-        data = fetch_ohlcv(self, ticker, "1m", 1)
+        data = self.fetch_ohlcv(self, ticker, "1m", 1)
         price = data[-1][2]
-        sell(self.obeservation_start, symbol, base_currency, price)
+        self.sell(self.obeservation_start, symbol, base_currency, price)
 
     def sell(self, date, symbol, base_currency, price):
         
