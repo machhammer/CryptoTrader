@@ -26,6 +26,21 @@ class Exchange:
     def get_mode(self):
         return credentials.MODE_PROD
 
+    def get_name(self):
+        return self.name
+
+    def set_observation_start(self, observation_start):
+        self.observation_start = observation_start
+
+    def set_observation_stop(self, observation_stop):
+        self.observation_stop = observation_stop
+    
+    def get_observation_start(self):
+        return self.observation_start
+
+    def get_observation_stop(self):
+        return self.observation_stop
+
     def connect(self):
         print("Connecting to {}.".format(self.name))
         if self.name == "cryptocom":
@@ -305,21 +320,6 @@ class Offline_Exchange(Exchange):
 
     def __init__(self, exchange_name):
         super().__init__(exchange_name)
-        self.observation_start = None
-
-    def set_observation_start(self, observation_start):
-        print(observation_start)
-        self.observation_start = observation_start
-
-    def set_observation_stop(self, observation_stop):
-        print(observation_stop)
-        self.observation_stop = observation_stop
-    
-    def get_observation_start(self):
-        return self.observation_start
-
-    def get_observation_stop(self):
-        return self.observation_stop
 
     def fetch_balance(self):
         return self.balance

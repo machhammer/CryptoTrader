@@ -31,12 +31,9 @@ logger.setLevel(logging.DEBUG)
 
 base_currency = "USDT"
 ignored_coins = [base_currency, "USDT", "USD", "CRO", "PAXG", "BGB"]
-amount_coins = 100
 wait_time_next_asset_selection_minutes = 15
 wait_time_next_buy_selection_seconds = 60
 
-take_profit_in_percent = 3
-max_loss_in_percent = 3.5
 funding_ratio_in_percent = 90
 
 buy_attempts_nr = 30
@@ -119,7 +116,7 @@ def still_has_postion(size, price):
 
 
 # ************************************ get All Tickers
-def get_tickers(exchange):
+def get_tickers(exchange, amount_coins):
     tickers = exchange.fetch_tickers()
     tickers = pd.DataFrame(tickers)
     tickers = tickers.T
@@ -217,9 +214,9 @@ def add_ema(data):
 
 
 # ************************************ get Candidate Functions
-def get_candidate(exchange):
+def get_candidate(exchange, amount_coins):
     logger.debug("1. ******** Check for New Candidate ********")
-    tickers = get_tickers(exchange)
+    tickers = get_tickers(exchange, amount_coins)
     tickers = get_tickers_as_list(tickers)
     major_move = get_ticker_with_bigger_moves(exchange, tickers)
     #expected_results = get_top_ticker_expected_results(exchange, major_move)
@@ -554,12 +551,23 @@ def observation_stop_check(exchange):
 def run_trader(
     exchange,
     mode,
+    amount_coins,
+    take_profit_in_percent,
+    max_loss_in_percent,
     ignore_profit_loss=False,
     selected=None,
     write_to_db=True,
 ):
 
     logger.info("Trader started!")
+    logger.info("Exchange: {}".format(exchange.__class__))
+    logger.info("Exchange Name: {}".format(exchange.get_name()))
+    logger.info("Mode: {}".format(exchange.get_mode()))
+    logger.info("Observation Start: {}".format(exchange.get_observation_start()))
+    logger.info("Observation Start: {}".format(exchange.get_observation_stop()))
+    logger.info("Amount Coins: {}".format(amount_coins))
+    logger.info("Take Profit Percentage: {}".format(take_profit_in_percent))
+    logger.info("Max Loss Percentage: {}".format(max_loss_in_percent))
 
     running = True
     in_business = False
@@ -625,7 +633,7 @@ def run_trader(
                     end_price = None
                 else:
                     if not existing_asset and not selected_new_asset:
-                        selected_new_asset = get_candidate(exchange)
+                        selected_new_asset = get_candidate(exchange, amount_coins)
                         buy_decision = True
 
                 if selected_new_asset or existing_asset:
@@ -815,6 +823,7 @@ if __name__ == "__main__":
         "--ignore_profit_loss",
         type=bool,
         default=False,
+        required=True,
         action=argparse.BooleanOptionalAction,
     )
     parser.add_argument(
@@ -824,6 +833,10 @@ if __name__ == "__main__":
     parser.add_argument("--observation_start", default=None)  # 2024-11-10 12:00
     parser.add_argument("--observation_stop", default=None)  # 2024-11-10 12:00
     parser.add_argument("--logging", default="INFO")
+    parser.add_argument("--amount_coins", type=int, required=True, default=1000)
+    parser.add_argument("--take_profit_in_percentage", required=True, type=float, default=3)
+    parser.add_argument("--max_loss_in_percentage", required=True, type=float, default=3.5)
+    
 
     args = parser.parse_args()
     if args.logging == "INFO":
@@ -847,6 +860,9 @@ if __name__ == "__main__":
     run_trader(
         exchange,
         exchange.get_mode(),
+        args.amount_coins,
+        args.take_profit_in_percentage,
+        args.max_loss_in_percentage,
         args.ignore_profit_loss,
         args.selected,
         args.use_db,
