@@ -748,7 +748,7 @@ def run_trader(
                                     wait_time = helper.wait("short", mode)
                                     observation_date_offset(exchange, wait_time)
                                 else:
-                                    logger.info("Asset has been sold!")
+                                    logger.info("Asset has been sold!, Time: {}".format(exchange.get_observation_start()))
                                     adjust_sell_trigger = False
                                     buy_decision = False
                                     end_price = current_price
