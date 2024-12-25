@@ -451,7 +451,7 @@ def set_sell_trigger(
                     )
                     if resistance > previous_resistance:
                         logger.debug("   set new sell triger: {}".format(resistance))
-                        order = sell_order(exchange, ticker, size, resistance)
+                        order = sell_order(exchange, ticker, current_value, size, resistance)
                     resistance_found = True
                 else:
                     row -= 1
@@ -464,34 +464,34 @@ def set_sell_trigger(
                 )
                 if resistance > previous_resistance:
                     logger.debug("   set new sell triger: {}".format(resistance))
-                    order = sell_order(exchange, ticker, size, resistance)
+                    order = sell_order(exchange, ticker, current_value, size, resistance)
                 resistance_found = True
     else:
         logger.debug("   No new sell trigger")
     return highest_value, current_value, order, resistance
 
 
-def sell_order_take_profit(exchange, ticker, size, takeProfitPrice):
+def sell_order_take_profit(exchange, ticker, price, size, takeProfitPrice):
     amount_precision, price_precision = get_precision(exchange, ticker)
     takeProfitPrice = convert_to_precision(takeProfitPrice, price_precision)
     size = convert_to_precision(size, amount_precision)
     logger.info(
-        "   put sell order take profit- Ticker: {}, Size: {}, takeProfitPrice: {}".format(
-            ticker, size, takeProfitPrice
+        "   put sell order take profit- Ticker: {}, Time: {}, Size: {}, Price: {}, takeProfitPrice: {}".format(
+            ticker, exchange.get_observation_start(), size, price, takeProfitPrice
         )
     )
     order = exchange.create_take_profit_order(ticker, size, takeProfitPrice)
     logger.debug("   sell TP order id : {}".format(order))
 
 
-def sell_order(exchange, ticker, size, stopLossPrice):
+def sell_order(exchange, ticker, price, size, stopLossPrice):
     # exchange.cancel_orders(ticker)
     amount_precision, price_precision = get_precision(exchange, ticker)
     stopLossPrice = convert_to_precision(stopLossPrice, price_precision)
     size = convert_to_precision(size, amount_precision)
     logger.info(
-        "   put sell order - Ticker: {}, Size: {}, stopLossPrice: {}".format(
-            ticker, size, stopLossPrice
+        "   put sell order - Ticker: {}, Time: {}, Size: {}, Price: {}, stopLossPrice: {}".format(
+            ticker, exchange.get_observation_start(), size, price, stopLossPrice
         )
     )
     order = exchange.create_stop_loss_order(ticker, size, stopLossPrice)
@@ -689,6 +689,7 @@ def run_trader(
                                     sell_order_take_profit(
                                         exchange,
                                         selected_new_asset,
+                                        current_price,
                                         size,
                                         take_profit_price,
                                     )
