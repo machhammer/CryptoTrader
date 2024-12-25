@@ -311,8 +311,15 @@ class Offline_Exchange(Exchange):
         print(observation_start)
         self.observation_start = observation_start
 
+    def set_observation_stop(self, observation_stop):
+        print(observation_stop)
+        self.observation_stop = observation_stop
+    
     def get_observation_start(self):
         return self.observation_start
+
+    def get_observation_stop(self):
+        return self.observation_stop
 
     def fetch_balance(self):
         return self.balance
@@ -371,9 +378,9 @@ class Offline_Exchange(Exchange):
     def create_sell_order(self, asset, size):
         base_currency = asset.split("/")[1]
         symbol = asset.split("/")[0]
-        data = self.fetch_ohlcv(self, asset, "1m", 1)
+        data = self.fetch_ohlcv(asset, "1m", 1)
         price = data[-1][2]
-        self.sell(self.obeservation_start, symbol, base_currency, price)
+        self.sell(self.observation_start, symbol, base_currency, price)
 
     def sell(self, date, symbol, base_currency, price):
         

@@ -5,7 +5,7 @@ pandas
 tqdm
 ta
 scipy
-mariadb
 matplotlib
 flask
 flask_cors
+mariadb
