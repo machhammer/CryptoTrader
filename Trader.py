@@ -411,7 +411,7 @@ def buy_order(exchange, ticker, price, funding):
     price = convert_to_precision(price, price_precision)
     size = convert_to_precision(funding / price, amount_precision)
     order = exchange.create_buy_order(ticker, size, price)
-    logger.info("   buy: {}, size: {}, price: {}".format(ticker, size, price))
+    logger.info("   buy: {}, Time: {}, size: {}, price: {}".format(ticker, exchange.get_observation_start(), size, price))
     return order, price, size
 
 
