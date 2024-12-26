@@ -93,6 +93,43 @@ def insert_coin_select_table(timestamp, asset, level):
     connection.close()
 
 
+def initialize_activity_tracker():
+    connection = connect()
+    create_table ="CREATE or REPLACE TABLE activity_tracker " \
+            "( "\
+                "run_id INT UNSIGNED, "\
+                "mode TINYINT UNSIGNED, "\
+                "timestamp TIMESTAMP, "\
+                "activity VARCHAR(25), "\
+                "asset VARCHAR(25), "\
+                "size FLOAT, "\
+                "price FLOAT"\
+            ")"
+    connection.cursor().execute(create_table)
+
+
+def insert_activity_tracker_table(run_id, mode, timestamp, activity, asset, size, price):
+    connection = connect()
+    insert_record = "INSERT INTO activity_tracker " \
+        "(run_id, mode, timestamp, activity, asset, size, price) "\
+        "VALUES ({}, {}, '{}', '{}', '{}', {}, {})".format(run_id, mode, timestamp, activity, asset, str(size), str(price))
+    connection.cursor().execute(insert_record)
+    connection.commit()
+    connection.close()
+
+def create_run_id_sequence():
+    connection = connect()
+    create_table ="CREATE SEQUENCE s START WITH 1 INCREMENT BY 1"
+    connection.cursor().execute(create_table)
+
+def get_next_sequence():
+    connection = connect()
+    cursor = connection.cursor()
+    cursor.execute("SELECT nextval(s)")
+    rows = cursor.fetchall()
+    connection.close()
+    return pd.DataFrame(rows).iloc[0, 0]
+
 def execute_select(select):
     connection = connect()
     cursor = connection.cursor()
@@ -104,5 +141,5 @@ def execute_select(select):
 
 
 if __name__ == "__main__":
-    initialize_coin_select()
+    initialize_activity_tracker()
 

@@ -41,6 +41,9 @@ class Exchange:
     def get_observation_stop(self):
         return self.observation_stop
 
+    def get_timestamp(self):
+        return datetime.now() if self.observation_start is None else self.observation_start
+
     def connect(self):
         print("Connecting to {}.".format(self.name))
         if self.name == "cryptocom":

@@ -557,18 +557,10 @@ def run_trader(
     ignore_profit_loss=False,
     selected=None,
     write_to_db=True,
+    starting_balance=None
 ):
 
-    logger.info("Trader started!")
-    logger.info("Exchange: {}".format(exchange.__class__))
-    logger.info("Exchange Name: {}".format(exchange.get_name()))
-    logger.info("Mode: {}".format(exchange.get_mode()))
-    logger.info("Observation Start: {}".format(exchange.get_observation_start()))
-    logger.info("Observation Start: {}".format(exchange.get_observation_stop()))
-    logger.info("Amount Coins: {}".format(amount_coins))
-    logger.info("Take Profit Percentage: {}".format(take_profit_in_percent))
-    logger.info("Max Loss Percentage: {}".format(max_loss_in_percent))
-
+    
     running = True
     in_business = False
 
@@ -587,6 +579,8 @@ def run_trader(
     max_loss_reached = False
     existing_asset, current_price = find_asset_with_balance(exchange)
 
+    run_id = helper.get_next_sequence(write_to_db)
+
     while running:
         if helper.in_business_hours(
             start_trading_at, stop_trading_at, exchange.get_observation_start(), exchange.get_observation_stop()
@@ -594,10 +588,7 @@ def run_trader(
             in_business = True
             if not existing_asset:
                 base_currency_balance = get_base_currency_balance(exchange)
-                if write_to_db:
-                    last_balance = helper.read_last_balacne_from_db().iloc[0, 0]
-                else:
-                    last_balance = 100
+                last_balance = starting_balance if not starting_balance is None else helper.read_last_balacne_from_db().iloc[0, 0]
                 pnl_achieved = daily_pnl_target_achieved(base_currency_balance, last_balance)
                 max_loss_reached = daily_max_loss_reached(base_currency_balance, last_balance)
 
@@ -634,6 +625,7 @@ def run_trader(
                 else:
                     if not existing_asset and not selected_new_asset:
                         selected_new_asset = get_candidate(exchange, amount_coins)
+                        if selected_new_asset: helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "selected", selected_new_asset, 0, 0)
                         buy_decision = True
 
                 if selected_new_asset or existing_asset:
@@ -674,13 +666,8 @@ def run_trader(
                                 )
                                 helper.wait_seconds(5)
                                 start_price = current_price
-                                if write_to_db:
-                                    helper.write_trading_info_to_db(
-                                        selected_new_asset,
-                                        "buy",
-                                        current_price,
-                                    )
                                 size = get_Ticker_balance(exchange, selected_new_asset)
+                                helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "buy", selected_new_asset, size, current_price)
                                 # Take Profit Order
                                 if isinstance(current_price, float):
                                     take_profit_price = current_price * (
@@ -693,12 +680,8 @@ def run_trader(
                                         size,
                                         take_profit_price,
                                     )
-                                    if write_to_db:
-                                        helper.write_trading_info_to_db(
-                                            selected_new_asset,
-                                            "tp",
-                                            take_profit_price,
-                                        )
+                                    helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "take profit order", selected_new_asset, size, take_profit_price)
+
                                 existing_asset = selected_new_asset
                             except Exception as e:
                                 adjust_sell_trigger = False
@@ -741,9 +724,8 @@ def run_trader(
                                     )
                                     if new_resistance:
                                         previous_resistance = new_resistance
-                                    # if order:
-                                    #    if current_order_id: cancel_order(exchange, existing_asset, current_order_id)
-                                    #    current_order_id = order['data']['orderId']
+                                        helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell loss order", existing_asset, size, new_resistance)
+
                                     isInitial = False
                                     wait_time = helper.wait("short", mode)
                                     observation_date_offset(exchange, wait_time)
@@ -752,18 +734,10 @@ def run_trader(
                                     adjust_sell_trigger = False
                                     buy_decision = False
                                     end_price = current_price
+                                    helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell", existing_asset, size, current_price)
                                     previous_asset = existing_asset
-                                    if write_to_db:
-                                        helper.write_trading_info_to_db(
-                                            existing_asset,
-                                            "sell",
-                                            current_price,
-                                        )
                                     balance = get_base_currency_balance(exchange)
-                                    if write_to_db:
-                                        helper.write_balance_to_db(
-                                            base_currency, balance
-                                        )
+                                    helper.write_balance_to_db(write_to_db, base_currency, balance)
                                     existing_asset = None
                             else:
                                 existing_asset, current_price = find_asset_with_balance(
@@ -772,12 +746,8 @@ def run_trader(
                                 if existing_asset:
                                     size = get_Ticker_balance(exchange, existing_asset)
                                     sell_now(exchange, existing_asset, size)
-                                    if write_to_db:
-                                        helper.write_trading_info_to_db(
-                                            existing_asset,
-                                            "sell",
-                                            current_price,
-                                        )
+                                    helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell", existing_asset, size, current_price)
+                                    
                                 adjust_sell_trigger = False
                                 existing_asset = None
                 else:
@@ -799,9 +769,7 @@ def run_trader(
                 if existing_asset:
                     size = get_Ticker_balance(exchange, existing_asset)
                     sell_now(exchange, existing_asset, size)
-                    helper.write_trading_info_to_db(
-                        existing_asset, "sell", current_price
-                    )
+                    helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell", existing_asset, size, current_price)
                     existing_asset = None
                 start_price = None
                 end_price = None
@@ -837,7 +805,7 @@ if __name__ == "__main__":
     parser.add_argument("--amount_coins", type=int, required=True, default=1000)
     parser.add_argument("--take_profit_in_percentage", required=True, type=float, default=3)
     parser.add_argument("--max_loss_in_percentage", required=True, type=float, default=3.5)
-    
+    parser.add_argument("--starting_balance", type=float, default=None)
 
     args = parser.parse_args()
     if args.logging == "INFO":
@@ -857,6 +825,21 @@ if __name__ == "__main__":
     if observation_stop:
         exchange.set_observation_stop(observation_stop)
         
+    logger.info("Trader started!")
+    logger.info("Exchange: {}".format(exchange.__class__))
+    logger.info("Exchange Name: {}".format(exchange.get_name()))
+    logger.info("Mode: {}".format(exchange.get_mode()))
+    logger.info("Log Level: {}".format(logger.level))
+    logger.info("Observation Start: {}".format(exchange.get_observation_start()))
+    logger.info("Observation Start: {}".format(exchange.get_observation_stop()))
+    logger.info("Amount Coins: {}".format(args.amount_coins))
+    logger.info("Take Profit Percentage: {}".format(args.take_profit_in_percentage))
+    logger.info("Max Loss Percentage: {}".format(args.max_loss_in_percentage))
+    logger.info("Ignore Profit/Loss: {}".format(args.ignore_profit_loss))
+    logger.info("Selected: {}".format(args.selected))
+    logger.info("Use DB: {}".format(args.use_db))
+    logger.info("Starting Balance: {}".format(args.starting_balance))
+    
 
     run_trader(
         exchange,
@@ -867,4 +850,5 @@ if __name__ == "__main__":
         args.ignore_profit_loss,
         args.selected,
         args.use_db,
+        args.starting_balance
     )

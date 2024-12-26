@@ -214,8 +214,14 @@ class Helper:
             self.get_time(), asset, side, price, market_movement
         )
 
-    def write_balance_to_db(self, base_currency, balance):
-        database.insert_balance(self.get_time(), base_currency, balance)
+    def write_balance_to_db(self, write_to_db, base_currency, balance):
+        if write_to_db: database.insert_balance(self.get_time(), base_currency, balance)
+
+    def write_to_db_activity_tracker(self, write_to_db, run_id, mode, timestamp, activity, asset, size, price):
+        if write_to_db: database.insert_activity_tracker_table(run_id, mode, timestamp, activity, asset, size, price)
+
+    def get_next_sequence(self, write_to_db):
+        return database.get_next_sequence() if write_to_db else None
 
     def read_last_balacne_from_db(self):
         return database.execute_select(
