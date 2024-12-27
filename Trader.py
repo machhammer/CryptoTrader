@@ -557,7 +557,8 @@ def run_trader(
     ignore_profit_loss=False,
     selected=None,
     write_to_db=True,
-    starting_balance=None
+    starting_balance=None,
+    sell_end_of_day=True
 ):
 
     
@@ -740,16 +741,17 @@ def run_trader(
                                     helper.write_balance_to_db(write_to_db, base_currency, balance)
                                     existing_asset = None
                             else:
-                                existing_asset, current_price = find_asset_with_balance(
-                                    exchange
-                                )
-                                if existing_asset:
-                                    size = get_Ticker_balance(exchange, existing_asset)
-                                    sell_now(exchange, existing_asset, size)
-                                    helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell", existing_asset, size, current_price)
-                                    
-                                adjust_sell_trigger = False
-                                existing_asset = None
+                                if sell_end_of_day:
+                                    existing_asset, current_price = find_asset_with_balance(
+                                        exchange
+                                    )
+                                    if existing_asset:
+                                        size = get_Ticker_balance(exchange, existing_asset)
+                                        sell_now(exchange, existing_asset, size)
+                                        helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell", existing_asset, size, current_price)
+                                        
+                                    adjust_sell_trigger = False
+                                    existing_asset = None
                 else:
                     logger.debug("No Asset selected!")
                     winning_buy_count = 0
@@ -764,18 +766,19 @@ def run_trader(
                     helper.wait("long", mode)
         else:
             if in_business:
-                in_business = False
-                existing_asset, current_price = find_asset_with_balance(exchange)
-                if existing_asset:
-                    size = get_Ticker_balance(exchange, existing_asset)
-                    sell_now(exchange, existing_asset, size)
-                    helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell", existing_asset, size, current_price)
-                    existing_asset = None
-                start_price = None
-                end_price = None
-                balance = get_base_currency_balance(exchange)
-                if write_to_db:
-                    helper.write_balance_to_db(write_to_db, base_currency, balance)
+                if sell_end_of_day:
+                    in_business = False
+                    existing_asset, current_price = find_asset_with_balance(exchange)
+                    if existing_asset:
+                        size = get_Ticker_balance(exchange, existing_asset)
+                        sell_now(exchange, existing_asset, size)
+                        helper.write_to_db_activity_tracker(write_to_db, run_id, exchange.get_mode(), exchange.get_timestamp(), "sell", existing_asset, size, current_price)
+                        existing_asset = None
+                    start_price = None
+                    end_price = None
+                    balance = get_base_currency_balance(exchange)
+                    if write_to_db:
+                        helper.write_balance_to_db(write_to_db, base_currency, balance)
 
             wait_time = helper.wait("long", mode)
             observation_date_offset(exchange, wait_time)
@@ -798,6 +801,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--use_db", type=bool, default=False, action=argparse.BooleanOptionalAction
     )
+    parser.add_argument("--sell_end_of_day", type=bool, required=True, default=True, action=argparse.BooleanOptionalAction)
+
     parser.add_argument("--selected", default=None)
     parser.add_argument("--observation_start", default=None)  # 2024-11-10 12:00
     parser.add_argument("--observation_stop", default=None)  # 2024-11-10 12:00
@@ -806,6 +811,8 @@ if __name__ == "__main__":
     parser.add_argument("--take_profit_in_percentage", required=True, type=float, default=3)
     parser.add_argument("--max_loss_in_percentage", required=True, type=float, default=3.5)
     parser.add_argument("--starting_balance", type=float, default=None)
+    
+    
 
     args = parser.parse_args()
     if args.logging == "INFO":

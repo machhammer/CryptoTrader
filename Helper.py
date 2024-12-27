@@ -85,12 +85,12 @@ class Helper:
             )  # and now.weekday() < 6
         else:
             run = True if observation_stop >= observation_start else False
-        return run
+        return True
 
     def in_buying_period(self, by_time, observation_start):
         now = observation_start if observation_start else datetime.now()  
         run = now.hour < by_time.hour
-        return run
+        return True
 
     def get_time(self):
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
