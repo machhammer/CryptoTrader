@@ -846,6 +846,8 @@ if __name__ == "__main__":
     logger.info("Selected: {}".format(args.selected))
     logger.info("Use DB: {}".format(args.use_db))
     logger.info("Starting Balance: {}".format(args.starting_balance))
+    logger.info("Sell end of day: {}".format(args.sell_end_of_day))
+    
     
 
     run_trader(
@@ -857,5 +859,6 @@ if __name__ == "__main__":
         args.ignore_profit_loss,
         args.selected,
         args.use_db,
-        args.starting_balance
+        args.starting_balance,
+        args.sell_end_of_day
     )
