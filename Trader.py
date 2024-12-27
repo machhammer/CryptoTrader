@@ -775,7 +775,7 @@ def run_trader(
                 end_price = None
                 balance = get_base_currency_balance(exchange)
                 if write_to_db:
-                    helper.write_balance_to_db(base_currency, balance)
+                    helper.write_balance_to_db(write_to_db, base_currency, balance)
 
             wait_time = helper.wait("long", mode)
             observation_date_offset(exchange, wait_time)
@@ -819,7 +819,7 @@ if __name__ == "__main__":
         observation_stop = datetime.strptime(args.observation_stop, "%Y-%m-%d %H:%M")
 
     exchange_class = globals()[args.exchange]
-    exchange = exchange_class(args.exchange_name)
+    exchange = exchange_class(args.exchange_name, args.starting_balance)
     if observation_start:
         exchange.set_observation_start(observation_start)
     if observation_stop:

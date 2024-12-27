@@ -313,16 +313,19 @@ class Offline_Exchange(Exchange):
 
     sell_orders = {"profit_sell": None, "loss_sell": []}
 
-    balance = {
-        "total": {"USDT": 100.0},
-        "USDT": {"total": 100.0},
-    }
 
     def get_mode(self):
         return credentials.MODE_TEST
 
-    def __init__(self, exchange_name):
+    def set_balance(self, starting_balance):
+        self.balance = {
+            "total": {"USDT": starting_balance},
+            "USDT": {"total": starting_balance},
+        }
+
+    def __init__(self, exchange_name, starting_balance):
         super().__init__(exchange_name)
+        self.set_balance(starting_balance)
 
     def fetch_balance(self):
         return self.balance
