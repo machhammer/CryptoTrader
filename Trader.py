@@ -134,7 +134,7 @@ def get_tickers_as_list(tickers):
 
 # ************************************ Funding based on market movment
 def get_funding(usd):
-    fund_ratio = funding_ratio_in_percent / 100
+    """ fund_ratio = funding_ratio_in_percent / 100
     funding = usd * fund_ratio
     if funding < minimum_funding:
         funding = minimum_funding
@@ -142,8 +142,8 @@ def get_funding(usd):
         "{} {} * Market Factor {} = Funding {}".format(
             base_currency, usd, fund_ratio, funding
         )
-    )
-    return funding
+    ) """
+    return usd - minimum_funding
 
 
 # ************************************ get precision for specific ticker
