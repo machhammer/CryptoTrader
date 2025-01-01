@@ -17,18 +17,17 @@ logger = logging.getLogger("screener")
 
 def __init__(
     self,
-    logger,
     wait_time_next_asset_selection_minutes,
     wait_time_next_buy_selection_seconds,
 ):
-    self.logger = logger
+    
     self.wait_time_next_asset_selection_minutes = (
         wait_time_next_asset_selection_minutes
     )
     self.wait_time_next_buy_selection_seconds = wait_time_next_buy_selection_seconds
 
 # ************************************ Helper - Wait functions
-def wait(logger, period, params):
+def wait(period, params):
     wait_time = 0
     if params["mode"] == credentials.MODE_PROD:
         if period == "short":
@@ -216,10 +215,10 @@ def read_last_balance_from_db():
     )
 
 
-def get_logger(type):
+def set_logger(type):
     # ************************************ Logging
     logger = logging.getLogger("screener")
-    formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(filename)25s %(funcName)25s - %(message)s")
     handler = logging.FileHandler(
         filename="screener.log",
         mode="w",
@@ -287,20 +286,28 @@ def read_arguments():
     parser.add_argument("--volume_increase_threshold", type=float, default = 0.5)
     parser.add_argument("--difference_to_maximum_max", type=float, default = -2)
     parser.add_argument("--valid_position_amount", type=int, default = 2)
-    parser.add_argument("--daily_pnl_target_in_percent", type=float, default = 999999999999999999)
-    parser.add_argument("--daily_pnl_max_loss_in_percent", type=float, default = -999999999999999999)
+    parser.add_argument(
+        "--acknowledge_profit_loss", type=bool, default=True, action=argparse.BooleanOptionalAction
+    )
+    parser.add_argument("--daily_pnl_target_in_percent", type=float, default = None)
+    parser.add_argument("--daily_pnl_max_loss_in_percent", type=float, default = None)
     parser.add_argument("--minimum_funding", type=float, default = 10)
     parser.add_argument("--winning_buy_nr", type=int, default = 2)
+    parser.add_argument(
+        "--acknowledge_business_hours", type=bool, default=True, action=argparse.BooleanOptionalAction
+    )
     parser.add_argument("--start_trading_at", type=int, default = 1)
     parser.add_argument("--stop_trading_at", type=int, default = 23)
     parser.add_argument("--stop_buying_at", type=int, default = 21)
     
     args = parser.parse_args()
 
-    d = vars(args)
-    d['start_trading_at'] = ti(hour=d['start_trading_at'])
-    d['stop_trading_at'] = ti(hour=d['stop_trading_at'])
-    d['stop_buying_at'] = ti(hour=d['stop_buying_at'])
+    parameters = vars(args)
+    parameters['start_trading_at'] = ti(hour=parameters['start_trading_at'])
+    parameters['stop_trading_at'] = ti(hour=parameters['stop_trading_at'])
+    parameters['stop_buying_at'] = ti(hour=parameters['stop_buying_at'])
 
-    return vars(args)
+    logger.info("Parameters: {}".format(parameters))
+
+    return parameters
 

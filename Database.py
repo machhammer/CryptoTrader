@@ -2,6 +2,9 @@
 import mariadb
 import credentials
 import pandas as pd
+import logging
+
+logger = logging.getLogger("screener")
 
 
 def connect():

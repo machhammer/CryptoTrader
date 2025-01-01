@@ -3,12 +3,14 @@ from matplotlib.offsetbox import OffsetBox
 import credentials
 from datetime import datetime, timedelta
 import time
+import logging
 import traceback
 import asyncio
 from pybitget import Client
 import pprint
 import pandas as pd
 
+logger = logging.getLogger("screener")
 
 class Exchange:
 
@@ -22,6 +24,7 @@ class Exchange:
     def log_error(self, proc):
         d = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         print("Reconnecting from {} at {}".format(proc, d))
+        logger.error("Reconnecting from {} at {}".format(proc, d))
 
     def get_mode(self):
         return credentials.MODE_PROD
@@ -30,9 +33,11 @@ class Exchange:
         return self.name
 
     def set_observation_start(self, observation_start):
+        logger.debug("Observation Start: {}".format(observation_start))
         self.observation_start = observation_start
 
     def set_observation_stop(self, observation_stop):
+        logger.debug("Observation Stop: {}".format(observation_stop))
         self.observation_stop = observation_stop
     
     def get_observation_start(self):
@@ -45,7 +50,8 @@ class Exchange:
         return datetime.now() if self.observation_start is None else self.observation_start
 
     def connect(self):
-        print("Connecting to {}.".format(self.name))
+        logger.info("Connecting to {}.".format(self.name))
+
         if self.name == "cryptocom":
             self.exchange = self.cryptocom()
         elif self.name == "coinbase":
@@ -322,6 +328,7 @@ class Offline_Exchange(Exchange):
             "total": {"USDT": starting_balance},
             "USDT": {"total": starting_balance},
         }
+        logger.debug("Balance: {}".format(self.balance))
 
     def __init__(self, exchange_name, starting_balance):
         super().__init__(exchange_name)
@@ -390,13 +397,13 @@ class Offline_Exchange(Exchange):
 
     def sell(self, date, symbol, base_currency, price):
         
-        print ("** Sell: {}".format(date))
-        print("** Current Balance: {} + (amount: {} * price: {})".format(round(self.balance["total"][base_currency], 2), self.balance["total"][symbol], price))
+        logger.info ("{} Sell Asset: {}".format(self.observation_start, symbol))
+        logger.debug ("{} Current Balance: {} + (amount: {} * price: {})".format(self.observation_start, round(self.balance["total"][base_currency], 2), self.balance["total"][symbol], price))
         
         self.balance["total"][base_currency] = self.balance["total"][base_currency] + self.balance["total"][symbol] * price
         self.balance[base_currency]["total"] = self.balance[base_currency]["total"] + self.balance["total"][symbol] * price
         
-        print("New Balance: {}".format(round(self.balance["total"][base_currency], 2)))
+        logger.info("{} New Balance: {}".format(self.observation_start, round(self.balance["total"][base_currency], 2)))
         
         self.balance["total"][symbol] = 0
         self.balance[symbol]["total"] = 0

@@ -10,26 +10,24 @@ from datetime import time, datetime, timedelta
 from tqdm import tqdm
 from DataToolbox import get_data, add_aroon, add_macd, add_min_max, add_vwap
 from scipy.signal import argrelextrema
-from Helper import read_arguments, get_logger, get_exchange, get_next_sequence, write_to_db_activity_tracker, wait, wait_minutes, read_last_balance_from_db, wait_hours, wait_seconds, write_balance_to_db
+from Helper import read_arguments, set_logger, get_exchange, get_next_sequence, write_to_db_activity_tracker, wait, wait_minutes, read_last_balance_from_db, wait_hours, wait_seconds, write_balance_to_db
 
-
+logger = logging.getLogger("screener")
 
 class Trader:
 
-    def __init__(self, logger, exchange, params):
-        self.logger = logger
+    def __init__(self, exchange, params):
         self.exchange = exchange
         self.params = params
 
     # ************************************ Balance of base currency
     def get_base_currency_balance(self):
         usd = self.exchange.fetch_balance()[params["base_currency"]]["total"]
-        self.logger.debug("Base currency balance: {}".format(usd))
+        logger.debug("Base currency balance: {}".format(usd))
         return usd
 
     # ************************************ Assets with existing balance
     def find_asset_with_balance(self):
-        logger = self.logger
         exchange = self.exchange
         asset_with_balance = None
         price = None
@@ -41,7 +39,7 @@ class Trader:
                 )
                 balance = exchange.fetch_balance()[asset]["total"]
                 if (balance * found_price) > valid_position_amount:
-                    logger.info("Found asset with balance: {}".format(asset))
+                    logger.debug("Found asset with balance: {}".format(asset))
                     asset_with_balance = asset + "/" + self.params["base_currency"]
                     price = found_price
         if asset_with_balance:
@@ -53,20 +51,20 @@ class Trader:
     # ************************************ Balance for specific ticker
     def get_Ticker_balance(self, ticker):
         exchange = self.exchange
-        logger = self.logger
+
         ticker = ticker.replace("/" + self.params["base_currency"], "")
         ticker_balance = 0
         try:
             ticker_balance = exchange.fetch_balance()[ticker]["total"]
         except:
-            logger.debug("   Ticker not in Wallet")
-        logger.debug("   Ticker Balance: {}".format(ticker_balance))
+            logger.debug("Ticker not in Wallet")
+        logger.debug("Ticker Balance: {}".format(ticker_balance))
         return ticker_balance
 
     # ************************************ check for valid position
     def still_has_postion(self, size, price):
         value = (size * price) > params["valid_position_amount"]
-        self.logger.debug("   still has position: {}".format(value))
+        logger.debug("   still has position: {}".format(value))
         return value
 
     # ************************************ get All Tickers
@@ -77,6 +75,7 @@ class Trader:
         tickers = tickers[
             tickers["symbol"].str.endswith("/" + self.params["base_currency"])
         ].head(self.params["amount_coins"])
+        logger.debug("Amount Tickers: {}".format(len(tickers)))
         return tickers
 
     def get_tickers_as_list(self, tickers):
@@ -94,7 +93,7 @@ class Trader:
             funding = minimum_funding
         if rest < minimum_funding:
             funding = balance - minimum_funding
-        self.logger.debug(
+        logger.debug(
             "{} {} * Market Factor {} = Funding {}".format(
                 params["base_currency"], balance, fund_ratio, funding
             )
@@ -116,7 +115,7 @@ class Trader:
     # ************************************ get convert price fitting to precision
     def convert_to_precision(self, value, precision):
         rounded = round(math.floor(value / precision) * precision, 10)
-        self.logger.debug(
+        logger.debug(
             "   convert_to_precision - size: {}, precision: {}, value: {}".format(
                 value, precision, rounded
             )
@@ -125,8 +124,8 @@ class Trader:
 
     # ************************************ get Candidate Functions
     def get_candidate(self):
-        logger = self.logger
-        logger.debug("1. ******** Check for New Candidate ********")
+
+        logger.info("{} Check for New Candidate".format(self.exchange.get_observation_start()))
         tickers = self.get_tickers()
         tickers = self.get_tickers_as_list(tickers)
         major_move = self.get_ticker_with_bigger_moves(tickers)
@@ -140,8 +139,7 @@ class Trader:
         buy_signals = self.get_ticker_with_aroon_buy_signals(relevant_tickers)
         selected_Ticker = self.get_lowest_difference_to_maximum(buy_signals)
         selected_Ticker = self.get_with_sufficient_variance(selected_Ticker)
-        if selected_Ticker:
-            logger.info("   Selected: {}".format(selected_Ticker))
+        logger.info("{} Selected: {}".format(self.exchange.get_observation_start(), selected_Ticker))
         return selected_Ticker
 
     def get_ticker_with_bigger_moves(self, tickers):
@@ -170,7 +168,7 @@ class Trader:
                 next(progress_bar)
             except Exception as e:
                 print(e)
-        self.logger.debug("   ticker with bigger moves: {}".format(len(bigger_moves)))
+        logger.debug("   ticker with bigger moves: {}".format(len(bigger_moves)))
         return bigger_moves
 
     def get_ticker_with_aroon_buy_signals(self, tickers):
@@ -191,7 +189,7 @@ class Trader:
             current_mean = data.tail(4)["volume"].mean()
             if (current_mean / last_mean) >= params["volume_increase_threshold"]:
                 increased_volumes.append(ticker)
-        self.logger.debug(
+        logger.debug(
             "   ticker_with_increased_volume: {}".format(len(increased_volumes))
         )
         return increased_volumes
@@ -207,7 +205,7 @@ class Trader:
         df = pd.DataFrame(accepted_expected_results.items(), columns=["ticker", "min"])
         df = df.sort_values(by="min")
         df = df.tail(5)["ticker"].to_list()
-        self.logger.debug("   ticker_with_expected_results: {}".format(len(df)))
+        logger.debug("   ticker_with_expected_results: {}".format(len(df)))
         return df
 
     def get_close_to_high(self, tickers):
@@ -217,7 +215,7 @@ class Trader:
             max = data["close"].max()
             if data.iloc[-1, 4] >= max:
                 close_to_high.append(ticker)
-        self.logger.debug("   ticker_close_to_high: {}".format(len(close_to_high)))
+        logger.debug("   ticker_close_to_high: {}".format(len(close_to_high)))
         return close_to_high
 
     def get_lowest_difference_to_maximum(self, tickers):
@@ -230,7 +228,7 @@ class Trader:
             ratio = ((current_close - local_max) * 100) / local_max
             if ratio > params["difference_to_maximum_max"]:
                 lowest_difference_to_maximum = ticker
-        self.logger.debug(
+        logger.debug(
             "   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum)
         )
         return lowest_difference_to_maximum
@@ -250,10 +248,10 @@ class Trader:
 
     # ************************************ BUY Functions
     def is_buy_decision(self, ticker, attempt):
-        logger = self.logger
-        logger.debug(
-            "2. ******** Check for Buy Decision, Ticker: {}, #{}".format(
-                ticker, attempt
+
+        logger.info(
+            "{} Check for Buy Decision, Ticker: {}, #{}".format(
+                self.exchange.get_observation_start(), ticker, attempt
             )
         )
         data = get_data(self.exchange, ticker, "1m", limit=180)
@@ -274,7 +272,7 @@ class Trader:
             is_buy = True
         else:
             is_buy = False
-        logger.debug("   Resistance check - buy: {}".format(is_buy))
+        logger.debug("Resistance check - buy: {}".format(is_buy))
 
         aroon_up = data.iloc[-1, 8]
         if is_buy:
@@ -283,7 +281,7 @@ class Trader:
                     is_buy = True
                 else:
                     is_buy = False
-            logger.debug("   Aroon check - buy: {}".format(is_buy))
+            logger.debug("Aroon check - buy: {}".format(is_buy))
 
         vwap = data.iloc[-1, 10]
         if is_buy:
@@ -292,7 +290,7 @@ class Trader:
                     is_buy = True
                 else:
                     is_buy = False
-            logger.debug("   vwap check - buy: {}".format(is_buy))
+            logger.debug("vwap check - buy: {}".format(is_buy))
 
         macd = data.iloc[-1, 11]
         macd_diff = data.iloc[-1, 12]
@@ -307,23 +305,18 @@ class Trader:
                     is_buy = True
                 else:
                     is_buy = False
-            logger.debug("   macd check - buy: {}".format(is_buy))
+            logger.debug("Macd check - buy: {}".format(is_buy))
 
         return is_buy, current_close
 
     def buy_order(self, ticker, price, funding):
-        self.logger.debug(
-            "3. ******** Buy Decision, Ticker: {}, Price: {}, Funding: {}".format(
-                ticker, price, funding
-            )
-        )
         amount_precision, price_precision = self.get_precision(ticker)
         price = self.convert_to_precision(price, price_precision)
         size = self.convert_to_precision(funding / price, amount_precision)
         order = self.exchange.create_buy_order(ticker, size, price)
         logger.info(
-            "   buy: {}, Time: {}, size: {}, price: {}".format(
-                ticker, self.exchange.get_observation_start(), size, price
+            "{} Buy Decision, Ticker: {}, Price: {}, Size: {}, Funding: {}".format(
+                self.exchange.get_observation_start(), ticker, price, size, funding
             )
         )
         return order, price, size
@@ -332,9 +325,9 @@ class Trader:
     def set_sell_trigger(
         self, isInitial, ticker, size, highest_value, max_loss, previous_resistance
     ):
-        logger = self.logger
+
         logger.debug(
-            "4. ********  Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(
+            "Check Sell - ticker: {}, isInitial: {}, size: {}, highest_value: {}, max_loss: {}".format(
                 ticker, isInitial, size, highest_value, max_loss
             )
         )
@@ -346,7 +339,7 @@ class Trader:
         order = None
         resistance = None
         logger.debug(
-            "   highest value: {}, current value: {}".format(
+            "Highest value: {}, current value: {}".format(
                 highest_value, current_value
             )
         )
@@ -361,13 +354,13 @@ class Trader:
                     diff = (current_value - resistance) / current_value
                     if diff >= max_loss:
                         logger.debug(
-                            "previous resistance: {}, resistance: {}".format(
+                            "Previous resistance: {}, resistance: {}".format(
                                 previous_resistance, resistance
                             )
                         )
                         if resistance > previous_resistance:
-                            logger.debug(
-                                "   set new sell triger: {}".format(resistance)
+                            logger.info(
+                                "{} Set new sell triger: {}".format(self.exchange.get_observation_start(), resistance)
                             )
                             order = self.sell_order(
                                 ticker, current_value, size, resistance
@@ -378,7 +371,7 @@ class Trader:
                 else:
                     resistance = min_column.iloc[(-1) * len(min_column)]
                     logger.debug(
-                        "previous resistance: {}, resistance: {}".format(
+                        "Previous resistance: {}, resistance: {}".format(
                             previous_resistance, resistance
                         )
                     )
@@ -389,33 +382,33 @@ class Trader:
                         )
                     resistance_found = True
         else:
-            logger.debug("   No new sell trigger")
+            logger.debug("No new sell trigger")
         return highest_value, current_value, order, resistance
 
     def sell_order_take_profit(self, ticker, price, size, takeProfitPrice):
-        logger = self.logger
+
         exchange = self.exchange
         amount_precision, price_precision = self.get_precision(ticker)
         takeProfitPrice = self.convert_to_precision(takeProfitPrice, price_precision)
         size = self.convert_to_precision(size, amount_precision)
         logger.info(
-            "   put sell order take profit- Ticker: {}, Time: {}, Size: {}, Price: {}, takeProfitPrice: {}".format(
-                ticker, exchange.get_observation_start(), size, price, takeProfitPrice
+            "{} Put sell order take profit- Ticker: {}, Size: {}, Price: {}, takeProfitPrice: {}".format(
+                self.exchange.get_observation_start(), ticker, size, price, takeProfitPrice
             )
         )
         order = self.exchange.create_take_profit_order(ticker, size, takeProfitPrice)
-        logger.debug("   sell TP order id : {}".format(order))
+        logger.debug("Sell TP order id : {}".format(order))
 
     def sell_order(self, ticker, price, size, stopLossPrice):
-        logger = self.logger
+
         exchange = self.exchange
         # exchange.cancel_orders(ticker)
         amount_precision, price_precision = self.get_precision(ticker)
         stopLossPrice = self.convert_to_precision(stopLossPrice, price_precision)
         size = self.convert_to_precision(size, amount_precision)
         logger.info(
-            "   put sell order - Ticker: {}, Time: {}, Size: {}, Price: {}, stopLossPrice: {}".format(
-                ticker, exchange.get_observation_start(), size, price, stopLossPrice
+            "{} Put sell order - Ticker: {}, Size: {}, Price: {}, stopLossPrice: {}".format(
+                self.exchange.get_observation_start(), ticker, size, price, stopLossPrice
             )
         )
         order = self.exchange.create_stop_loss_order(ticker, size, stopLossPrice)
@@ -427,35 +420,41 @@ class Trader:
         amount_precision, _ = self.get_precision(ticker)
         size = self.convert_to_precision(size, amount_precision)
         order = self.exchange.create_sell_order(ticker, size)
-        self.logger.info("   sell inmediately - Ticker: {}".format(ticker))
+        logger.info("{} Sell inmediately - Ticker: {}".format(self.exchange.get_observation_start(), ticker))
         return order
 
     def cancel_order(self, ticker, orderId):
-        logger = self.logger
+
         order = self.exchange.cancel_order(ticker, orderId)
-        logger.info("   cancel Order: {}".format(order))
-        logger.info(
-            "   cancel Order - Ticker: {}, Order Id: {}".format(ticker, orderId)
-        )
 
     def daily_pnl_target_achieved(self, current_balance, last_balance):
-        current_pnl = ((current_balance - last_balance) * 100) / last_balance
-        self.logger.info(
-            "   last_balance: {}, current_balance: {}, current pnl: {}".format(
-                last_balance, current_balance, current_pnl
+        pnl = False
+        if ["acknowledge_profit_loss"] is True:
+            current_pnl = ((current_balance - last_balance) * 100) / last_balance
+            logger.debug(
+                "   last_balance: {}, current_balance: {}, current pnl: {}".format(
+                    last_balance, current_balance, current_pnl
+                )
             )
-        )
-        if current_pnl >= params["daily_pnl_target_in_percent"]:
-            return True
+            if current_pnl >= params["daily_pnl_target_in_percent"]:
+                pnl = True
+            else:
+                pnl = False
         else:
-            return False
+            pnl = False
+        return pnl
 
     def daily_max_loss_reached(self, current_balance, last_balance):
-        current_pnl = ((current_balance - last_balance) * 100) / last_balance
-        if current_pnl <= params["daily_pnl_max_loss_in_percent"]:
-            return True
+        pnl = False
+        if ["acknowledge_profit_loss"] is True: 
+            current_pnl = ((current_balance - last_balance) * 100) / last_balance
+            if current_pnl <= params["daily_pnl_max_loss_in_percent"]:
+                pnl = True
+            else:
+                pnl = False
         else:
-            return False
+            pnl = False
+        return pnl
 
     def observation_date_offset(self, offset_in_seconds):
         observation_start = self.exchange.get_observation_start()
@@ -464,7 +463,7 @@ class Trader:
                 minutes=offset_in_seconds / 60
             )
             self.exchange.set_observation_start(observation_start)
-            self.logger.debug(
+            logger.debug(
                 "Observation Time: {}".format(self.exchange.get_observation_start())
             )
 
@@ -478,35 +477,43 @@ class Trader:
         )
 
     def in_business_hours(self):
-        now = (
-            params["observation_start"]
-            if params["observation_start"]
-            else datetime.now()
-        )
-        if params["observation_stop"] is None:
-            if params["stop_trading_at"] < params["start_trading_at"]:
-                raise Exception("case end < start not implemeted!")
-            run = (
-                now.hour >= params["start_trading_at"].hour
-                and now.hour < params["stop_trading_at"].hour
-            )  # and now.weekday() < 6
-        else:
-            run = (
-                True
-                if self.exchange.get_observation_stop()
-                >= self.exchange.get_observation_start()
-                else False
+        run = False
+        if params["acknowledge_business_hours"] is True:
+            now = (
+                params["observation_start"]
+                if params["observation_start"]
+                else datetime.now()
             )
-        return True
+            if params["observation_stop"] is None:
+                if params["stop_trading_at"] < params["start_trading_at"]:
+                    raise Exception("case end < start not implemeted!")
+                run = (
+                    now.hour >= params["start_trading_at"].hour
+                    and now.hour < params["stop_trading_at"].hour
+                )  # and now.weekday() < 6
+            else:
+                run = (
+                    True
+                    if self.exchange.get_observation_stop()
+                    >= self.exchange.get_observation_start()
+                    else False
+                )
+        else:
+            run = True
+        return run
 
     def in_buying_period(self):
-        now = (
-            self.exchange.get_observation_start()
-            if self.exchange.get_observation_start()
-            else datetime.now()
-        )
-        run = now.hour < params["stop_buying_at"].hour
-        return True
+        run = False
+        if params["acknowledge_business_hours"] is True:
+            now = (
+                self.exchange.get_observation_start()
+                if self.exchange.get_observation_start()
+                else datetime.now()
+            )
+            run = now.hour < params["stop_buying_at"].hour
+        else:
+            run = True
+        return run
 
     def run(self):
 
@@ -550,7 +557,7 @@ class Trader:
 
                 if (
                     not pnl_achieved and not max_loss_reached
-                ) or not ignore_profit_loss:
+                ):
                     if not start_price is None and not end_price is None:
                         if (
                             isinstance(start_price, float)
@@ -561,7 +568,7 @@ class Trader:
                             if winning_buy_count <= params["winning_buy_nr"]:
                                 selected_new_asset = previous_asset
                                 logger.info(
-                                    "Sold with proft #{}".format(winning_buy_count)
+                                    "{} Sold with proft #{}".format(self.exchange.get_observation_start(), winning_buy_count)
                                 )
                             else:
                                 winning_buy_count = 0
@@ -576,7 +583,7 @@ class Trader:
                             selected_new_asset = None
                             existing_asset = None
                             winning_buy_count = 0
-                            logger.info("Sold with loss. Waiting 1 hour!")
+                            logger.info("{} Sold with loss. Waiting 1 hour!".format(self.exchange.get_observation_start()))
                             wait_time = wait_hours(1)
                             self.observation_date_offset(wait_time)
                         previous_asset = None
@@ -612,13 +619,14 @@ class Trader:
                             )
                             if not is_buy:
                                 buy_attempts += 1
-                                wait_time = wait(logger, "short", params)
+                                wait_time = wait("short", params)
                                 self.observation_date_offset(wait_time)
                             else:
                                 buy_decision = True
                             if not self.get_lowest_difference_to_maximum(
                                 [selected_new_asset]
                             ):
+                                logger.info("{} Difference to maximum exceeds limit!".format(self.exchange.get_observation_start()))
                                 buy_attempts = params["buy_attempts_nr"] + 1
 
                         if buy_decision or existing_asset:
@@ -675,7 +683,7 @@ class Trader:
                                     existing_asset = selected_new_asset
                                 except Exception as e:
                                     adjust_sell_trigger = False
-                                    logger.info("Error buying: {}".format(e))
+                                    logger.info("{} Error buying: {}".format(self.exchange.get_observation_start(), e))
 
                             if selected_new_asset:
                                 isInitial = True
@@ -723,11 +731,11 @@ class Trader:
                                             )
 
                                         isInitial = False
-                                        wait_time = wait(logger, "short", params)
+                                        wait_time = wait("short", params)
                                         self.observation_date_offset(wait_time)
                                     else:
                                         logger.info(
-                                            "Asset has been sold!, Time: {}".format(
+                                            "{} Asset has been sold!".format(
                                                 exchange.get_observation_start()
                                             )
                                         )
@@ -776,15 +784,15 @@ class Trader:
                     else:
                         logger.debug("No Asset selected!")
                         winning_buy_count = 0
-                        wait_time = wait(logger, "long", params)
+                        wait_time = wait("long", params)
                         self.observation_date_offset(wait_time)
                 else:
                     if pnl_achieved:
-                        logger.info("PnL achieved. No activities for today!")
-                        wait(logger, "long", params)
+                        logger.info("{} PnL achieved. No activities for today!".format(self.exchange.get_observation_start()))
+                        wait("long", params)
                     if max_loss_reached:
-                        logger.info("Too much loss. No activities for today!")
-                        wait(logger, "long", params)
+                        logger.info("{} Too much loss. No activities for today!".format(self.exchange.get_observation_start()))
+                        wait("long", params)
             else:
                 if in_business:
                     if sell_end_of_day:
@@ -793,7 +801,7 @@ class Trader:
                             exchange
                         )
                         if existing_asset:
-                            size = self.get_Ticker_balance(exchange, existing_asset)
+                            size = self.get_Ticker_balance(existing_asset)
                             sell_now(existing_asset, size)
                             write_to_db_activity_tracker(
                                 write_to_db,
@@ -814,7 +822,7 @@ class Trader:
                                 write_to_db, base_currency, balance
                             )
 
-                wait_time = wait(logger, "long", params)
+                wait_time = wait("long", params)
                 self.observation_date_offset(wait_time)
 
             selected_new_asset = None
@@ -825,8 +833,9 @@ if __name__ == "__main__":
 
     params = read_arguments()
 
-    logger = get_logger(params["logging"])
+    set_logger(params["logging"])
+    
     exchange = get_exchange(params)
 
-    trader = Trader(logger, exchange, params)
+    trader = Trader(exchange, params)
     trader.run()

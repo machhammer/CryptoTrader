@@ -3,6 +3,9 @@ from ta.volume import VolumeWeightedAveragePrice
 from scipy.signal import argrelextrema
 import pandas as pd
 import numpy as np
+import logging
+
+logger = logging.getLogger("screener")
 
 # ************************************ Get Ticker Data
 def get_data(exchange, ticker, interval, limit):
