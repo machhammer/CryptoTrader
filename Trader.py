@@ -35,10 +35,10 @@ class Trader:
         for asset in current_assets:
             if not asset in params["ignored_coins"]:
                 found_price = exchange.fetch_ticker(
-                    asset + "/" + self.params("base_currency")["last"]
-                )
+                    asset + "/" + self.params["base_currency"]
+                )["last"]
                 balance = exchange.fetch_balance()[asset]["total"]
-                if (balance * found_price) > valid_position_amount:
+                if (balance * found_price) > params["valid_position_amount"]:
                     logger.debug("Found asset with balance: {}".format(asset))
                     asset_with_balance = asset + "/" + self.params["base_currency"]
                     price = found_price
@@ -365,6 +365,7 @@ class Trader:
                             order = self.sell_order(
                                 ticker, current_value, size, resistance
                             )
+                            
                         resistance_found = True
                     else:
                         row -= 1
@@ -377,8 +378,8 @@ class Trader:
                     )
                     if resistance > previous_resistance:
                         logger.debug("   set new sell triger: {}".format(resistance))
-                        order = sell_order(
-                            exchange, ticker, current_value, size, resistance
+                        order = self.sell_order(
+                           ticker, current_value, size, resistance
                         )
                     resistance_found = True
         else:

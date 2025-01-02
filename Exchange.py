@@ -17,7 +17,7 @@ class Exchange:
     exchange = None
     name = None
 
-    def __init__(self, name):
+    def __init__(self, name, *args):
         self.name = name
         self.connect()
 
@@ -39,7 +39,8 @@ class Exchange:
     def set_observation_stop(self, observation_stop):
         logger.debug("Observation Stop: {}".format(observation_stop))
         self.observation_stop = observation_stop
-    
+   
+
     def get_observation_start(self):
         return self.observation_start
 
@@ -332,7 +333,8 @@ class Offline_Exchange(Exchange):
 
     def __init__(self, exchange_name, starting_balance):
         super().__init__(exchange_name)
-        self.set_balance(starting_balance)
+        self.starting_balance = starting_balance
+        self.set_balance(self.starting_balance)
 
     def fetch_balance(self):
         return self.balance
