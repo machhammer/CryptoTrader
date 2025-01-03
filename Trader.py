@@ -470,12 +470,7 @@ class Trader:
 
     def observation_stop_check(self):
         return (
-            True
-            if self.exchange.get_observation_stop
-            and self.exchange.get_observation_stop()
-            >= self.exchange.get_observation_start()
-            else False
-        )
+            self.exchange.get_observation_stop() >= self.exchange.get_observation_start() if self.exchange.get_observation_stop and self.exchange.get_observation_start else False)
 
     def in_business_hours(self):
         run = False
