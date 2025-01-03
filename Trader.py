@@ -470,7 +470,7 @@ class Trader:
 
     def observation_stop_check(self):
         return (
-            self.exchange.get_observation_stop() >= self.exchange.get_observation_start() if self.exchange.get_observation_stop and self.exchange.get_observation_start else False)
+            self.exchange.get_observation_stop() >= self.exchange.get_observation_start() if self.exchange.get_observation_stop and self.exchange.get_observation_start else True)
 
     def in_business_hours(self):
         run = False
@@ -757,13 +757,13 @@ class Trader:
                                 else:
                                     if sell_end_of_day:
                                         existing_asset, current_price = (
-                                            find_asset_with_balance(exchange)
+                                            self.find_asset_with_balance()
                                         )
                                         if existing_asset:
                                             size = self.get_Ticker_balance(
                                                 existing_asset
                                             )
-                                            sell_now(exchange, existing_asset, size)
+                                            self.sell_now(existing_asset, size)
                                             write_to_db_activity_tracker(
                                                 write_to_db,
                                                 run_id,
@@ -791,14 +791,14 @@ class Trader:
                         wait("long", params)
             else:
                 if in_business:
-                    if sell_end_of_day:
+                    if params["sell_end_of_day"]:
                         in_business = False
-                        existing_asset, current_price = find_asset_with_balance(
+                        existing_asset, current_price = self.find_asset_with_balance(
                             exchange
                         )
                         if existing_asset:
                             size = self.get_Ticker_balance(existing_asset)
-                            sell_now(existing_asset, size)
+                            self.sell_now(existing_asset, size)
                             write_to_db_activity_tracker(
                                 write_to_db,
                                 run_id,
@@ -815,7 +815,7 @@ class Trader:
                         balance = self.get_base_currency_balance()
                         if write_to_db:
                             write_balance_to_db(
-                                write_to_db, base_currency, balance
+                                write_to_db, params["base_currency"], balance
                             )
 
                 wait_time = wait("long", params)
