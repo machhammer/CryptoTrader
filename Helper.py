@@ -34,7 +34,7 @@ def wait(period, params):
             wait_time = get_wait_time_1(params)
         if period == "long":
             wait_time = get_wait_time(params)
-        logger.info("wait: {} PROD".format(wait_time))
+        logger.debug("wait: {} PROD".format(wait_time))
         time.sleep(wait_time)
     else:
         if period == "short":
@@ -42,7 +42,7 @@ def wait(period, params):
         if period == "long":
             wait_time = params["wait_time_next_asset_selection_minutes"] * 60
         time.sleep(1)
-        logger.info("wait: {} TEST".format(wait_time))
+        logger.debug("wait: {} TEST".format(wait_time))
     return wait_time
 
 def get_wait_time(params):
