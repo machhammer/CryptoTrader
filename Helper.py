@@ -31,7 +31,7 @@ def wait(period, params):
     wait_time = 0
     if params["mode"] == credentials.MODE_PROD:
         if period == "short":
-            wait_time = get_wait_time_1()
+            wait_time = get_wait_time_1(params)
         if period == "long":
             wait_time = get_wait_time(params)
         logger.info("wait: {} PROD".format(wait_time))
@@ -53,7 +53,7 @@ def get_wait_time(params):
     ) * 60
     return wait_time
 
-def get_wait_time_1():
+def get_wait_time_1(params):
     seconds = datetime.now().second
     wait_time = params["wait_time_next_buy_selection_seconds"] - (
         seconds % params["wait_time_next_buy_selection_seconds"]
