@@ -20,6 +20,8 @@ class Exchange:
     def __init__(self, name, *args):
         self.name = name
         self.connect()
+        self.observation_start = None
+        self.observation_stop = None
 
     def log_error(self, proc):
         d = datetime.today().strftime("%Y-%m-%d %H:%M:%S")

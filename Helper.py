@@ -236,13 +236,12 @@ def set_logger(type):
 
 
 def get_exchange(params):
-    observation_start = None
-    observation_start = datetime.strptime(params["observation_start"], "%Y-%m-%d %H:%M")
-    observation_stop = datetime.strptime(params["observation_stop"], "%Y-%m-%d %H:%M")
+
     exchange_class = globals()[params["exchange"]]
     exchange = exchange_class(params["exchange_name"], params["starting_balance"])
-    exchange.set_observation_start(observation_start)
-    exchange.set_observation_stop(observation_stop)
+    if params["observation_start"] and params["observation_stop"]:
+        exchange.set_observation_start(datetime.strptime(params["observation_start"], "%Y-%m-%d %H:%M"))
+        exchange.set_observation_stop(datetime.strptime(params["observation_stop"], "%Y-%m-%d %H:%M"))
     return exchange
 
 def read_arguments():
