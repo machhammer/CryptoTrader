@@ -822,7 +822,7 @@ class Trader:
                 self.observation_date_offset(wait_time)
 
             selected_new_asset = None
-            running = self.observation_stop_check()
+            running = self.exchange.observation_run_check()
 
 
 if __name__ == "__main__":

@@ -49,6 +49,13 @@ class Exchange:
     def get_observation_stop(self):
         return self.observation_stop
 
+    def observation_run_check(self):
+        if not self.observation_start is None and not self.observation_stop is None:
+            return self.exchange.get_observation_stop() >= self.exchange.get_observation_start()
+        else:
+            return True
+
+
     def get_timestamp(self):
         return datetime.now() if self.observation_start is None else self.observation_start
 
