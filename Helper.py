@@ -33,8 +33,8 @@ def wait(period, params):
         if period == "short":
             wait_time = get_wait_time_1()
         if period == "long":
-            wait_time = get_wait_time()
-        logger.debug("wait: {}".format(wait_time))
+            wait_time = get_wait_time(params)
+        logger.info("wait: {} PROD".format(wait_time))
         time.sleep(wait_time)
     else:
         if period == "short":
@@ -42,7 +42,7 @@ def wait(period, params):
         if period == "long":
             wait_time = params["wait_time_next_asset_selection_minutes"] * 60
         time.sleep(1)
-        logger.debug("wait: {}".format(wait_time))
+        logger.info("wait: {} TEST".format(wait_time))
     return wait_time
 
 def get_wait_time(params):
@@ -260,8 +260,8 @@ def read_arguments():
     )
     parser.add_argument("--sell_end_of_day", type=bool, required=True, default=True, action=argparse.BooleanOptionalAction)
     parser.add_argument("--write_to_db", type=bool, required=True, default=True, action=argparse.BooleanOptionalAction)
-    parser.add_argument("--mode", default=1)
-    parser.add_argument("--selected", default=None)
+    parser.add_argument("--mode", type=int, default=1)
+    parser.add_argument("--selected", type=str, default=None)
     parser.add_argument("--observation_start", default=None)  # 2024-11-10 12:00
     parser.add_argument("--observation_stop", default=None)  # 2024-11-10 12:00
     parser.add_argument("--logging", default="INFO")
