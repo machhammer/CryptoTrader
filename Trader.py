@@ -755,7 +755,7 @@ class Trader:
                                         )
                                         existing_asset = None
                                 else:
-                                    if sell_end_of_day:
+                                    if params["sell_end_of_day"]:
                                         existing_asset, current_price = (
                                             self.find_asset_with_balance()
                                         )
