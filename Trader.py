@@ -114,7 +114,7 @@ class Trader:
 
     # ************************************ get convert price fitting to precision
     def convert_to_precision(self, value, precision):
-        rounded = round(math.floor(value / precision) * precision, 5)
+        rounded = round(math.floor(value / precision) * precision, 8)
         logger.debug(
             "   convert_to_precision - size: {}, precision: {}, value: {}".format(
                 value, precision, rounded
