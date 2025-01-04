@@ -149,46 +149,56 @@ class Trader:
         progress_bar = iter(tqdm(range(iterations)))
         next(progress_bar)
         for ticker in tickers:
-            data = get_data(self.exchange, ticker, "1m", limit)
-            # data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
-            if not data.empty:
-                data["change"] = data["close"].pct_change()
-                data["is_change_relevant"] = data["change"] >= params["move_increase_threshold"]
-                ticker_check = {}
-                ticker_check["ticker"] = ticker
-                ticker_check["change"] = data["change"].to_list()
-                ticker_check["relevant"] = data["is_change_relevant"].to_list()
-                ticker_check["data"] = data
-                if (
-                    ticker_check["relevant"].count(True)
-                    >= params ["move_increase_period_threshold"]
-                ):
-                    bigger_moves.append(ticker)
             try:
-                next(progress_bar)
+                data = get_data(self.exchange, ticker, "1m", limit)
+                # data["change"] = ((data["close"] - data["open"]) / data["open"]) * 100
+                if not data.empty:
+                    data["change"] = data["close"].pct_change()
+                    data["is_change_relevant"] = data["change"] >= params["move_increase_threshold"]
+                    ticker_check = {}
+                    ticker_check["ticker"] = ticker
+                    ticker_check["change"] = data["change"].to_list()
+                    ticker_check["relevant"] = data["is_change_relevant"].to_list()
+                    ticker_check["data"] = data
+                    if (
+                        ticker_check["relevant"].count(True)
+                        >= params ["move_increase_period_threshold"]
+                    ):
+                        bigger_moves.append(ticker)
+                try:
+                    next(progress_bar)
+                except Exception as e:
+                    pass
             except Exception as e:
-                print(e)
+                logger.error("error loading data: {} {}".format(ticker, e))
+
         logger.debug("   ticker with bigger moves: {}".format(len(bigger_moves)))
         return bigger_moves
 
     def get_ticker_with_aroon_buy_signals(self, tickers):
         buy_signals = []
         for ticker in tickers:
-            data = get_data(self.exchange, ticker, "1m", limit=20)
-            data = add_aroon(data)
-            if 100 in data.tail(3)["aroon_up"].to_list():
-                buy_signals.append(ticker)
+            try:
+                data = get_data(self.exchange, ticker, "1m", limit=20)
+                data = add_aroon(data)
+                if 100 in data.tail(3)["aroon_up"].to_list():
+                    buy_signals.append(ticker)
+            except Exception as e:
+                logger.error("error loading data: {} {}".format(ticker, e))
         logger.debug("   ticker_with_aroon_buy_signals: {}".format(len(buy_signals)))
         return buy_signals
 
     def get_ticker_with_increased_volume(self, tickers):
         increased_volumes = []
         for ticker in tickers:
-            data = get_data(ticker, "15m", limit=28)
-            last_mean = data.head(24)["volume"].mean()
-            current_mean = data.tail(4)["volume"].mean()
-            if (current_mean / last_mean) >= params["volume_increase_threshold"]:
-                increased_volumes.append(ticker)
+            try:
+                data = get_data(ticker, "15m", limit=28)
+                last_mean = data.head(24)["volume"].mean()
+                current_mean = data.tail(4)["volume"].mean()
+                if (current_mean / last_mean) >= params["volume_increase_threshold"]:
+                    increased_volumes.append(ticker)
+            except Exception as e:
+                logger.error("error loading data: {} {}".format(ticker, e))
         logger.debug(
             "   ticker_with_increased_volume: {}".format(len(increased_volumes))
         )
@@ -197,11 +207,14 @@ class Trader:
     def get_top_ticker_expected_results(self, tickers):
         accepted_expected_results = {}
         for ticker in tickers:
-            data = get_data(self.exchange, ticker, "5m", limit=120)
-            data["pct_change"] = data["close"].pct_change(periods=3)
-            min = data["pct_change"].min()
-            if min > -0.005:
-                accepted_expected_results[ticker] = min
+            try:
+                data = get_data(self.exchange, ticker, "5m", limit=120)
+                data["pct_change"] = data["close"].pct_change(periods=3)
+                min = data["pct_change"].min()
+                if min > -0.005:
+                    accepted_expected_results[ticker] = min
+            except Exception as e:
+                logger.error("error loading data: {} {}".format(ticker, e))
         df = pd.DataFrame(accepted_expected_results.items(), columns=["ticker", "min"])
         df = df.sort_values(by="min")
         df = df.tail(5)["ticker"].to_list()
@@ -211,23 +224,29 @@ class Trader:
     def get_close_to_high(self, tickers):
         close_to_high = []
         for ticker in tickers:
-            data = get_data(self.exchange, ticker, "1h", limit=48)
-            max = data["close"].max()
-            if data.iloc[-1, 4] >= max:
-                close_to_high.append(ticker)
+            try:
+                data = get_data(self.exchange, ticker, "1h", limit=48)
+                max = data["close"].max()
+                if data.iloc[-1, 4] >= max:
+                    close_to_high.append(ticker)
+            except Exception as e:
+                logger.error("error loading data: {} {}".format(ticker, e))
         logger.debug("   ticker_close_to_high: {}".format(len(close_to_high)))
         return close_to_high
 
     def get_lowest_difference_to_maximum(self, tickers):
         lowest_difference_to_maximum = None
         for ticker in tickers:
-            data = get_data(self.exchange, ticker, "1m", limit=90)
-            data = add_min_max(data)
-            local_max = data["max"].max()
-            current_close = data.iloc[-1, 4]
-            ratio = ((current_close - local_max) * 100) / local_max
-            if ratio > params["difference_to_maximum_max"]:
-                lowest_difference_to_maximum = ticker
+            try:
+                data = get_data(self.exchange, ticker, "1m", limit=90)
+                data = add_min_max(data)
+                local_max = data["max"].max()
+                current_close = data.iloc[-1, 4]
+                ratio = ((current_close - local_max) * 100) / local_max
+                if ratio > params["difference_to_maximum_max"]:
+                    lowest_difference_to_maximum = ticker
+            except Exception as e:
+                logger.error("error loading data: {} {}".format(ticker, e))
         logger.debug(
             "   lowest_difference_to_maximum: {}".format(lowest_difference_to_maximum)
         )
@@ -236,11 +255,14 @@ class Trader:
     def get_with_sufficient_variance(self, ticker):
         duplicate_data = 99
         if ticker:
-            data = get_data(self.exchange, ticker, "1m", limit=5)
-            data = data.duplicated(subset=["close"])
-            data = data.loc[lambda x: x == True]
-            duplicate_data = len(data)
-            logger.debug("   variance: {}".format(duplicate_data))
+            try:
+                data = get_data(self.exchange, ticker, "1m", limit=5)
+                data = data.duplicated(subset=["close"])
+                data = data.loc[lambda x: x == True]
+                duplicate_data = len(data)
+                logger.debug("   variance: {}".format(duplicate_data))
+            except Exception as e:
+                logger.error("error loading data: {} {}".format(ticker, e))
         if duplicate_data > 0:
             return None
         else:
