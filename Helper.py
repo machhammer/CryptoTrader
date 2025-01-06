@@ -60,20 +60,20 @@ def get_wait_time_1(params):
     )
     return wait_time
 
-def wait_hours(hours, mode=None):
+def wait_hours(hours, params):
     wait_time = hours * 60 * 60
-    if mode == credentials.MODE_PROD:
+    if params["mode"] == credentials.MODE_PROD:
         time.sleep(wait_time)
     return wait_time
 
-def wait_minutes(minutes, mode=None):
+def wait_minutes(minutes, params):
     wait_time = minutes * 60
-    if mode == credentials.MODE_PROD:
+    if params["mode"] == credentials.MODE_PROD:
         time.sleep(wait_time)
     return minutes * 60
 
-def wait_seconds(seconds, mode=None):
-    if mode == credentials.MODE_PROD:
+def wait_seconds(seconds, params):
+    if params["mode"] == credentials.MODE_PROD:
         time.sleep(seconds)
     return seconds
 

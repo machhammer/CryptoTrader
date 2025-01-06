@@ -591,7 +591,7 @@ class Trader:
                             else:
                                 winning_buy_count = 0
                                 selected_new_asset = None
-                            wait_time = wait_minutes(5)
+                            wait_time = wait_minutes(5, params)
                             self.observation_date_offset(wait_time)
                         if (
                             isinstance(start_price, float)
@@ -602,7 +602,7 @@ class Trader:
                             existing_asset = None
                             winning_buy_count = 0
                             logger.info("{} Sold with loss. Waiting 1 hour!".format(self.exchange.get_observation_start()))
-                            wait_time = wait_hours(1)
+                            wait_time = wait_hours(1, params)
                             self.observation_date_offset(wait_time)
                         previous_asset = None
                         start_price = None
@@ -661,7 +661,7 @@ class Trader:
                                         current_price,
                                         funding,
                                     )
-                                    wait_seconds(5)
+                                    wait_seconds(5, params)
                                     start_price = current_price
                                     size = self.get_Ticker_balance(
                                         selected_new_asset
