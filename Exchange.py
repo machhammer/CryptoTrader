@@ -51,7 +51,7 @@ class Exchange:
 
     def observation_run_check(self):
         if not self.observation_start is None and not self.observation_stop is None:
-            return self.exchange.get_observation_stop() >= self.exchange.get_observation_start()
+            return self.get_observation_stop() >= self.get_observation_start()
         else:
             return True
 

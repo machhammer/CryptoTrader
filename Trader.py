@@ -815,9 +815,7 @@ class Trader:
                 if in_business:
                     if params["sell_end_of_day"]:
                         in_business = False
-                        existing_asset, current_price = self.find_asset_with_balance(
-                            exchange
-                        )
+                        existing_asset, current_price = self.find_asset_with_balance()
                         if existing_asset:
                             size = self.get_Ticker_balance(existing_asset)
                             self.sell_now(existing_asset, size)
