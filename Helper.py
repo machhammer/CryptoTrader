@@ -270,7 +270,7 @@ def read_arguments():
     parser.add_argument("--max_loss_in_percent", required=True, type=float, default=3.5)
     parser.add_argument("--starting_balance", type=float, default=None)
     parser.add_argument("--base_currency", default= "USDT")
-    parser.add_argument("--ignored_coins", default = ["USDT", "USD", "CRO", "PAXG", "BGB"])
+    parser.add_argument("--ignored_coins", type=lambda s: [str(item) for item in s.split(',')], default = ["USDT", "USD", "CRO", "PAXG", "BGB"])
     parser.add_argument("--wait_time_next_asset_selection_minutes", type=int, default = 15)
     parser.add_argument("--wait_time_next_buy_selection_seconds", type=int, default = 60)
     parser.add_argument("--funding_ratio_in_percent", type=float, default=90)

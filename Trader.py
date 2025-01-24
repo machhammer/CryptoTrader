@@ -70,6 +70,8 @@ class Trader:
     # ************************************ get All Tickers
     def get_tickers(self):
         tickers = self.exchange.fetch_tickers()
+        for ignore_coin in params["ignored_coins"]:
+            tickers.pop(ignore_coin + '/' + params["base_currency"], None)
         tickers = pd.DataFrame(tickers)
         tickers = tickers.T
         tickers = tickers[
