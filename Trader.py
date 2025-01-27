@@ -333,6 +333,51 @@ class Trader:
 
         return is_buy, current_close
 
+
+    def is_rebuy_decision(self, ticker, attempt):
+
+        logger.info(
+            "{} Check for Re-Buy Decision, Ticker: {}, #{}".format(
+                self.exchange.get_observation_start(), ticker, attempt
+            )
+        )
+        data = get_data(self.exchange, ticker, "1m", limit=180)
+        data = add_min_max(data)
+        data = add_aroon(data)
+        data = add_vwap(data)
+        data = add_macd(data)
+        current_close = data.iloc[-1, 4]
+        
+        is_buy = False
+
+        
+        aroon_up = data.iloc[-1, 8]
+        if is_buy:
+            if isinstance(aroon_up, float):
+                if aroon_up > 90:
+                    is_buy = True
+                else:
+                    is_buy = False
+            logger.debug("Aroon check - buy: {}".format(is_buy))
+
+        
+        macd = data.iloc[-1, 11]
+        macd_diff = data.iloc[-1, 12]
+        macd_signal = data.iloc[-1, 13]
+        if is_buy:
+            if (
+                isinstance(macd, float)
+                and isinstance(macd_signal, float)
+                and isinstance(macd_diff, float)
+            ):
+                if macd > macd_signal and macd_diff > 0:
+                    is_buy = True
+                else:
+                    is_buy = False
+            logger.debug("Macd check - buy: {}".format(is_buy))
+
+        return is_buy, current_close
+
     def buy_order(self, ticker, price, funding):
         amount_precision, price_precision = self.get_precision(ticker)
         price = self.convert_to_precision(price, price_precision)
@@ -628,6 +673,7 @@ class Trader:
                     if selected_new_asset or existing_asset:
                         buy_attempts = 1
                         # observe selected Ticker
+                        confirm_buy = False
                         buy_decision = False
                         while (
                             not buy_decision
@@ -637,12 +683,19 @@ class Trader:
                             is_buy, current_price = self.is_buy_decision(
                                 selected_new_asset, buy_attempts
                             )
+                            if is_buy:
+                                wait_time = wait_minutes(1, params)
+                                self.observation_date_offset(wait_time)
+                                confirm_buy, current_price = self.is_buy_decision(
+                                    selected_new_asset, buy_attempts
+                                )
                             if not is_buy:
                                 buy_attempts += 1
                                 wait_time = wait("short", params)
                                 self.observation_date_offset(wait_time)
                             else:
-                                buy_decision = True
+                                if confirm_buy:
+                                    buy_decision = True
                             if not self.get_lowest_difference_to_maximum(
                                 [selected_new_asset]
                             ):
