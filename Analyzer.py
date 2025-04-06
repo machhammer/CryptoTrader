@@ -18,8 +18,8 @@ def interpret_news_with_openai(news):
         model="gpt-4o-mini",
         store=True,
         messages=[
-            {"role": "system", "content": "You are a financial analyst summarizing crypto news."},
-            {"role": "user", "content": f"Summarize the key takeaways from these latest crypto news articles:\n\n{news}"},
+            {"role": "system", "content": "You are a financial analyst searching for opportunities"},
+            {"role": "user", "content": f"What are the 5 coins which might face an increase in price today?:\n\n{news}"},
         ]
     )
     print("AI Summary:", completion.choices[0].message.content)
@@ -42,8 +42,8 @@ if __name__ == "__main__":
     news = fetch_news()
     save_news(news)
     
-    #articles = load_news()
-    #interpret_news_with_openai(articles)
+    articles = load_news()
+    interpret_news_with_openai(articles)
 
 
 
