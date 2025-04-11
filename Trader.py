@@ -1,10 +1,10 @@
-from os import write
 import numpy as np
 import pandas as pd
 import random
 import math
 import logging
 import argparse
+from os import write
 from Exchange import Exchange, Offline_Exchange
 from datetime import time, datetime, timedelta
 from tqdm import tqdm
